@@ -1,0 +1,6 @@
+@BeQuestionBank.API_HostAddress = http://localhost:5146
+
+GET {{BeQuestionBank.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
