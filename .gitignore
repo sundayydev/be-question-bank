@@ -402,4 +402,9 @@ FodyWeavers.xsd
 # Loging
 Logs
 
+#App Settings
+appsettings.json
+
 # End of https://www.toptal.com/developers/gitignore/api/csharp
+/BeQuestionBank.API/appsettings.json
+BeQuestionBank.API/appsettings.json
