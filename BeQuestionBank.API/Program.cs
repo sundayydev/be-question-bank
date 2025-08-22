@@ -1,4 +1,5 @@
 ﻿using BeQuestionBank.API.Extensions;
+using BeQuestionBank.API.Middlewares;
 using BeQuestionBank.Core.Configurations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -109,6 +110,11 @@ builder.Host.UseSerilog();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+// Thêm middleware custom
+app.UseMiddleware<ErrorHandlingMiddleware>();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<RequestLoggingMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
