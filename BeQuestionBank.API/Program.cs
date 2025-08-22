@@ -3,6 +3,7 @@ using BeQuestionBank.Core.Configurations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -92,6 +93,18 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
+// Đọc cấu hình từ appsettings.json (nếu có)
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .WriteTo.Seq("http://localhost:5341")
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+// Thay logger mặc định của ASP.NET Core bằng Serilog
+builder.Host.UseSerilog();
 
 builder.Services.AddOpenApi();
 
