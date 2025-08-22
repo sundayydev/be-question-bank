@@ -10,7 +10,11 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers(); //Cần có để Swagger hiển thị API
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+}); //Cần có để Swagger hiển thị API
 builder.Services.AddEndpointsApiExplorer(); //Cho minimal APIs
 builder.Services.AddSwaggerGen(); //Cấu hình Swagger
 
@@ -96,16 +100,16 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // Đọc cấu hình từ appsettings.json (nếu có)
-Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(builder.Configuration)
-    .WriteTo.Seq("http://localhost:5341")
-    .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
-    .CreateLogger();
+//Log.Logger = new LoggerConfiguration()
+//    .ReadFrom.Configuration(builder.Configuration)
+//    .WriteTo.Seq("http://localhost:5341")
+//    .Enrich.FromLogContext()
+//    .WriteTo.Console()
+//    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+//    .CreateLogger();
 
 // Thay logger mặc định của ASP.NET Core bằng Serilog
-builder.Host.UseSerilog();
+builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
 
 builder.Services.AddOpenApi();
 
