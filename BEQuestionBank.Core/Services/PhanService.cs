@@ -101,7 +101,7 @@ public class PhanService
         return await _phanRepository.GetAllAsync();
     }
 
-    public async Task<(bool Success, string Message)> AddPhanAsync(PhanCreateDto newPhan)
+    public async Task<(bool Success, string Message)> AddPhanAsync(CreatePhanDto newPhan)
     {
         await using var transaction = await _phanRepository.BeginTransactionAsync();
         try
@@ -150,7 +150,7 @@ public class PhanService
         }
     }
 
-    public async Task<(bool Success, string Message)> AddPhanWithChildrenAsync(PhanCreateDto newPhan)
+    public async Task<(bool Success, string Message)> AddPhanWithChildrenAsync(CreatePhanDto newPhan)
     {
         await using var transaction = await _phanRepository.BeginTransactionAsync();
         try

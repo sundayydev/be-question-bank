@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace BeQuestionBank.Shared.DTOs.Phan;
 
-public class PhanUpdateDto
+public class CreatePhanDto
 {
     [Required(ErrorMessage = "Mã môn học là bắt buộc.")]
     public Guid MaMonHoc { get; set; }
@@ -20,7 +20,7 @@ public class PhanUpdateDto
     public string? NoiDung { get; set; }
 
     [Range(0, int.MaxValue, ErrorMessage = "Thứ tự phải là số không âm.")]
-    public int ThuTu { get; set; }
+    public int? ThuTu { get; set; }
 
     [Range(0, int.MaxValue, ErrorMessage = "Số lượng câu hỏi phải là số không âm.")]
     public int SoLuongCauHoi { get; set; }
@@ -29,9 +29,5 @@ public class PhanUpdateDto
 
     public bool LaCauHoiNhom { get; set; } = false;
 
-    public int? MaSoPhan { get; set; } = null;
-
     public bool XoaTam { get; set; } = false;
-
-    public DateTime NgayCapNhat { get; set; } = DateTime.UtcNow;
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BeQuestionBank.Shared.DTOs.MonHoc;
 
-public class MonHocCreateDto
+public class CreateMonHocDto
 {
     public required string MaSoMonHoc { get; set; }
     public string TenMonHoc { get; set; } = string.Empty;
