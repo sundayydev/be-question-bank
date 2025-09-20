@@ -70,7 +70,7 @@ public class MonHocController(MonHocService service, ILogger<MonHocController> l
     // POST: api/MonHoc
     [HttpPost]
     [SwaggerOperation("Thêm mới môn học")]
-    public async Task<IActionResult> CreateAsync([FromBody] MonHocCreateDto model)
+    public async Task<IActionResult> CreateAsync([FromBody] CreateMonHocDto model)
     {
         try
         {
@@ -95,7 +95,7 @@ public class MonHocController(MonHocService service, ILogger<MonHocController> l
     // PATCH: api/MonHoc
     [HttpPatch("{id}")]
     [SwaggerOperation("Cập nhật thông tin môn học")]
-    public async Task<IActionResult> UpdateAsync(string id, [FromBody] MonHocUpdateDto model)
+    public async Task<IActionResult> UpdateAsync(string id, [FromBody] UpdateMonHocDto model)
     {
         try
         {

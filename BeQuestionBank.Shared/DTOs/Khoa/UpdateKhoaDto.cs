@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BeQuestionBank.Shared.DTOs.Khoa;
 
-public class KhoaCreateDto
+public class UpdateKhoaDto
 {
     public required string TenKhoa { get; set; }
     public bool? XoaTam { get; set; }

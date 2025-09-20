@@ -73,7 +73,7 @@ public class KhoaController(KhoaService service, ILogger<KhoaController> logger)
     //POST: api/Khoa
     [HttpPost]
     [SwaggerOperation("Thêm một Khoa")]
-    public async Task<IActionResult> CreateKhoaAsync([FromBody] KhoaCreateDto model)
+    public async Task<IActionResult> CreateKhoaAsync([FromBody] CreateKhoaDto model)
     {
         try
         {
@@ -123,7 +123,7 @@ public class KhoaController(KhoaService service, ILogger<KhoaController> logger)
     //PATCH: api/Khoa/{id}
     [HttpPatch("{id}")]
     [SwaggerOperation(Summary = "Cập nhật thông tin Khoa")]
-    public async Task<IActionResult> UpdateKhoaAsync(string id, [FromBody] KhoaUpdateDto model)
+    public async Task<IActionResult> UpdateKhoaAsync(string id, [FromBody] UpdateKhoaDto model)
     {
         try
         {

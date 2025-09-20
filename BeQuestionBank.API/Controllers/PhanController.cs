@@ -57,7 +57,7 @@ public class PhanController(PhanService service) : ControllerBase
     // POST: api/Phan
     [HttpPost]
     [SwaggerOperation("Thêm Phần mới")]
-    public async Task<IActionResult> AddPhan([FromBody] PhanCreateDto phanCreateDto)
+    public async Task<IActionResult> AddPhan([FromBody] CreatePhanDto phanCreateDto)
     {
         if (phanCreateDto == null)
         {
@@ -93,7 +93,7 @@ public class PhanController(PhanService service) : ControllerBase
     // PATCH: api/Phan/{id}
     [HttpPatch("{id}")]
     [SwaggerOperation("Cập nhật Phần")]
-    public async Task<IActionResult> UpdatePhan(Guid id, [FromBody] PhanUpdateDto phanUpdateDto)
+    public async Task<IActionResult> UpdatePhan(Guid id, [FromBody] UpdatePhanDto phanUpdateDto)
     {
         if (phanUpdateDto == null || id == Guid.Empty)
         {
