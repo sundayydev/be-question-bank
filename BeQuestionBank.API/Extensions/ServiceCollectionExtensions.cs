@@ -19,6 +19,10 @@ public static class ServiceCollectionExtensions
         //Phan
         services.AddScoped<PhanService>();
         services.AddScoped<IPhanRepository, PhanRepository>();
+        
+        //DeThi
+        services.AddScoped<DeThiService>();
+        services.AddScoped<IDeThiRepository, DeThiRepository>();
 
         return services;
     }

@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace BeQuestionBank.Domain.Models;
-
+[Table("DeThi")]
 public class DeThi : ModelBase
 {
     [Key]

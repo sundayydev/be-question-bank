@@ -13,7 +13,7 @@ public class CauHoi : ModelBase
 
     [ForeignKey("Phan")]
     public Guid MaPhan { get; set; }
-    public int? MaSoCauHoi { get; set; }
+    public int MaSoCauHoi { get; set; }
     public string? NoiDung { get; set; } = string.Empty;
     public bool HoanVi { get; set; } = false;
     public short CapDo { get; set; } = 0;
@@ -28,6 +28,7 @@ public class CauHoi : ModelBase
     public EnumCLO? CLO { get; set; }
     [ForeignKey("NguoiDung")]
     public Guid? NguoiTao { get; set; }
+    public string LoaiCauHoi { get; set; }
 
     // Navigation property cho phần
     [ForeignKey("MaPhan")]
@@ -39,5 +40,6 @@ public class CauHoi : ModelBase
 
     // Navigation property cho các câu hỏi con
     public ICollection<CauHoi> CauHoiCons { get; set; } = new List<CauHoi>();
+    public ICollection<CauTraLoi> CauTraLois { get; set; }  = new List<CauTraLoi>();
 }
 
