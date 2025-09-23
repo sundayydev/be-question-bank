@@ -1,13 +1,11 @@
-﻿using BeQuestionBank.Shared.DTOs.CauHoi;
+﻿using System.Text.Json.Serialization;
+using BeQuestionBank.Shared.DTOs.CauHoi;
+using BEQuestionBank.Shared.DTOs.ChiTietDeThi;
 
 namespace BeQuestionBank.Shared.DTOs.DeThi;
 
-public class ChiTietDeThiWithCauTraLoiDto
+public class ChiTietDeThiWithCauTraLoiDto : ChiTietDeThiDto
 {
-    public Guid? MaDeThi { get; set; }
-    public Guid MaPhan { get; set; }
-    public Guid MaCauHoi { get; set; }
-    public int? ThuTu { get; set; }
-
+    [JsonPropertyOrder(99)] 
     public CauHoiWithCauTraLoiDto CauHoi { get; set; }
 }

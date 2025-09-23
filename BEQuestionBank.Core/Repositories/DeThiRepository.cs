@@ -37,26 +37,6 @@ public class DeThiRepository : GenericRepository<DeThi>, IDeThiRepository
         return deThi;
     }
 
-    public async Task<object> AddWithChiTietAsync(CreateDeThiDto deThiDto)
-    {
-        var deThi = new DeThi
-        {
-            MaDeThi = deThiDto.MaDeThi == Guid.Empty ? Guid.NewGuid() : deThiDto.MaDeThi,
-            TenDeThi = deThiDto.TenDeThi,
-            MaMonHoc = deThiDto.MaMonHoc,
-            ChiTietDeThis = deThiDto.ChiTietDeThis.Select(ct => new ChiTietDeThi
-            {
-                MaCauHoi = ct.MaCauHoi,
-                ThuTu = ct.ThuTu
-            }).ToList()
-        };
-
-        _context.DeThis.Add(deThi);
-        await _context.SaveChangesAsync();
-
-        return deThi;
-    }
-
     public Task<object> UpdateWithChiTietAsync(DeThiDto deThiDto)
     {
         throw new NotImplementedException();

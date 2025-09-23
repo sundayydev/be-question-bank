@@ -23,7 +23,10 @@ public static class ServiceCollectionExtensions
         //DeThi
         services.AddScoped<DeThiService>();
         services.AddScoped<IDeThiRepository, DeThiRepository>();
-
+        
+        //YeuCauRutTrich
+        services.AddScoped<YeuCauRutTrichService>();
+        services.AddScoped<IYeuCauRutTrichRepository,YeuCauRutTrichRepository>();
         return services;
     }
 }

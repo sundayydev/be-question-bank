@@ -112,36 +112,55 @@ public class DeThiService
     /// <summary>
     /// thêm mới đề thi có chi tiết dề thi
     /// </summary>
-    public async Task<(bool Success, string Message)> AddAsync(CreateDeThiDto deThiDto)
+    public async Task<(bool Success, string Message, Guid? MaDeThi)> AddAsync(CreateDeThiDto deThiDto)
     {
         try
         {
             // Validate input
             if (string.IsNullOrWhiteSpace(deThiDto.TenDeThi))
-                return (false, "Tên đề thi không được để trống.");
+                return (false, "Tên đề thi không được để trống.", null);
             if (deThiDto.MaMonHoc == Guid.Empty)
-                return (false, "Mã môn học không hợp lệ.");
+                return (false, "Mã môn học không hợp lệ.", null);
             if (deThiDto.ChiTietDeThis == null || !deThiDto.ChiTietDeThis.Any())
-                return (false, "Đề thi phải có ít nhất một câu hỏi.");
+                return (false, "Đề thi phải có ít nhất một câu hỏi.", null);
             if (deThiDto.ChiTietDeThis.Any(ct => ct.MaCauHoi == Guid.Empty || ct.MaPhan == Guid.Empty))
-                return (false, "Mã câu hỏi hoặc mã phần trong chi tiết đề thi không hợp lệ.");
+                return (false, "Mã câu hỏi hoặc mã phần trong chi tiết đề thi không hợp lệ.", null);
 
-            // Check for duplicate MaDeThi
-            if (deThiDto.MaDeThi != Guid.Empty)
+            // ✅ Tạo ID trước
+            var maDeThi = Guid.NewGuid();
+
+            // Map DTO → Entity
+            var entity = new DeThi
             {
-                var existing = await _deThiRepository.FirstOrDefaultAsync(dt => dt.MaDeThi == deThiDto.MaDeThi);
-                if (existing != null)
-                    return (false, "Mã đề thi đã tồn tại.");
-            }
+                MaDeThi = maDeThi,
+                MaMonHoc = deThiDto.MaMonHoc,
+                TenDeThi = deThiDto.TenDeThi,
+                DaDuyet = deThiDto.DaDuyet ?? false,
+                SoCauHoi = deThiDto.SoCauHoi ?? deThiDto.ChiTietDeThis.Count,
+                NgayTao = DateTime.UtcNow,
+                NgayCapNhat = DateTime.UtcNow,
+                ChiTietDeThis = deThiDto.ChiTietDeThis.Select(ct => new ChiTietDeThi
+                {
+                    MaDeThi = maDeThi, // ✅ gán FK đúng
+                    MaPhan = ct.MaPhan,
+                    MaCauHoi = ct.MaCauHoi,
+                    ThuTu = ct.ThuTu
+                }).ToList()
+            };
 
-            var deThi = await _deThiRepository.AddWithChiTietAsync(deThiDto);
-            return (true, "Thêm đề thi thành công.");
+            // Save vào DB
+            await _deThiRepository.AddAsync(entity);
+
+            return (true, "Thêm đề thi thành công.", entity.MaDeThi);
         }
         catch (Exception ex)
         {
-            return (false, $"Lỗi khi thêm đề thi: {ex.Message}");
+            return (false, $"Lỗi khi thêm đề thi: {ex.Message}", null);
         }
     }
+
+
+
 
     /// <summary>
     /// update

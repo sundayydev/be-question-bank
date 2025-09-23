@@ -174,23 +174,38 @@ public async Task<IActionResult> GetApprovedDeThisAsync()
     {
         if (deThiCreateDto == null)
         {
-            return StatusCode(StatusCodes.Status400BadRequest, ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ."));
+            return StatusCode(StatusCodes.Status400BadRequest, 
+                ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ."));
         }
         try
         {
-            var (success, message) = await _service.AddAsync(deThiCreateDto);
+            var (success, message, maDeThi) = await _service.AddAsync(deThiCreateDto);
             if (!success)
             {
-                return StatusCode(StatusCodes.Status400BadRequest, ApiResponseFactory.ValidationError<object>(message));
+                return StatusCode(StatusCodes.Status400BadRequest, 
+                    ApiResponseFactory.ValidationError<object>(message));
             }
 
-            return StatusCode(StatusCodes.Status201Created, ApiResponseFactory.Success<object>(deThiCreateDto, "Thêm đề thi thành công!"));
+            // ✅ Tạo response object mới có cả ID
+            var responseData = new
+            {
+                MaDeThi = maDeThi,
+                deThiCreateDto.MaMonHoc,
+                deThiCreateDto.TenDeThi,
+                deThiCreateDto.DaDuyet,
+                deThiCreateDto.ChiTietDeThis
+            };
+
+            return StatusCode(StatusCodes.Status201Created, 
+                ApiResponseFactory.Success(responseData, "Thêm đề thi thành công!"));
         }
         catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
+            return StatusCode(StatusCodes.Status500InternalServerError, 
+                ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
     }
+
 
     // PATCH: api/DeThi/{id}
     [HttpPatch("{id}")]
