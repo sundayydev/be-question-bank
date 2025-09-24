@@ -19,7 +19,14 @@ public static class ServiceCollectionExtensions
         //Phan
         services.AddScoped<PhanService>();
         services.AddScoped<IPhanRepository, PhanRepository>();
-
+        
+        //DeThi
+        services.AddScoped<DeThiService>();
+        services.AddScoped<IDeThiRepository, DeThiRepository>();
+        
+        //YeuCauRutTrich
+        services.AddScoped<YeuCauRutTrichService>();
+        services.AddScoped<IYeuCauRutTrichRepository,YeuCauRutTrichRepository>();
         return services;
     }
 }
