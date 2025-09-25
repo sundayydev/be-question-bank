@@ -2,6 +2,7 @@
 using BeQuestionBank.Domain.Interfaces.IRepositories;
 using BeQuestionBank.Domain.Models;
 using BeQuestionBank.Shared.DTOs.YeuCauRutTrich;
+using Newtonsoft.Json;
 
 namespace BEQuestionBank.Core.Services;
 
@@ -62,7 +63,7 @@ public class YeuCauRutTrichService
     /// <summary>
     /// Thêm mới yêu cầu.
     /// </summary>
-    public async Task<(bool Success, string Message, Guid? MaYeuCau)> AddAsync(CreateYeuCauRutTrichDto dto)
+    public async Task<(bool Success, string Message, Guid MaYeuCau)> AddAsync(CreateYeuCauRutTrichDto dto)
     {
         try
         {
@@ -75,7 +76,7 @@ public class YeuCauRutTrichService
                 GhiChu = dto.GhiChu,
                 NgayYeuCau = DateTime.UtcNow,
                 DaXuLy = dto.DaXuLy,
-                MaTran = dto.MaTran
+                MaTran = JsonConvert.SerializeObject(dto.MaTran)
             };
 
             await _repository.AddAsync(entity);
@@ -83,9 +84,10 @@ public class YeuCauRutTrichService
         }
         catch (Exception ex)
         {
-            return (false, $"Lỗi khi thêm yêu cầu: {ex.Message}", null);
+            return (false, $"Lỗi khi thêm yêu cầu: {ex.Message}", Guid.Empty);
         }
     }
+
 
     /// <summary>
     /// Cập nhật yêu cầu.
