@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -21,4 +22,5 @@ public interface ICauHoiRepository : IRepository<CauHoi>
     Task<IEnumerable<Object>> GetAllGroupsAsync();
     Task<Object> AddWithAnswersAsync(Object cauHoiDto);
     Task<Object> UpdateWithAnswersAsync(Guid maCauHoi, Object cauHoiDto);
+    Task<int> CountAsync(Expression<Func<CauHoi, bool>> predicate);
 }

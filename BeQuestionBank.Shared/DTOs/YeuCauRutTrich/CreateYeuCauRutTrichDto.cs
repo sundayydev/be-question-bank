@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using BEQuestionBank.Shared.DTOs.MaTran;
 
 namespace BeQuestionBank.Shared.DTOs.YeuCauRutTrich;
 
@@ -11,5 +12,5 @@ public class CreateYeuCauRutTrichDto
     public string? NoiDungRutTrich { get; set; }
     public bool? DaXuLy { get; set; } = false;
     public string? GhiChu { get; set; }
-    public string? MaTran { get; set; }
+    public MaTranDto MaTran { get; set; }
 }

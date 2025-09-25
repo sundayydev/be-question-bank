@@ -1,6 +1,7 @@
 ﻿using BEQuestionBank.Core.Services;
 using BeQuestionBank.Shared.DTOs.Common;
 using BEQuestionBank.Shared.DTOs.DeThi;
+using BEQuestionBank.Shared.DTOs.MaTran;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -186,7 +187,7 @@ public async Task<IActionResult> GetApprovedDeThisAsync()
                     ApiResponseFactory.ValidationError<object>(message));
             }
 
-            // ✅ Tạo response object mới có cả ID
+          
             var responseData = new
             {
                 MaDeThi = maDeThi,
@@ -255,4 +256,44 @@ public async Task<IActionResult> GetApprovedDeThisAsync()
             return StatusCode(StatusCodes.Status500InternalServerError, ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
     }
+   
+    // POST: api/YeuCauRutTrich/CheckQuestions
+    [HttpPost("CheckQuestions")]
+    [SwaggerOperation("Kiểm tra xem có đủ câu hỏi theo ma trận hay không")]
+    public async Task<IActionResult> CheckQuestionsAsync([FromBody] MaTranDto maTran, [FromQuery] Guid maMonHoc)
+    {
+        if (maTran == null || maMonHoc == Guid.Empty)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest,
+                ApiResponseFactory.ValidationError<object>("Thiếu dữ liệu ma trận hoặc mã môn học."));
+        }
+
+        try
+        {
+            var (success, message, available) = await _service.CheckAvailableQuestionsAsync(maTran, maMonHoc);
+
+            if (!success)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest,
+                    ApiResponseFactory.ValidationError<object>(
+                        $"Không đủ câu hỏi. Tổng yêu cầu: {maTran.TotalQuestions}, Có: {available}. Chi tiết: {message}"
+                    ));
+            }
+
+            return StatusCode(StatusCodes.Status200OK,
+                ApiResponseFactory.Success(new
+                {
+                    TongYeuCau = maTran.TotalQuestions,
+                    SoCauHoiCo = available
+                }, "Đủ câu hỏi để rút trích."));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi kiểm tra câu hỏi cho môn học {MaMonHoc}", maMonHoc);
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
+        }
+    }
+
+
 }

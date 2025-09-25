@@ -2,6 +2,7 @@
 using BeQuestionBank.Shared.DTOs.Common;
 using BeQuestionBank.Shared.DTOs.YeuCauRutTrich;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace BeQuestionBank.API.Controllers;
@@ -234,4 +235,70 @@ public class YeuCauRutTrichController : ControllerBase
                 ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
     }
+    // POST: api/YeuCauRutTrich/RutTrichDeThi
+  // POST: api/YeuCauRutTrich/RutTrichDeThi
+[HttpPost("RutTrichDeThi")]
+[SwaggerOperation("Tạo yêu cầu rút trích và đề thi mới")]
+public async Task<IActionResult> CreateAndRutTrichDeThiAsync([FromBody] CreateYeuCauRutTrichDto dto)
+{
+    if (dto == null || dto.MaNguoiDung == Guid.Empty || dto.MaMonHoc == Guid.Empty || 
+        dto.MaTran == null)
+    {
+        return StatusCode(StatusCodes.Status400BadRequest,
+            ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ, thiếu mã người dùng, mã môn học hoặc ma trận."));
+    }
+
+    try
+    {
+        // Sinh tên đề thi tự động (ví dụ: "Đề thi [MaMonHoc] [Ngày giờ]")
+        string tenDeThi = $"Đề thi {dto.MaMonHoc} {DateTime.UtcNow:yyyyMMdd_HHmmss}";
+
+        // Tạo yêu cầu rút trích (không serialize ở đây)
+        var (success, message, maYeuCau) = await _service.AddAsync(dto);
+        if (!success)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest,
+                ApiResponseFactory.ValidationError<object>(message));
+        }
+
+        // Gọi DeThiService để rút trích đề thi
+        var deThiService = HttpContext.RequestServices.GetService<DeThiService>();
+        if (deThiService == null)
+        {
+            await _service.DeleteAsync(maYeuCau); // Xóa yêu cầu nếu không lấy được DeThiService
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponseFactory.ServerError("Không thể khởi tạo DeThiService."));
+        }
+
+        var (deThiSuccess, deThiMessage, maDeThi) = await deThiService.RutTrichDeThiAsync(maYeuCau, tenDeThi);
+        if (!deThiSuccess)
+        {
+            // Nếu rút trích thất bại, xóa yêu cầu vừa tạo
+            await _service.DeleteAsync(maYeuCau);
+            return StatusCode(StatusCodes.Status400BadRequest,
+                ApiResponseFactory.ValidationError<object>(deThiMessage));
+        }
+
+        var responseData = new
+        {
+            MaYeuCau = maYeuCau,
+            MaDeThi = maDeThi,
+            MaNguoiDung = dto.MaNguoiDung,
+            MaMonHoc = dto.MaMonHoc,
+            TenDeThi = tenDeThi,
+            NoiDungRutTrich = dto.NoiDungRutTrich,
+            GhiChu = dto.GhiChu
+        };
+
+        return StatusCode(StatusCodes.Status201Created,
+            ApiResponseFactory.Success(responseData, "Tạo yêu cầu rút trích và đề thi thành công!"));
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Lỗi khi tạo yêu cầu rút trích và đề thi với mã người dùng {MaNguoiDung}", dto.MaNguoiDung);
+        return StatusCode(StatusCodes.Status500InternalServerError,
+            ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
+    }
+}
+
 }

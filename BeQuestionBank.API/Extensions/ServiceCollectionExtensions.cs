@@ -27,6 +27,9 @@ public static class ServiceCollectionExtensions
         //YeuCauRutTrich
         services.AddScoped<YeuCauRutTrichService>();
         services.AddScoped<IYeuCauRutTrichRepository,YeuCauRutTrichRepository>();
+        services.AddScoped<CauHoiRepository>();
+        services.AddScoped<ICauHoiRepository,CauHoiRepository>();
+       
         return services;
     }
 }

@@ -10,16 +10,28 @@ using BeQuestionBank.Shared.DTOs.CauTraLoi;
 using BEQuestionBank.Shared.DTOs.DeThi;
 using BEQuestionBank.Shared.DTOs.ChiTietDeThi;
 using BeQuestionBank.Shared.DTOs.DeThi;
+using BEQuestionBank.Shared.DTOs.MaTran;
+using BeQuestionBank.Shared.DTOs.YeuCauRutTrich;
+using BeQuestionBank.Shared.Enums;
+using Newtonsoft.Json;
+using JsonException = System.Text.Json.JsonException;
 
 namespace BEQuestionBank.Core.Services;
 
 public class DeThiService
 {
     private readonly IDeThiRepository _deThiRepository;
+    private readonly ICauHoiRepository _cauHoiRepository;
+    private readonly IYeuCauRutTrichRepository _yeuCauRutTrichRepository;
 
-    public DeThiService(IDeThiRepository deThiRepository)
+    public DeThiService(
+        IDeThiRepository deThiRepository,
+        ICauHoiRepository cauHoiRepository,
+        IYeuCauRutTrichRepository yeuCauRutTrichRepository)
     {
         _deThiRepository = deThiRepository;
+        _cauHoiRepository = cauHoiRepository;
+        _yeuCauRutTrichRepository = yeuCauRutTrichRepository;
     }
 
     /// <summary>
@@ -376,4 +388,274 @@ public class DeThiService
             }).ToList() ?? new List<ChiTietDeThiWithCauTraLoiDto>()
         };
     }
+    /// <summary>
+    /// Kiểm tra xem có đủ câu hỏi để rút trích theo ma trận không.
+    /// </summary>
+    public async Task<(bool Success, string Message, int AvailableQuestions)> CheckAvailableQuestionsAsync(MaTranDto maTran, Guid maMonHoc)
+{
+    try
+    {
+        int totalRequired = maTran.TotalQuestions;
+        int totalAvailable = 0;
+
+        if (maTran.CloPerPart)
+        {
+            foreach (var part in maTran.Parts)
+            {
+                int partRequired = part.NumQuestions;
+                int partAvailable = 0;
+
+                foreach (var clo in part.Clos)
+                {
+                    foreach (var questionType in part.QuestionTypes)
+                    {
+                        int required = Math.Min(clo.Num, questionType.Num);
+                        var available = await _cauHoiRepository.CountAsync(ch =>
+                            ch.MaPhan == Guid.Parse(part.MaPhan) &&
+                            (clo.Clo == null || ch.CLO == (EnumCLO?)clo.Clo) &&
+                            ch.LoaiCauHoi == questionType.Loai &&
+                            ch.Phan.MaMonHoc == maMonHoc &&
+                            ch.XoaTam == false);
+
+
+                        if (available < required)
+                        {
+                            return (false, $"Không đủ câu hỏi cho phần {part.MaPhan}, CLO {clo.Clo}, loại {questionType.Loai}. Yêu cầu: {required}, có: {available}.", totalAvailable);
+                        }
+                        partAvailable += available;
+                    }
+                }
+
+                if (partAvailable < partRequired)
+                {
+                    return (false, $"Không đủ câu hỏi cho phần {part.MaPhan}. Yêu cầu: {partRequired}, có: {partAvailable}.", totalAvailable);
+                }
+                totalAvailable += partAvailable;
+            }
+        }
+        else
+        {
+            // Tổng hợp Clos và QuestionTypes từ tất cả Parts
+            var allClos = maTran.Parts.SelectMany(p => p.Clos).GroupBy(c => c.Clo)
+                .Select(g => new CloDto { Clo = g.Key, Num = g.Sum(c => c.Num) })
+                .ToList();
+            var allQuestionTypes = maTran.Parts.SelectMany(p => p.QuestionTypes).GroupBy(q => q.Loai)
+                .Select(g => new QuestionTypeDto { Loai = g.Key, Num = g.Sum(q => q.Num) })
+                .ToList();
+
+            foreach (var part in maTran.Parts)
+            {
+                int partRequired = part.NumQuestions;
+                int partAvailable = 0;
+
+                foreach (var clo in allClos)
+                {
+                    foreach (var questionType in allQuestionTypes)
+                    {
+                        int required = Math.Min(clo.Num, questionType.Num);
+                        var available = await _cauHoiRepository.CountAsync(ch =>
+                            ch.MaPhan == Guid.Parse(part.MaPhan) &&
+                            ch.CLO == (EnumCLO?)clo.Clo &&
+                            ch.LoaiCauHoi == questionType.Loai &&
+                            ch.Phan.MaMonHoc == maMonHoc &&
+                            ch.XoaTam == false);
+
+                        if (available < required)
+                        {
+                            return (false, $"Không đủ câu hỏi cho phần {part.MaPhan}, CLO {clo.Clo}, loại {questionType.Loai}. Yêu cầu: {required}, có: {available}.", totalAvailable);
+                        }
+                        partAvailable += available;
+                    }
+                }
+
+                if (partAvailable < partRequired)
+                {
+                    return (false, $"Không đủ câu hỏi cho phần {part.MaPhan}. Yêu cầu: {partRequired}, có: {partAvailable}.", totalAvailable);
+                }
+                totalAvailable += partAvailable;
+            }
+        }
+
+        if (totalAvailable < totalRequired)
+        {
+            return (false, $"Không đủ câu hỏi. Yêu cầu: {totalRequired}, có: {totalAvailable}.", totalAvailable);
+        }
+
+        return (true, "Đủ câu hỏi để rút trích.", totalAvailable);
+    }
+    catch (Exception ex)
+    {
+        return (false, $"Lỗi khi kiểm tra câu hỏi: {ex.Message}", 0);
+    }
+}
+
+private async Task<List<ChiTietDeThi>> SelectRandomQuestionsAsync(MaTranDto maTran, Guid maMonHoc, Guid maDeThi)
+{
+    var chiTietDeThis = new List<ChiTietDeThi>();
+    int thuTu = 1;
+
+    if (maTran.CloPerPart)
+    {
+        foreach (var part in maTran.Parts)
+        {
+            int remainingQuestions = part.NumQuestions;
+            foreach (var clo in part.Clos)
+            {
+                foreach (var questionType in part.QuestionTypes)
+                {
+                    int numQuestions = Math.Min(clo.Num, Math.Min(questionType.Num, remainingQuestions));
+                    if (numQuestions <= 0) continue;
+
+                    var questions = await _cauHoiRepository.FindAsync(ch =>
+                        ch.MaPhan == Guid.Parse(part.MaPhan) &&
+                        ch.CLO == (EnumCLO?)clo.Clo &&
+                        ch.LoaiCauHoi == questionType.Loai &&
+                        ch.Phan.MaMonHoc == maMonHoc &&
+                        ch.XoaTam == false);
+
+                    var selectedQuestions = questions.OrderBy(x => Guid.NewGuid()).Take(numQuestions).ToList();
+
+                    chiTietDeThis.AddRange(selectedQuestions.Select(q => new ChiTietDeThi
+                    {
+                        MaDeThi = maDeThi,
+                        MaPhan = Guid.Parse(part.MaPhan),
+                        MaCauHoi = q.MaCauHoi,
+                        ThuTu = thuTu++
+                    }));
+
+                    remainingQuestions -= selectedQuestions.Count;
+                    if (remainingQuestions <= 0) break;
+                }
+                if (remainingQuestions <= 0) break;
+            }
+        }
+    }
+    else
+    {
+        // Tổng hợp Clos và QuestionTypes từ tất cả Parts
+        var allClos = maTran.Parts.SelectMany(p => p.Clos).GroupBy(c => c.Clo)
+            .Select(g => new CloDto { Clo = g.Key, Num = g.Sum(c => c.Num) })
+            .ToList();
+        var allQuestionTypes = maTran.Parts.SelectMany(p => p.QuestionTypes).GroupBy(q => q.Loai)
+            .Select(g => new QuestionTypeDto { Loai = g.Key, Num = g.Sum(q => q.Num) })
+            .ToList();
+
+        foreach (var part in maTran.Parts)
+        {
+            int remainingQuestions = part.NumQuestions;
+            foreach (var clo in allClos)
+            {
+                foreach (var questionType in allQuestionTypes)
+                {
+                    int numQuestions = Math.Min(clo.Num, Math.Min(questionType.Num, remainingQuestions));
+                    if (numQuestions <= 0) continue;
+
+                    var questions = await _cauHoiRepository.FindAsync(ch =>
+                        ch.MaPhan == Guid.Parse(part.MaPhan) &&
+                        ch.CLO == (EnumCLO?)clo.Clo &&
+                        ch.LoaiCauHoi == questionType.Loai &&
+                        ch.Phan.MaMonHoc == maMonHoc &&
+                        ch.XoaTam == false);
+
+                    var selectedQuestions = questions.OrderBy(x => Guid.NewGuid()).Take(numQuestions).ToList();
+
+                    chiTietDeThis.AddRange(selectedQuestions.Select(q => new ChiTietDeThi
+                    {
+                        MaDeThi = maDeThi,
+                        MaPhan = Guid.Parse(part.MaPhan),
+                        MaCauHoi = q.MaCauHoi,
+                        ThuTu = thuTu++
+                    }));
+
+                    remainingQuestions -= selectedQuestions.Count;
+                    if (remainingQuestions <= 0) break;
+                }
+                if (remainingQuestions <= 0) break;
+            }
+        }
+    }
+
+    return chiTietDeThis;
+}
+     /// <summary>
+    /// Rút trích đề thi dựa trên yêu cầu rút trích.
+    /// </summary>
+    public async Task<(bool Success, string Message, Guid? MaDeThi)> RutTrichDeThiAsync(Guid maYeuCau, string tenDeThi)
+    {
+        try
+        {
+            // Lấy yêu cầu rút trích
+            var yeuCau = await _yeuCauRutTrichRepository.GetByIdAsync(maYeuCau);
+            if (yeuCau == null)
+            {
+                return (false, "Yêu cầu rút trích không tồn tại.", null);
+            }
+
+            // Deserialize ma trận từ JSON
+            if (string.IsNullOrWhiteSpace(yeuCau.MaTran))
+            {
+                return (false, "Ma trận không được để trống.", null);
+            }
+
+            MaTranDto maTran;
+            try
+            {
+                maTran = JsonConvert.DeserializeObject<MaTranDto>(yeuCau.MaTran);
+            }
+            catch (JsonException ex)
+            {
+                return (false, $"Lỗi khi phân tích ma trận: {ex.Message}", null);
+            }
+
+            if (maTran == null)
+            {
+                return (false, "Ma trận không hợp lệ.", null);
+            }
+
+            // Kiểm tra đủ câu hỏi
+            var checkResult = await CheckAvailableQuestionsAsync(maTran, yeuCau.MaMonHoc);
+            if (!checkResult.Success)
+            {
+                return (false, checkResult.Message, null);
+            }
+
+            // Tạo đề thi mới
+            var maDeThi = Guid.NewGuid();
+            var chiTietDeThis = await SelectRandomQuestionsAsync(maTran, yeuCau.MaMonHoc, maDeThi);
+
+            // Kiểm tra số lượng câu hỏi
+            if (chiTietDeThis.Count != maTran.TotalQuestions)
+            {
+                return (false, $"Số câu hỏi rút trích ({chiTietDeThis.Count}) không khớp với yêu cầu ({maTran.TotalQuestions}).", null);
+            }
+
+            // Tạo đề thi
+            var deThi = new DeThi
+            {
+                MaDeThi = maDeThi,
+                MaMonHoc = yeuCau.MaMonHoc,
+                TenDeThi = tenDeThi,
+                DaDuyet = false,
+                SoCauHoi = chiTietDeThis.Count,
+                NgayTao = DateTime.UtcNow,
+                NgayCapNhat = DateTime.UtcNow,
+                ChiTietDeThis = chiTietDeThis
+            };
+
+            // Lưu đề thi
+            await _deThiRepository.AddAsync(deThi);
+
+            // Cập nhật trạng thái yêu cầu rút trích
+            yeuCau.DaXuLy = true;
+            yeuCau.NgayXuLy = DateTime.UtcNow;
+            await _yeuCauRutTrichRepository.UpdateAsync(yeuCau);
+
+            return (true, "Rút trích đề thi thành công.", maDeThi);
+        }
+        catch (Exception ex)
+        {
+            return (false, $"Lỗi khi rút trích đề thi: {ex.Message}", null);
+        }
+    }
+
 }
