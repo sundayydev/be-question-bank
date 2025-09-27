@@ -236,69 +236,103 @@ public class YeuCauRutTrichController : ControllerBase
         }
     }
     // POST: api/YeuCauRutTrich/RutTrichDeThi
-  // POST: api/YeuCauRutTrich/RutTrichDeThi
-[HttpPost("RutTrichDeThi")]
-[SwaggerOperation("Tạo yêu cầu rút trích và đề thi mới")]
-public async Task<IActionResult> CreateAndRutTrichDeThiAsync([FromBody] CreateYeuCauRutTrichDto dto)
-{
-    if (dto == null || dto.MaNguoiDung == Guid.Empty || dto.MaMonHoc == Guid.Empty || 
-        dto.MaTran == null)
+  
+    [HttpPost("RutTrichDeThi")]
+    [SwaggerOperation("Tạo yêu cầu rút trích và đề thi mới")]
+    public async Task<IActionResult> CreateAndRutTrichDeThiAsync([FromBody] CreateYeuCauRutTrichDto dto)
     {
-        return StatusCode(StatusCodes.Status400BadRequest,
-            ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ, thiếu mã người dùng, mã môn học hoặc ma trận."));
-    }
-
-    try
-    {
-        // Sinh tên đề thi tự động (ví dụ: "Đề thi [MaMonHoc] [Ngày giờ]")
-        string tenDeThi = $"Đề thi {dto.MaMonHoc} {DateTime.UtcNow:yyyyMMdd_HHmmss}";
-
-        // Tạo yêu cầu rút trích (không serialize ở đây)
-        var (success, message, maYeuCau) = await _service.AddAsync(dto);
-        if (!success)
+        if (dto == null || dto.MaNguoiDung == Guid.Empty || dto.MaMonHoc == Guid.Empty || 
+            dto.MaTran == null)
         {
             return StatusCode(StatusCodes.Status400BadRequest,
-                ApiResponseFactory.ValidationError<object>(message));
+                ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ, thiếu mã người dùng, mã môn học hoặc ma trận."));
         }
 
-        // Gọi DeThiService để rút trích đề thi
-        var deThiService = HttpContext.RequestServices.GetService<DeThiService>();
-        if (deThiService == null)
+        try
         {
-            await _service.DeleteAsync(maYeuCau); // Xóa yêu cầu nếu không lấy được DeThiService
+           
+
+            // Tạo yêu cầu rút trích (không serialize ở đây)
+            var (success, message, maYeuCau) = await _service.AddAsync(dto);
+            if (!success)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest,
+                    ApiResponseFactory.ValidationError<object>(message));
+            }
+            // Sinh tên đề thi tự động (sau khi có mã yêu cầu)
+            string tenDeThi = $"Đề thi {dto.MaMonHoc} - YC_{maYeuCau.ToString().Substring(0, 8)}";
+            // Gọi DeThiService để rút trích đề thi
+            var deThiService = HttpContext.RequestServices.GetService<DeThiService>();
+            if (deThiService == null)
+            {
+                await _service.DeleteAsync(maYeuCau); // Xóa yêu cầu nếu không lấy được DeThiService
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    ApiResponseFactory.ServerError("Không thể khởi tạo DeThiService."));
+            }
+
+            var (deThiSuccess, deThiMessage, maDeThi) = await deThiService.RutTrichDeThiAsync(maYeuCau, tenDeThi);
+            if (!deThiSuccess)
+            {
+                // Nếu rút trích thất bại, xóa yêu cầu vừa tạo
+                await _service.DeleteAsync(maYeuCau);
+                return StatusCode(StatusCodes.Status400BadRequest,
+                    ApiResponseFactory.ValidationError<object>(deThiMessage));
+            }
+
+            var responseData = new
+            {
+                MaYeuCau = maYeuCau,
+                MaDeThi = maDeThi,
+                MaNguoiDung = dto.MaNguoiDung,
+                MaMonHoc = dto.MaMonHoc,
+                TenDeThi = tenDeThi,
+                NoiDungRutTrich = dto.NoiDungRutTrich,
+                GhiChu = dto.GhiChu
+            };
+
+            return StatusCode(StatusCodes.Status201Created,
+                ApiResponseFactory.Success(responseData, "Tạo yêu cầu rút trích và đề thi thành công!"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi tạo yêu cầu rút trích và đề thi với mã người dùng {MaNguoiDung}", dto.MaNguoiDung);
             return StatusCode(StatusCodes.Status500InternalServerError,
-                ApiResponseFactory.ServerError("Không thể khởi tạo DeThiService."));
+                ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
-
-        var (deThiSuccess, deThiMessage, maDeThi) = await deThiService.RutTrichDeThiAsync(maYeuCau, tenDeThi);
-        if (!deThiSuccess)
-        {
-            // Nếu rút trích thất bại, xóa yêu cầu vừa tạo
-            await _service.DeleteAsync(maYeuCau);
-            return StatusCode(StatusCodes.Status400BadRequest,
-                ApiResponseFactory.ValidationError<object>(deThiMessage));
-        }
-
-        var responseData = new
-        {
-            MaYeuCau = maYeuCau,
-            MaDeThi = maDeThi,
-            MaNguoiDung = dto.MaNguoiDung,
-            MaMonHoc = dto.MaMonHoc,
-            TenDeThi = tenDeThi,
-            NoiDungRutTrich = dto.NoiDungRutTrich,
-            GhiChu = dto.GhiChu
-        };
-
-        return StatusCode(StatusCodes.Status201Created,
-            ApiResponseFactory.Success(responseData, "Tạo yêu cầu rút trích và đề thi thành công!"));
     }
-    catch (Exception ex)
+    /// <summary>
+    /// Upload Excel để đọc Ma Trận
+    /// </summary>
+    /// <param name="file">Excel file</param>
+    /// <param name="maMonHoc">Guid môn học</param>
+    [HttpPost("upload")]
+    public async Task<IActionResult> UploadExcelAsync(IFormFile file, [FromQuery] Guid maMonHoc)
     {
-        _logger.LogError(ex, "Lỗi khi tạo yêu cầu rút trích và đề thi với mã người dùng {MaNguoiDung}", dto.MaNguoiDung);
-        return StatusCode(StatusCodes.Status500InternalServerError,
-            ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
+        if (file == null || file.Length == 0)
+            return BadRequest("Vui lòng chọn file Excel.");
+
+        try
+        {
+            // Lưu file tạm
+            var tempPath = Path.GetTempFileName();
+            using (var stream = new FileStream(tempPath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            // Gọi service đọc Excel
+            var result = await _service.ReadMaTranFromExcelAsync(tempPath, maMonHoc);
+
+            // Xoá file tạm sau khi xử lý
+            System.IO.File.Delete(tempPath);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi đọc Excel Ma Trận.");
+            return StatusCode(500, $"Lỗi: {ex.Message}");
+        }
     }
 }
 
-}
