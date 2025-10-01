@@ -11,4 +11,5 @@ public interface IDeThiRepository :  IRepository<DeThi>
     Task<IEnumerable<DeThi>> GetByMaMonHocAsync(Guid maMonHoc);
     Task<IEnumerable<Object>> GetApprovedDeThisAsync();
     Task<Object> GetDeThiWithChiTietAndCauTraLoiAsync(Guid maDeThi);
+    
 }
