@@ -37,7 +37,7 @@ namespace FEQuestionBank.Client.Pages
                 string url = $"api/Khoa/paged?page={page}&pageSize={pageSize}";
                 if (!string.IsNullOrEmpty(sort)) url += $"&sort={sort}";
                 if (!string.IsNullOrEmpty(_searchTerm))
-                    url += $"&filter={Uri.EscapeDataString($"TenKhoa.Contains(\"{_searchTerm}\")")}";
+                    url += $"&filter={Uri.EscapeDataString(_searchTerm)}";
 
                 var response = await Http.GetFromJsonAsync<ApiResponse<PagedResult<KhoaDto>>>(url, cancellationToken);
 
