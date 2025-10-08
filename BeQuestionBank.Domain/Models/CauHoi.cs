@@ -28,7 +28,7 @@ public class CauHoi : ModelBase
     public EnumCLO? CLO { get; set; }
     [ForeignKey("NguoiDung")]
     public Guid? NguoiTao { get; set; }
-    public string LoaiCauHoi { get; set; }
+    public string? LoaiCauHoi { get; set; }
 
     // Navigation property cho phần
     [ForeignKey("MaPhan")]

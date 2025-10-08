@@ -207,4 +207,15 @@ public class PhanController(PhanService service) : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError, ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
     }
+    [HttpGet("monhoc/{maMonHoc}")]
+    public async Task<IActionResult> GetByMonHoc(Guid maMonHoc)
+    {
+        var result = await _service.GetPhansByMaMonHocAsync(maMonHoc);
+        return Ok(new
+        {
+            statusCode = 200,
+            message = "Lấy danh sách phần theo môn học thành công",
+            data = result
+        });
+    }
 }

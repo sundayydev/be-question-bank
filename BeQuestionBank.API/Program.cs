@@ -31,7 +31,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:5173") //Đúng port React
+            policy.WithOrigins("http://localhost:5273") //Đúng port React
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials(); //nếu dùng cookie hoặc auth
