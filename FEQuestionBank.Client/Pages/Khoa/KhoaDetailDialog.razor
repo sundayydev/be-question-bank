@@ -1,0 +1,46 @@
+﻿@using BeQuestionBank.Shared.DTOs.Khoa
+@using MudBlazor
+
+<MudDialog MaxWidth="MaxWidth.Small" FullWidth="true">
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="font-weight-bold mb-2">Chi tiết Khoa</MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <div class="d-flex flex-column gap-3 p-3">
+            <MudTextField Label="Tên Khoa"
+                          Value="Khoa.TenKhoa"
+                          Variant="Variant.Outlined"
+                          ReadOnly="true"
+                          FullWidth="true" />
+
+            <MudTextField Label="Mô Tả"
+                          Value="Khoa.MoTa"
+                          Variant="Variant.Outlined"
+                          Lines="4"
+                          ReadOnly="true"
+                          FullWidth="true" />
+
+            <MudTextField Label="Ngày Cập Nhật"
+                          Value="@Khoa.NgayCapNhat.ToString("dd/MM/yyyy HH:mm")"
+                          Variant="Variant.Outlined"
+                          ReadOnly="true"
+                          FullWidth="true" />
+        </div>
+    </DialogContent>
+
+    <DialogActions>
+        <div class="p-3">
+            <MudButton OnClick="Cancel" Color="Color.Secondary" Variant="Variant.Filled">
+                Đóng
+            </MudButton>
+        </div>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public KhoaDto Khoa { get; set; } = new();
+
+    private void Cancel() => MudDialog.Cancel();
+}

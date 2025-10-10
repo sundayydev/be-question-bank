@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BEQuestionBank.Core", "BEQu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeQuestionBank.Test", "BeQuestionBank.Test\BeQuestionBank.Test.csproj", "{42EB69AD-7AF0-4233-ABE1-44BFAFBD1641}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FEQuestionBank.Client", "FEQuestionBank.Client\FEQuestionBank.Client.csproj", "{DF923C12-3954-4353-8A7B-504E7283806B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{42EB69AD-7AF0-4233-ABE1-44BFAFBD1641}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{42EB69AD-7AF0-4233-ABE1-44BFAFBD1641}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{42EB69AD-7AF0-4233-ABE1-44BFAFBD1641}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DF923C12-3954-4353-8A7B-504E7283806B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF923C12-3954-4353-8A7B-504E7283806B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF923C12-3954-4353-8A7B-504E7283806B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF923C12-3954-4353-8A7B-504E7283806B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,59 @@
+﻿<MudDrawer @bind-Open="Open"
+           Elevation="1"
+           Color="Color.Surface"
+           Variant="DrawerVariant.Responsive">
+    <!-- Logo -->
+    <div style="text-align: center; padding: 10px;">
+        <img src="/images/LogoHutechFull.png" alt="HUTECH Logo" style="max-width: 100%; height: 60px;" />
+    </div>
+
+    <MudNavMenu>
+        <!-- Trang chủ -->
+        <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" Color="Color.Primary" OnClick="HandleClose">Trang chủ</MudNavLink>
+
+        <!-- Dashboard -->
+        <MudNavLink Href="/dashboard" Icon="@Icons.Material.Filled.Dashboard" OnClick="HandleClose">Dashboard</MudNavLink>
+
+        <!-- Quản lý đề -->
+        <MudNavGroup Title="Quản lý đề" Icon="@Icons.Material.Filled.List" Expanded="false">
+            <MudNavLink Href="/khoa" Icon="@Icons.Material.Filled.Class" OnClick="HandleClose">Danh sách khoa</MudNavLink>
+            <MudNavLink Href="/manage-exam/tests" Icon="@Icons.Material.Filled.Assignment" OnClick="HandleClose">Danh sách đề thi</MudNavLink>
+        </MudNavGroup>
+
+        <!-- Quản lý câu hỏi -->
+        <MudNavGroup Title="Quản lý câu hỏi" Icon="@Icons.Material.Filled.QuestionAnswer" Expanded="true">
+            <MudNavLink Href="/question/list" Icon="@Icons.Material.Filled.List" OnClick="HandleClose">Danh sách câu hỏi</MudNavLink>
+            <MudNavLink Href="/question/add" Icon="@Icons.Material.Filled.Add" OnClick="HandleClose">Thêm câu hỏi</MudNavLink>
+            <MudNavLink Href="/question/upload" Icon="@Icons.Material.Filled.Upload" OnClick="HandleClose">Tải câu hỏi lên</MudNavLink>
+            <MudNavLink Href="/question/trash" Icon="@Icons.Material.Filled.Delete" OnClick="HandleClose">Rác</MudNavLink>
+        </MudNavGroup>
+
+        <!-- Quản lý người dùng -->
+        <MudNavGroup Title="Quản lý người dùng" Icon="@Icons.Material.Filled.Person" Expanded="false">
+            <MudNavLink Href="/user/list" Icon="@Icons.Material.Filled.List" OnClick="HandleClose">Danh sách người dùng</MudNavLink>
+            <MudNavLink Href="/user/add" Icon="@Icons.Material.Filled.PersonAdd" OnClick="HandleClose">Thêm người dùng</MudNavLink>
+        </MudNavGroup>
+
+        <!-- Quản lý Audio -->
+        <MudNavLink Href="/manage-audio" Icon="@Icons.Material.Filled.Audiotrack" OnClick="HandleClose">Quản lý Audio</MudNavLink>
+
+        <!-- Công cụ -->
+        <MudNavGroup Title="Công cụ" Icon="@Icons.Material.Filled.Build" Expanded="false">
+            <MudNavLink Href="/tools/exam-extract" Icon="@Icons.Material.Filled.ContentPaste" OnClick="HandleClose">Rút trích đề thi</MudNavLink>
+            <MudNavLink Href="/tools/extract-history" Icon="@Icons.Material.Filled.History" OnClick="HandleClose">Lịch sử rút trích</MudNavLink>
+        </MudNavGroup>
+
+        <!-- Trợ giúp -->
+        <MudNavLink Href="/help" Icon="@Icons.Material.Filled.Help" OnClick="HandleClose">Trợ giúp</MudNavLink>
+    </MudNavMenu>
+</MudDrawer>
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OnClose { get; set; }
+
+    private void HandleClose()
+    {
+        OnClose.InvokeAsync(false);
+    }
+}

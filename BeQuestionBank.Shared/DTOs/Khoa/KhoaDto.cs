@@ -10,8 +10,11 @@ namespace BeQuestionBank.Shared.DTOs.Khoa;
 public class KhoaDto
 {
     public Guid MaKhoa { get; set; }
-    public required string TenKhoa { get; set; }
+    public string TenKhoa { get; set; }
+    public string? MoTa { get; set; }
     public bool? XoaTam { get; set; }
     public List<MonHocDto>? DanhSachMonHoc { get; set; }
+    public DateTime NgayTao { get; set; } = DateTime.UtcNow;
+    public DateTime NgayCapNhat { get; set; } = DateTime.UtcNow;
 }
 

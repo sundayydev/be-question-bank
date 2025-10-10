@@ -3,6 +3,7 @@ using BeQuestionBank.Shared.DTOs.Common;
 using BeQuestionBank.Shared.DTOs.Khoa;
 using BeQuestionBank.Shared.DTOs.MonHoc;
 using BEQuestionBank.Core.Services;
+using BeQuestionBank.Shared.DTOs.Pagination;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -58,6 +59,9 @@ public class KhoaController(KhoaService service, ILogger<KhoaController> logger)
             MaKhoa = k.MaKhoa,
             TenKhoa = k.TenKhoa,
             XoaTam = k.XoaTam,
+            MoTa = k.MoTa,
+            NgayTao = k.NgayTao,
+            NgayCapNhat = k.NgayCapNhat,
             DanhSachMonHoc = k.MonHocs?.Select(m => new MonHocDto
             {
                 MaSoMonHoc = m.MaSoMonHoc,
@@ -215,5 +219,78 @@ public class KhoaController(KhoaService service, ILogger<KhoaController> logger)
         existingKhoa.XoaTam = false;
         await _service.UpdateKhoaAsync(existingKhoa);
         return StatusCode(StatusCodes.Status200OK, ApiResponseFactory.Success($"Đã khôi phục {existingKhoa.TenKhoa} thành công"));
+    }
+    
+    // GET: api/Khoa/paged
+    [HttpGet("paged")]
+    [SwaggerOperation("Lấy danh sách Khoa có phân trang, filter, sort")]
+    public async Task<IActionResult> GetPagedAsync(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? sort = null,
+        [FromQuery] string? filter = null)
+    {
+        try
+        {
+            var query = await _service.GetAllKhoasAsync(); // Trả về IQueryable hoặc List<Khoa>
+
+            // Filtering
+            if (!string.IsNullOrWhiteSpace(filter))
+            {
+                query = query.Where(k => k.TenKhoa.Contains(filter, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // Sorting
+            if (!string.IsNullOrWhiteSpace(sort))
+            {
+                var parts = sort.Split(',');
+                var column = parts[0];
+                var direction = parts.Length > 1 ? parts[1] : "asc";
+
+                query = column switch
+                {
+                    "TenKhoa" when direction == "asc" => query.OrderBy(k => k.TenKhoa),
+                    "TenKhoa" when direction == "desc" => query.OrderByDescending(k => k.TenKhoa),
+                    _ => query.OrderBy(k => k.TenKhoa)
+                };
+            }
+
+            var totalCount = query.Count();
+
+            var items = query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(k => new KhoaDto
+                {
+                    MaKhoa = k.MaKhoa,
+                    TenKhoa = k.TenKhoa,
+                    XoaTam = k.XoaTam,
+                    MoTa = k.MoTa,
+                    DanhSachMonHoc = k.MonHocs?.Select(m => new MonHocDto
+                    {
+                        MaSoMonHoc = m.MaSoMonHoc,
+                        MaMonHoc = m.MaMonHoc,
+                        TenMonHoc = m.TenMonHoc,
+                        SoTinChi = m.SoTinChi
+                    }).ToList() ?? new()
+                })
+                .ToList();
+
+            var result = new PagedResult<KhoaDto>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
+
+            return Ok(ApiResponseFactory.Success(result, "Lấy danh sách Khoa có phân trang thành công"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi lấy danh sách Khoa có phân trang");
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponseFactory.ServerError("Đã xảy ra lỗi khi xử lý."));
+        }
     }
 }

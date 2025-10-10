@@ -1,0 +1,72 @@
+﻿@page "/khoa"
+@inherits KhoaBase
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-6 max-w-full w-full" Style="min-height:600px;">
+    <MudText Typo="Typo.h4" Class="mb-6">Danh sách Khoa</MudText>
+
+    <!-- Ô tìm kiếm + nút tạo mới -->
+    <div class="row mb-3 g-2 align-items-center">
+        <div class="col">
+            <MudTextField @bind-Value="_searchTerm"
+                          Placeholder="Tìm theo tên..."
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Immediate="true"
+                          OnKeyDown="@(e => { if (e.Key == "Enter") { table?.ReloadServerData(); } })"
+                          Style="width: 100%;" />
+        </div>
+
+        <div class="col-auto">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OnCreateNew">
+                <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-1" /> Tạo mới
+            </MudButton>
+        </div>
+    </div>
+
+    <!-- Bảng dữ liệu -->
+    <MudTable ServerData="LoadServerData"
+              Bordered="true"
+              Hover="true"
+              Striped="true"
+              Dense="false"
+              RowsPerPage="10"
+              PageSizeOptions="new int[] {10,20,50}"
+              Class="w-full text-base"
+              @ref="table">
+
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortLabel="TenKhoa" T="KhoaDto">Tên Khoa</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortLabel="MoTa" T="KhoaDto">Mô Tả</MudTableSortLabel></MudTh>
+            <MudTh Style="text-align:center;"><MudTableSortLabel SortLabel="NgayCapNhat" T="KhoaDto">Ngày Cập Nhật</MudTableSortLabel></MudTh>
+            <MudTh Style="text-align:center;">Thao Tác</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd>@context.TenKhoa</MudTd>
+            <MudTd>@context.MoTa</MudTd>
+            <MudTd Style="text-align:center;">@context.NgayCapNhat.ToString("dd/MM/yyyy")</MudTd>
+            <MudTd Style="text-align:center;">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" Class="mx-1" OnClick="() => OnEdit(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" Class="mx-1" OnClick="() => OnConfirmDelete(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Info" Size="Size.Small" Class="mx-1" OnClick="() => OnViewDetail(context)" />
+            </MudTd>
+        </RowTemplate>
+
+        <NoRecordsContent>
+            <MudText>Không tìm thấy khoa nào</MudText>
+        </NoRecordsContent>
+
+        <LoadingContent>
+            <MudText>Đang tải dữ liệu...</MudText>
+        </LoadingContent>
+
+        <PagerContent>
+            <MudTablePager 
+                InfoFormat="Hiển thị {first_item}-{last_item} của {all_items} mục" />
+        </PagerContent>
+
+
+
+    </MudTable>
+</MudPaper>

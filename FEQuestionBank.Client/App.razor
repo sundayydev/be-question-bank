@@ -1,0 +1,25 @@
+﻿<MudThemeProvider />
+<MudDialogProvider
+    FullWidth="true"
+    MaxWidth="MaxWidth.Medium"
+    CloseButton="true"
+    BackdropClick="false"
+    NoHeader="false"
+    Position="DialogPosition.Center"
+    CloseOnEscapeKey="true" />
+
+<MudSnackbarProvider/>
+
+<MudPopoverProvider />
+
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <p>Không tìm thấy trang.</p>
+        </LayoutView>
+    </NotFound>
+</Router>

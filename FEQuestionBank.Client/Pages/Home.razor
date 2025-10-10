@@ -1,0 +1,189 @@
+﻿@page "/"
+
+<div class="container my-5">
+    <!-- Tiêu đề và biểu tượng -->
+    <div class="text-center mb-5">
+        <div class="d-flex justify-content-center mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.Book"
+                     Size="Size.Large"
+                     Class="bg-primary text-white rounded-circle p-4"
+                     Style="font-size: 100px;" />
+        </div>
+        <MudText Typo="Typo.h3" Color="Color.Primary" Class="text-uppercase fw-bold mb-2">
+            Chào mừng đến với Ngân hàng Câu hỏi
+        </MudText>
+        <MudText Typo="Typo.h6" Class="text-secondary fw-medium">
+            Hệ thống quản lý & tạo ngân hàng câu hỏi trắc nghiệm hiện đại cho các khoa, giảng viên
+        </MudText>
+    </div>
+
+    <!-- Các tính năng -->
+    <div class="row justify-content-center g-4" style="margin-bottom: 3rem;">
+        <!-- CARD 1 -->
+        <div class="col-12 col-sm-6 col-md-4">
+            <div class="card shadow-sm hover-scale text-center">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-center mb-3">
+                        <div class="bg-primary text-white d-flex align-items-center justify-content-center rounded-circle" style="width:50px; height:50px;">
+                            <MudIcon Icon="@Icons.Material.Filled.Book" Size="Size.Large" />
+                        </div>
+                    </div>
+                    <MudText Typo="Typo.h6" Color="Color.Primary" Class="fw-bold mb-2">
+                        Kho câu hỏi đa dạng
+                    </MudText>
+                    <MudText Typo="Typo.body2" Class="text-secondary">
+                        Hơn 350+ câu hỏi trắc nghiệm chất lượng cao từ nhiều môn học khác nhau.
+                    </MudText>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 2 -->
+        <div class="col-12 col-sm-6 col-md-4">
+            <div class="card shadow-sm hover-scale text-center">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-center mb-3">
+                        <div class="bg-success text-white d-flex align-items-center justify-content-center rounded-circle" style="width:50px; height:50px;">
+                            <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Large" />
+                        </div>
+                    </div>
+                    <MudText Typo="Typo.h6" Color="Color.Success" Class="fw-bold mb-2">
+                        Tạo đề thi dễ dàng
+                    </MudText>
+                    <MudText Typo="Typo.body2" Class="text-secondary">
+                        Tạo và quản lý các đề thi với nhiều cấu trúc và mức độ khác nhau.
+                    </MudText>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 3 -->
+        <div class="col-12 col-sm-6 col-md-4">
+            <div class="card shadow-sm hover-scale text-center">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-center mb-3">
+                        <div class="bg-info text-white d-flex align-items-center justify-content-center rounded-circle" style="width:50px; height:50px;">
+                            <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Large" />
+                        </div>
+                    </div>
+                    <MudText Typo="Typo.h6" Color="Color.Info" Class="fw-bold mb-2">
+                        Tìm kiếm thông minh
+                    </MudText>
+                    <MudText Typo="Typo.body2" Class="text-secondary">
+                        Dễ dàng tìm kiếm câu hỏi theo nhiều tiêu chí khác nhau.
+                    </MudText>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bắt đầu sử dụng và Công cụ chính -->
+    <div class="row justify-content-center g-4"  style="margin-bottom: 3rem;">
+        <!-- Card 1: Bắt đầu sử dụng -->
+        <div class="col-12 col-sm-6">
+            <div class="card shadow-sm hover-elevate h-100" style="border-color: #dce6ff;">
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="d-flex align-items-center mb-3">
+                        <MudIcon Icon="@Icons.Material.Filled.MenuBook" Color="Color.Primary" Size="Size.Large" Class="me-2" />
+                        <MudText Typo="Typo.h6" Color="Color.Primary" Class="fw-bold m-0">
+                            Bắt đầu sử dụng
+                        </MudText>
+                    </div>
+                    <div class="flex-grow-1">
+                        <ul class="list-unstyled ms-2">
+                            <li class="mb-2 d-flex align-items-center">
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 28px; height: 28px;">1</div>
+                                <span>Duyệt qua các khoa và môn học</span>
+                            </li>
+                            <li class="mb-2 d-flex align-items-center">
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 28px; height: 28px;">2</div>
+                                <span>Tìm kiếm câu hỏi phù hợp</span>
+                            </li>
+                            <li class="d-flex align-items-center">
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 28px; height: 28px;">3</div>
+                                <span>Tạo đề thi theo yêu cầu</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2: Công cụ chính -->
+        <div class="col-12 col-sm-6">
+            <div class="card shadow-sm hover-elevate h-100" style="border-color: #d9f6e5;">
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="d-flex align-items-center mb-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Settings" Color="Color.Success" Size="Size.Large" Class="me-2" />
+                        <MudText Typo="Typo.h6" Color="Color.Success" Class="fw-bold m-0">
+                            Công cụ chính
+                        </MudText>
+                    </div>
+                    <div class="flex-grow-1 d-grid gap-2">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.MenuBook"
+                                   Class="justify-content-start btn btn-outline-primary">
+                            Quản lý câu hỏi
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Success"
+                                   StartIcon="@Icons.Material.Filled.Description"
+                                   Class="justify-content-start btn btn-outline-success">
+                            Quản lý đề thi
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
+                                   StartIcon="@Icons.Material.Filled.UploadFile"
+                                   Class="justify-content-start btn btn-outline"
+                                   Style="color: #9b51e0; border-color: #9b51e0;">
+                            Nhập câu hỏi từ Word
+                        </MudButton>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trang thống kê chi tiết -->
+    <div class="card shadow-sm hover-elevate mt-5" style="background-color: #e8f1ff; border-color: #d4e4ff; margin-bottom: 3rem;" >
+        <div class="card-body p-4 d-flex align-items-center">
+            <div class="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle me-3" style="width: 60px; height: 60px;">
+                <MudIcon Icon="@Icons.Material.Filled.Group" Size="Size.Large" />
+            </div>
+            <div class="flex-grow-1">
+                <MudText Typo="Typo.h6" Class="fw-bold text-primary mb-1">
+                    Trang thống kê chi tiết
+                </MudText>
+                <MudText Typo="Typo.body2" Class="text-primary mb-3">
+                    Bạn muốn xem thông tin chi tiết về ngân hàng câu hỏi? 
+                    Hãy truy cập trang Dashboard để xem các báo cáo và thống kê.
+                </MudText>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="fw-bold btn btn-outline-primary">
+                    Đi đến Dashboard
+                </MudButton>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Hiệu ứng hover cho card */
+    .hover-elevate:hover {
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1) !important;
+        transform: translateY(-4px);
+        transition: all 0.25s ease;
+    }
+
+    .hover-scale:hover {
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1) !important;
+        transition: all 0.3s ease;
+    }
+
+    /* Ensure MudBlazor buttons align with Bootstrap styling */
+    .mud-button-root {
+        text-transform: none !important;
+    }
+</style>
+
+@code {
+    // Include any necessary C# code for MudBlazor components, e.g., icon references
+}

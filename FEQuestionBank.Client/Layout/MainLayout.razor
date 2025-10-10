@@ -1,0 +1,24 @@
+﻿@inherits LayoutComponentBase
+
+<MudLayout>
+    <!-- Header -->
+    <Header OnMenuClick="ToggleDrawer" />
+
+    <!-- Sidebar -->
+    <Sidebar Open="_drawerOpen" />
+
+    <!-- Nội dung chính -->
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+
+    private void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+        StateHasChanged(); // Đảm bảo giao diện cập nhật
+    }
+}

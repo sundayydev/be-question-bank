@@ -1,0 +1,46 @@
+﻿<MudAppBar Style="background-color:#3F51B5; color:white;" Elevation="2">
+    <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                   Color="Color.Inherit"
+                   Edge="Edge.Start"
+                   OnClick="ToggleDrawer" 
+                   Class="hover-darkblue"/>
+
+    <MudSpacer /> <!-- đẩy các icon về bên phải -->
+
+    <!-- Group right-hand icons with spacing -->
+    <div class="d-flex gap-2 align-items-center">
+        <!-- Bóng đèn -->
+        <MudIconButton Icon="@Icons.Material.Filled.Lightbulb"
+                       Color="Color.Inherit" Class="hover-darkblue" />
+
+        <!-- Chuông thông báo với badge số 3 -->
+        <MudBadge Content="3" Overlap="true" Class="mx-6 my-4" Color="Color.Error">
+            <MudIcon Icon="@Icons.Material.Filled.Notifications" Color="Color.Inherit" Class="hover-darkblue" />
+        </MudBadge>
+
+
+        <!-- Avatar người dùng với menu -->
+        <MudMenu>
+            <ActivatorContent>
+                <MudAvatar Color="Color.Inherit" Variant="Variant.Outlined">H</MudAvatar>
+            </ActivatorContent>
+            <ChildContent>
+                <MudMenuItem>Profile</MudMenuItem>
+                <MudMenuItem>Logout</MudMenuItem>
+            </ChildContent>
+        </MudMenu>
+    </div>
+</MudAppBar>
+
+
+@code {
+    [Parameter] public EventCallback OnMenuClick { get; set; }
+
+    private Task ToggleDrawer() => OnMenuClick.InvokeAsync();
+}
+<style>
+    /* Khi hover, icon/avatar chuyển sang màu xanh đậm */
+    .hover-darkblue:hover {
+        color: #002366 !important; /* màu xanh đậm */
+    }
+</style>

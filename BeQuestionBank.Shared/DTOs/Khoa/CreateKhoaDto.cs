@@ -8,6 +8,7 @@ namespace BeQuestionBank.Shared.DTOs.Khoa;
 
 public class CreateKhoaDto
 {
-    public required string TenKhoa { get; set; }
+    public string TenKhoa { get; set; }
     public bool? XoaTam { get; set; }
+    public string? MoTa { get; set; }
 }
