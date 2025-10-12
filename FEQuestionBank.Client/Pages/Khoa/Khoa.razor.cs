@@ -166,5 +166,20 @@ namespace FEQuestionBank.Client.Pages
             var response = await KhoaApiClient.DeleteKhoaAsync(id);
             Snackbar.Add(response.Success ? "Xóa thành công!" : $"Lỗi: {response.Message}", response.Success ? Severity.Success : Severity.Error);
         }
+        // protected async Task OnViewSubjects(KhoaDto khoa)
+        // {
+        //     var parameters = new DialogParameters
+        //     {
+        //         ["MaKhoa"] = khoa.MaKhoa,
+        //         ["TenKhoa"] = khoa.TenKhoa
+        //     };
+        //     var options = new DialogOptions { MaxWidth = MaxWidth.Medium, CloseButton = true };
+        //     var dialog = DialogService.Show<MonHocByKhoaDialog>("Danh sách Môn Học của Khoa " + khoa.TenKhoa, parameters, options);
+        //     await dialog.Result;
+        // }
+        protected void OnViewSubjects(KhoaDto khoa)
+        {
+            NavigationManager.NavigateTo($"/monhoc/khoa/{khoa.MaKhoa}");
+        }
     }
 }

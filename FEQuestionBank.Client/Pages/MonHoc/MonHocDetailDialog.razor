@@ -1,0 +1,59 @@
+﻿@using BeQuestionBank.Shared.DTOs.MonHoc
+@using BeQuestionBank.Shared.DTOs.Khoa
+@using MudBlazor
+
+<MudDialog MaxWidth="MaxWidth.Small" FullWidth="true">
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="font-weight-bold mb-2">Chi tiết Môn Học</MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <div class="d-flex flex-column gap-3 p-3">
+            <MudTextField Label="Mã Số Môn Học"
+                          Value="MonHoc.MaSoMonHoc"
+                          Variant="Variant.Outlined"
+                          ReadOnly="true"
+                          FullWidth="true" />
+
+            <MudTextField Label="Tên Môn Học"
+                          Value="MonHoc.TenMonHoc"
+                          Variant="Variant.Outlined"
+                          ReadOnly="true"
+                          FullWidth="true" />
+
+            <MudTextField Label="Khoa"
+                          Value="@GetKhoaName(MonHoc.MaKhoa)"
+                          Variant="Variant.Outlined"
+                          ReadOnly="true"
+                          FullWidth="true" />
+
+            <MudTextField Label="Trạng Thái"
+                          Value="@(MonHoc.XoaTam == true ? "Đã xóa tạm" : "Hoạt động")"
+                          Variant="Variant.Outlined"
+                          ReadOnly="true"
+                          FullWidth="true" />
+        </div>
+    </DialogContent>
+
+    <DialogActions>
+        <div class="p-3">
+            <MudButton OnClick="Cancel" Color="Color.Secondary" Variant="Variant.Filled">
+                Đóng
+            </MudButton>
+        </div>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public MonHocDto MonHoc { get; set; } = new() { MaSoMonHoc = "" };
+    [Parameter] public List<KhoaDto> Khoas { get; set; } = new();
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private string GetKhoaName(Guid maKhoa)
+    {
+        var khoa = Khoas.Find(k => k.MaKhoa == maKhoa);
+        return khoa?.TenKhoa ?? "Không xác định";
+    }
+}

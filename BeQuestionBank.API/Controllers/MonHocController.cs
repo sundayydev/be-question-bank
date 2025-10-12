@@ -2,6 +2,7 @@
 using BeQuestionBank.Shared.DTOs.Common;
 using BeQuestionBank.Shared.DTOs.MonHoc;
 using BEQuestionBank.Core.Services;
+using BeQuestionBank.Shared.DTOs.Pagination;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -49,22 +50,43 @@ public class MonHocController(MonHocService service, ILogger<MonHocController> l
     // POST: api/MonHoc
     [HttpGet("khoa/{maKhoa}")]
     [SwaggerOperation("Lấy danh sách môn học theo mã khoa")]
-    public async Task<ActionResult<MonHocDto>> GetByMaKhoaAsync(string maKhoa)
+    public async Task<ActionResult<ApiResponse<List<MonHocDto>>>> GetByMaKhoaAsync(string maKhoa)
     {
-        var list = await _service.GetMonHocsByMaKhoaAsync(Guid.Parse(maKhoa));
-        if (list == null || !list.Any())
-            return StatusCode(StatusCodes.Status404NotFound, ApiResponseFactory.NotFound<Object>($"Không tìm thấy môn học nào cho mã khoa {maKhoa}"));
-
-        list.Select(m => new MonHocDto
+        try
         {
-            MaMonHoc = m.MaMonHoc,
-            MaSoMonHoc = m.MaSoMonHoc,
-            TenMonHoc = m.TenMonHoc,
-            MaKhoa = m.MaKhoa,
-            XoaTam = m.XoaTam
-        });
+            if (!Guid.TryParse(maKhoa, out var khoaId))
+            {
+                _logger.LogError($"Mã khoa {maKhoa} không đúng định dạng GUID");
+                return StatusCode(StatusCodes.Status400BadRequest, ApiResponseFactory.ValidationError<object>("Mã khoa không đúng định dạng GUID."));
+            }
 
-        return StatusCode(StatusCodes.Status200OK, ApiResponseFactory.Success<Object>(list, "Lấy danh sách môn học theo mã khoa thành công"));
+            var list = await _service.GetMonHocsByMaKhoaAsync(khoaId);
+            if (list == null || !list.Any())
+            {
+                _logger.LogInformation($"Không tìm thấy môn học nào cho mã khoa {maKhoa}");
+                return StatusCode(StatusCodes.Status404NotFound, ApiResponseFactory.NotFound<object>($"Không tìm thấy môn học nào cho mã khoa {maKhoa}"));
+            }
+
+            var monHocDtos = list
+                .Where(m => m.XoaTam == false) // Chỉ lấy các môn chưa bị xóa tạm
+                .Select(m => new MonHocDto
+                {
+                    MaMonHoc = m.MaMonHoc,
+                    MaSoMonHoc = m.MaSoMonHoc,
+                    TenMonHoc = m.TenMonHoc,
+                    MaKhoa = m.MaKhoa,
+                    XoaTam = m.XoaTam
+                })
+                .ToList();
+
+            _logger.LogInformation($"Số môn học tìm thấy cho MaKhoa {maKhoa}: {monHocDtos.Count}");
+            return StatusCode(StatusCodes.Status200OK, ApiResponseFactory.Success<List<MonHocDto>>(monHocDtos, "Lấy danh sách môn học theo mã khoa thành công"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi lấy danh sách môn học theo mã khoa {maKhoa}", maKhoa);
+            return StatusCode(StatusCodes.Status500InternalServerError, ApiResponseFactory.ServerError($"Lỗi: {ex.Message}"));
+        }
     }
 
     // POST: api/MonHoc
@@ -169,5 +191,73 @@ public class MonHocController(MonHocService service, ILogger<MonHocController> l
         await _service.UpdateMonHocAsync(monHoc);
         return StatusCode(StatusCodes.Status200OK, ApiResponseFactory.Success($"Đã khôi phục môn học: {monHoc.TenMonHoc}"));
     }
+    [HttpGet("paged")]
+[SwaggerOperation("Lấy danh sách Môn học có phân trang, filter, sort")]
+public async Task<IActionResult> GetPagedAsync(
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 10,
+    [FromQuery] string? sort = null,
+    [FromQuery] string? filter = null)
+{
+    try
+    {
+        var query = await _service.GetAllMonHocsAsync(); // Trả về List<MonHoc>
+
+        // Filtering
+        if (!string.IsNullOrWhiteSpace(filter))
+        {
+            query = query.Where(m => 
+                m.TenMonHoc.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                m.MaSoMonHoc.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        // Sorting
+        if (!string.IsNullOrWhiteSpace(sort))
+        {
+            var parts = sort.Split(',');
+            var column = parts[0];
+            var direction = parts.Length > 1 ? parts[1] : "asc";
+
+            query = column switch
+            {
+                "TenMonHoc" when direction == "asc" => query.OrderBy(m => m.TenMonHoc),
+                "TenMonHoc" when direction == "desc" => query.OrderByDescending(m => m.TenMonHoc),
+                _ => query.OrderBy(m => m.TenMonHoc)
+            };
+        }
+
+        var totalCount = query.Count();
+
+        var items = query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(m => new MonHocDto
+            {
+                MaMonHoc = m.MaMonHoc,
+                MaSoMonHoc = m.MaSoMonHoc,
+                TenMonHoc = m.TenMonHoc,
+                MaKhoa = m.MaKhoa,
+                XoaTam = m.XoaTam
+            })
+            .ToList();
+
+        var result = new PagedResult<MonHocDto>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
+
+        return Ok(ApiResponseFactory.Success(result, "Lấy danh sách môn học có phân trang thành công"));
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Lỗi khi lấy danh sách Môn học có phân trang");
+        return StatusCode(StatusCodes.Status500InternalServerError,
+            ApiResponseFactory.ServerError("Đã xảy ra lỗi khi xử lý."));
+    }
+}
 }
 

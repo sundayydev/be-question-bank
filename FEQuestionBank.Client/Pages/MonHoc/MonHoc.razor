@@ -1,15 +1,17 @@
-﻿@page "/khoa"
-@inherits KhoaBase
+﻿@page "/monhoc"
+@page "/monhoc/khoa/{MaKhoa:guid}"
+@using BeQuestionBank.Shared.DTOs.MonHoc
+@inherits MonHocBase
 @inject ISnackbar Snackbar
 
 <MudPaper Class="pa-6 max-w-full w-full" Style="min-height:600px;">
-    <MudText Typo="Typo.h4" Class="mb-6">Danh sách Khoa</MudText>
+    <MudText Typo="Typo.h4" Class="mb-6">@PageTitle</MudText>
 
     <!-- Ô tìm kiếm + nút tạo mới -->
     <div class="row mb-3 g-2 align-items-center">
         <div class="col">
             <MudTextField @bind-Value="_searchTerm"
-                          Placeholder="Tìm theo tên..."
+                          Placeholder="Tìm theo tên môn học..."
                           Adornment="Adornment.Start"
                           AdornmentIcon="@Icons.Material.Filled.Search"
                           Immediate="true"
@@ -31,31 +33,43 @@
               Striped="true"
               Dense="false"
               RowsPerPage="10"
-              PageSizeOptions="new int[] {10,20,50}"
+              PageSizeOptions="new int[] {10, 20, 50}"
               Class="w-full text-base"
               @ref="table">
 
         <HeaderContent>
-            <MudTh><MudTableSortLabel SortLabel="TenKhoa" T="KhoaDto">Tên Khoa</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortLabel="MoTa" T="KhoaDto">Mô Tả</MudTableSortLabel></MudTh>
-            <MudTh Style="text-align:center;"><MudTableSortLabel SortLabel="NgayCapNhat" T="KhoaDto">Ngày Cập Nhật</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortLabel="TenMonHoc" T="MonHocDto">Tên Môn Học</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortLabel="MaSoMonHoc" T="MonHocDto">Mã Số Môn Học</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortLabel="MaKhoa" T="MonHocDto">Khoa</MudTableSortLabel></MudTh>
+            <MudTh Style="text-align:center;">Trạng Thái</MudTh>
             <MudTh Style="text-align:center;">Thao Tác</MudTh>
         </HeaderContent>
 
         <RowTemplate>
-            <MudTd>@context.TenKhoa</MudTd>
-            <MudTd>@context.MoTa</MudTd>
-            <MudTd Style="text-align:center;">@context.NgayCapNhat.ToString("dd/MM/yyyy")</MudTd>
+            <MudTd>@context.TenMonHoc</MudTd>
+            <MudTd>@context.MaSoMonHoc</MudTd>
+            <MudTd>@GetKhoaName(context.MaKhoa)</MudTd>
+            <MudTd Style="text-align:center;">
+                <MudChip T="string" Color="@(context.XoaTam == true ? Color.Error : Color.Success)">
+                    @(context.XoaTam == true ? "Đã xóa tạm" : "Hoạt động")
+                </MudChip>
+            </MudTd>
             <MudTd Style="text-align:center;">
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" Class="mx-1" OnClick="() => OnEdit(context)" />
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" Class="mx-1" OnClick="() => OnConfirmDelete(context)" />
+                @if (context.XoaTam == true)
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.Restore" Color="Color.Success" Size="Size.Small" Class="mx-1" OnClick="() => OnRestore(context)" />
+                }
+                else
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" Class="mx-1" OnClick="() => OnConfirmDelete(context)" />
+                }
                 <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Info" Size="Size.Small" Class="mx-1" OnClick="() => OnViewDetail(context)" />
-                <MudIconButton Icon="@Icons.Material.Filled.List" Color="Color.Secondary" Size="Size.Small" Class="mx-1" OnClick="() => OnViewSubjects(context)" />
-                </MudTd>
+            </MudTd>
         </RowTemplate>
 
         <NoRecordsContent>
-            <MudText>Không tìm thấy khoa nào</MudText>
+            <MudText>Không tìm thấy môn học nào</MudText>
         </NoRecordsContent>
 
         <LoadingContent>
@@ -63,11 +77,7 @@
         </LoadingContent>
 
         <PagerContent>
-            <MudTablePager 
-                InfoFormat="Hiển thị {first_item}-{last_item} của {all_items} mục" />
+            <MudTablePager InfoFormat="Hiển thị {first_item}-{last_item} của {all_items} mục" />
         </PagerContent>
-
-
-
     </MudTable>
 </MudPaper>

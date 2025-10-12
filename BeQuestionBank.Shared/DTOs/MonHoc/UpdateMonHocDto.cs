@@ -8,7 +8,7 @@ namespace BeQuestionBank.Shared.DTOs.MonHoc;
 
 public class UpdateMonHocDto
 {
-    public required string MaSoMonHoc { get; set; }
+    public string MaSoMonHoc { get; set; }
     public string TenMonHoc { get; set; } = string.Empty;
     public Guid MaKhoa { get; set; }
     public bool? XoaTam { get; set; }
