@@ -15,7 +15,7 @@ namespace FEQuestionBank.Client.Pages.MonHoc
 {
     public partial class MonHocBase : ComponentBase
     {
-        [Parameter] public Guid? MaKhoa { get; set; }   // Route parameter
+        [Parameter] public Guid? MaKhoa { get; set; } 
 
         [Inject] protected IMonHocApiClient MonHocApiClient { get; set; } = default!;
         [Inject] protected IKhoaApiClient KhoaApiClient { get; set; } = default!;
@@ -49,7 +49,6 @@ namespace FEQuestionBank.Client.Pages.MonHoc
             if (MaKhoa.HasValue)
             {
                 MaKhoaFilter = MaKhoa.Value;
-                Snackbar.Add($"MaKhoa: {MaKhoa.Value}, MaKhoaFilter: {MaKhoaFilter}", Severity.Info);
                 var khoa = Khoas.Find(k => k.MaKhoa == MaKhoa.Value);
                 PageTitle = khoa != null
                     ? $"Danh sách Môn Học của Khoa {khoa.TenKhoa}"
@@ -57,7 +56,6 @@ namespace FEQuestionBank.Client.Pages.MonHoc
 
                 if (table != null)
                 {
-                    Snackbar.Add("Gọi ReloadServerData trong UpdateMaKhoaFilterAsync", Severity.Info);
                     await table.ReloadServerData();
                 }
             }
@@ -65,32 +63,27 @@ namespace FEQuestionBank.Client.Pages.MonHoc
             {
                 MaKhoaFilter = null;
                 PageTitle = "Danh sách Môn Học";
-                Snackbar.Add("Không có MaKhoa trong route", Severity.Warning);
+               
             }
 
-            Snackbar.Add($"MaKhoaFilter sau UpdateMaKhoaFilterAsync: {MaKhoaFilter}", Severity.Info);
         }
 
         protected async Task<TableData<MonHocDto>> LoadServerData(TableState state, CancellationToken cancellationToken)
         {
             try
             {
-                Snackbar.Add($"MaKhoaFilter trong LoadServerData: {MaKhoaFilter}", Severity.Info);
                 if (MaKhoaFilter.HasValue)
                 {
-                    Snackbar.Add($"Đang gọi API: api/monhoc/khoa/{MaKhoaFilter}", Severity.Info);
                     var response = await Http.GetFromJsonAsync<ApiResponse<List<MonHocDto>>>(
                         $"api/monhoc/khoa/{MaKhoaFilter}", cancellationToken);
 
                     if (response == null)
                     {
-                        Snackbar.Add("API trả về null", Severity.Error);
                         return new TableData<MonHocDto> { Items = new List<MonHocDto>(), TotalItems = 0 };
                     }
 
                     if (response.Success && response.Data != null)
                     {
-                        Snackbar.Add($"Số môn học trả về: {response.Data.Count}", Severity.Info);
                         return new TableData<MonHocDto>
                         {
                             Items = response.Data,
@@ -99,12 +92,10 @@ namespace FEQuestionBank.Client.Pages.MonHoc
                     }
                     else
                     {
-                        Snackbar.Add($"API không thành công. Success: {response?.Success}, Message: {response?.Message}", Severity.Error);
                         return new TableData<MonHocDto> { Items = new List<MonHocDto>(), TotalItems = 0 };
                     }
                 }
-
-                Snackbar.Add("Không có MaKhoaFilter, chuyển sang API phân trang", Severity.Warning);
+                
                 int page = state.Page + 1;
                 int pageSize = state.PageSize;
                 string? sort = null;
@@ -116,8 +107,7 @@ namespace FEQuestionBank.Client.Pages.MonHoc
                 if (!string.IsNullOrEmpty(sort)) url += $"&sort={sort}";
                 if (!string.IsNullOrEmpty(_searchTerm))
                     url += $"&filter={Uri.EscapeDataString(_searchTerm)}";
-
-                Snackbar.Add($"Đang gọi API phân trang: {url}", Severity.Info);
+                
                 var pagedResponse = await Http.GetFromJsonAsync<ApiResponse<PagedResult<MonHocDto>>>(url, cancellationToken);
                 if (pagedResponse is { Success: true, Data: not null })
                 {
@@ -132,7 +122,6 @@ namespace FEQuestionBank.Client.Pages.MonHoc
             }
             catch (Exception ex)
             {
-                Snackbar.Add($"Lỗi khi tải dữ liệu: {ex.Message}", Severity.Error);
                 return new TableData<MonHocDto> { Items = new List<MonHocDto>(), TotalItems = 0 };
             }
         }
