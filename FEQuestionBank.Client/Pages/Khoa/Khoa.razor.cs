@@ -48,7 +48,6 @@ namespace FEQuestionBank.Client.Pages
                         Items = response.Data.Items ?? new List<KhoaDto>(),
                         TotalItems = response.Data.TotalCount
                     };
-                    Snackbar.Add($"TotalItems: {tableData.TotalItems}", Severity.Info); // Log để kiểm tra
                     return tableData;
                 }
 
@@ -165,6 +164,10 @@ namespace FEQuestionBank.Client.Pages
         {
             var response = await KhoaApiClient.DeleteKhoaAsync(id);
             Snackbar.Add(response.Success ? "Xóa thành công!" : $"Lỗi: {response.Message}", response.Success ? Severity.Success : Severity.Error);
+        }
+        protected void OnViewSubjects(KhoaDto khoa)
+        {
+            NavigationManager.NavigateTo($"/monhoc/khoa/{khoa.MaKhoa}");
         }
     }
 }
