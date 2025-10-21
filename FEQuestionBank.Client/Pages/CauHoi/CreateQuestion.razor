@@ -1,0 +1,67 @@
+﻿@page "/question/create-question"
+@inherits CreateQuestionBase
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-6">
+    <MudText Typo="Typo.h5" Class="mb-6 text-center">Chọn loại câu hỏi</MudText>
+
+    <MudGrid Justify="Justify.Center" Spacing="3">
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="3"
+                      Class="p-6 text-center hover-card-question"
+                      Style="height:200px; display:flex; flex-direction:column; 
+                      justify-content:center; align-items:center;
+                      border-radius:10px; "
+                      @onclick="@(() => SelectQuestionType("single"))">
+
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle"
+                         Color="Color.Primary" Size="Size.Large" />
+
+                <MudText Typo="Typo.h6" Class="mt-2 text-primary">
+                    Trắc nghiệm một đáp án
+                </MudText>
+
+                <MudText Typo="Typo.body2" Class="mt-1 text-secondary">
+                    Câu hỏi có nhiều lựa chọn với 1 đáp án đúng
+                </MudText>
+
+            </MudPaper>
+        </MudItem>
+
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="3"
+                      Class="p-6 text-center hover-card-question"
+                      Style="height:200px; display:flex; flex-direction:column; 
+                      justify-content:center; align-items:center;
+                      border-radius:10px;"
+                      @onclick="@(() => SelectQuestionType("group"))">
+                <MudIcon Icon="@Icons.Material.Filled.GridOn" Color="Color.Success" Size="Size.Large"/>
+                <MudText Typo="Typo.h6" Class="mt-2 text-primary">Câu hỏi nhóm</MudText>
+                <MudText Typo="Typo.body2" Class="mt-1 text-secondary">
+                    Nhóm các loại câu hỏi khác nhau
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="3"
+                      Class="p-6 text-center hover-card-question"
+                      Style="height:200px; display:flex; flex-direction:column; 
+                      justify-content:center; align-items:center; 
+                      border-radius:10px;"
+                      @onclick="@(() => SelectQuestionType("upload"))">
+                <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Color="Color.Warning" Size="Size.Large" />
+                <MudText Typo="Typo.h6" Class="mt-2 text-primary">Tải lên từ tệp</MudText>
+                <MudText Typo="Typo.body2" Class="mt-1 text-secondary">
+                    Tạo nhiều câu hỏi từ file Word, Excel...
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+    </MudGrid>
+</MudContainer>
+
+@code {
+    // code-behind moved to .razor.cs
+}

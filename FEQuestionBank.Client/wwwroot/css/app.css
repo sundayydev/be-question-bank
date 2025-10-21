@@ -112,3 +112,18 @@ code {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+.hover-card-question {
+    border: 1px solid #80D8FF;
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background-color: #fff;
+}
+
+.hover-card-question:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);  
+    transform: translateY(-4px);               
+    border-color: #80D8FF;                   
+    background-color: #f9f9ff;                
+}
+.mud-input-control { margin-bottom: 8px; }

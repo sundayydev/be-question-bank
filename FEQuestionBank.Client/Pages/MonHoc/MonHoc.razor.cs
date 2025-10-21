@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using FEQuestionBank.Client.Pages.Khoa;
+using FEQuestionBank.Client.Pages.OtherPage;
 
 namespace FEQuestionBank.Client.Pages.MonHoc
 {

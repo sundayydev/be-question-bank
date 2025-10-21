@@ -9,6 +9,7 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using BeQuestionBank.Shared.DTOs.Pagination;
 using FEQuestionBank.Client.Pages.Khoa;
+using FEQuestionBank.Client.Pages.OtherPage;
 
 namespace FEQuestionBank.Client.Pages
 {
