@@ -1,0 +1,28 @@
+﻿@page "/user/list"
+
+<MudGrid Spacing="3" Style="padding: 15px ; margin-top: 5px">
+    <MudItem xs="12" sm="6" md="4">
+        <InfoCard 
+            Icon="@Icons.Material.Filled.People"
+            IconColor="Color.Primary"
+            Title="Tổng số người dùng"
+            Value="256" />
+    </MudItem>
+
+    <MudItem xs="12" sm="6" md="4">
+        <InfoCard 
+            Icon="@Icons.Material.Filled.Assignment"
+            IconColor="Color.Success"
+            Title="Tổng số bài thi"
+            Value="42" />
+    </MudItem>
+
+    <MudItem xs="12" sm="6" md="4">
+        <InfoCard 
+            Icon="@Icons.Material.Filled.CloudUpload"
+            IconColor="Color.Info"
+            Title="File đã tải lên"
+            Value="1,024"
+            BackgroundColor="#f5f9ff" />
+    </MudItem>
+</MudGrid>

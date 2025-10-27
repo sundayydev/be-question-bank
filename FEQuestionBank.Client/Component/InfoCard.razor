@@ -1,0 +1,27 @@
+﻿@using MudBlazor
+
+<MudPaper Elevation="@Elevation"
+          Class="info-card p-4 d-flex align-items-center gap-3"
+          Style=@($"border-radius:16px; background-color:{BackgroundColor}; min-height:100px; transition:all 0.2s ease-in-out;")>
+    
+    <!-- Icon -->
+    <MudIcon Icon="@Icon" Color="@IconColor" Size="@IconSize" Class="flex-shrink-0" />
+
+    <!-- Nội dung -->
+    <div>
+        <MudText Typo="Typo.body1" Class="text-secondary">@Title</MudText>
+        <MudText Typo="Typo.h5" Class="fw-bold">@Value</MudText>
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter] public string Icon { get; set; } = Icons.Material.Filled.Info;
+    [Parameter] public Color IconColor { get; set; } = Color.Primary;
+    [Parameter] public Size IconSize { get; set; } = Size.Large;
+
+    [Parameter] public string Title { get; set; } = "Tiêu đề";
+    [Parameter] public string Value { get; set; } = "0";
+
+    [Parameter] public string BackgroundColor { get; set; } = "#fff";
+    [Parameter] public int Elevation { get; set; } = 1;
+}

@@ -127,3 +127,13 @@ code {
     background-color: #f9f9ff;                
 }
 .mud-input-control { margin-bottom: 8px; }
+.info-card {
+    cursor: default;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.info-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+}
+

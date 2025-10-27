@@ -1,0 +1,174 @@
+﻿@page "/question/upload"
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Style="padding: 20px ">
+    <!-- Breadcrumb hoặc tiêu đề -->
+    <MudText Typo="Typo.h5" Class="mb-5 fw-bold">Tải lên câu hỏi</MudText>
+
+    <!-- Chọn Khoa, Môn, Chương/Phần -->
+    <MudPaper Elevation="2" Class="pa-4 mb-6">
+        <MudText Typo="Typo.subtitle1" Class="mb-3">Chọn khoa, môn học và chương/phần</MudText>
+        <MudGrid Spacing="3">
+            <MudItem xs="12" sm="4">
+                <MudSelect T="string" Label="Khoa" Placeholder="-- Chọn khoa --" Variant="Variant.Outlined" Required="true">
+                    <MudSelectItem Value="@("Khoa CNTT")" />
+                    <MudSelectItem Value="@("Khoa Kinh tế")" />
+                    <MudSelectItem Value="@("Khoa Ngoại ngữ")" />
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudSelect T="string" Label="Môn học" Placeholder="-- Chọn môn học --" Variant="Variant.Outlined" Required="true">
+                    <MudSelectItem Value="@("Lập trình Web")" />
+                    <MudSelectItem Value="@("Cơ sở dữ liệu")" />
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudSelect T="string" Label="Chương/Phần" Placeholder="-- Chọn chương/phần --" Variant="Variant.Outlined" Required="true">
+                    <MudSelectItem Value="@("Chương 1: HTML & CSS")" />
+                    <MudSelectItem Value="@("Chương 2: JavaScript")" />
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+   <!-- Hai cột: Upload Word & Upload Gói đề thi -->
+    <MudGrid Spacing="4">
+        <!-- CỘT 1: Upload File Word -->
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="2" Class="pa-6" Style="border-radius: 16px; background-color: #fff;">
+
+                <!-- Tiêu đề -->
+                <MudStack Row="true" AlignItems="@AlignItems.Center" Spacing="1" Class="mb-4">
+                    <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Primary" Size="Size.Medium" />
+                    <MudText Typo="Typo.h6" Class="fw-bold text-primary">Upload File Word</MudText>
+
+                    <MudTooltip Text="Tải lên file Word để hệ thống tự động đọc câu hỏi từ nội dung.">
+                        <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Default" Size="Size.Small" Class="ms-1" />
+                    </MudTooltip>
+                </MudStack>
+
+                <!-- Khu vực Upload -->
+                <div class="border-dashed border-primary"
+                     style="border: 2px dashed #3f51b5; border-radius: 10px; padding: 40px; text-align: center;">
+                    <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Large" Class="mb-2" Color="Color.Primary" />
+                    <MudText Typo="Typo.subtitle1" Class="fw-semibold mb-1">Tải lên file Word</MudText>
+                    <MudText Typo="Typo.body2" Class="text-muted">
+                        Kéo thả hoặc nhấp để chọn file<br />
+                        Hỗ trợ: .docx, .doc
+                    </MudText>
+
+                    <InputFile OnChange="@OnWordFileSelected" accept=".docx,.doc" class="opacity-0 position-absolute w-100 h-100" />
+                </div>
+
+                <!-- Nút hướng dẫn -->
+                <MudButton Variant="Variant.Outlined"
+                           StartIcon="@Icons.Material.Filled.Info"
+                           Color="Color.Primary"
+                           FullWidth="true"
+                           Class="mt-4 fw-semibold">
+                    Xem hướng dẫn định dạng Word
+                </MudButton>
+
+                <!-- Danh sách tính năng -->
+                <MudPaper Elevation="0"
+                          Class="p-4 mt-4"
+                          Style="background-color: #f5f8ff; border-radius: 12px;">
+                    <MudText Typo="Typo.subtitle2" Class="text-primary fw-semibold mb-2 d-flex align-items-center">
+                        <MudIcon Icon="@Icons.Material.Filled.Settings" Size="Size.Small" Class="me-1" />
+                        Tính năng:
+                    </MudText>
+
+                    <MudList T="string" Dense="true">
+                        <MudListItem T="string">Phân tích câu hỏi từ file Word</MudListItem>
+                        <MudListItem T="string">Tự động nhận diện CLO</MudListItem>
+                        <MudListItem T="string">Hỗ trợ LaTeX và công thức toán</MudListItem>
+                        <MudListItem T="string">Xử lý định dạng gạch chân (Hoán vị)</MudListItem>
+                    </MudList>
+                </MudPaper>
+
+            </MudPaper>
+        </MudItem>
+
+        <!-- CỘT 2: Upload Gói Đề Thi  -->
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="2" Class="pa-6" Style="border-radius: 16px; background-color: #fff;">
+
+                <!-- Tiêu đề -->
+                <MudStack Row="true" AlignItems="@AlignItems.Center" Spacing="1" Class="mb-4">
+                    <MudIcon Icon="@Icons.Material.Filled.FolderZip" Color="Color.Success" Size="Size.Medium"/>
+                    <MudText Typo="Typo.h6" Class="fw-bold text-success">Upload File Zip</MudText>
+
+                    <MudTooltip Text="Tải lên tệp ZIP để hệ thống tự động đọc cấu trúc và nội dung.">
+                        <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Default" Size="Size.Small" Class="ms-1"/>
+                    </MudTooltip>
+                </MudStack>
+
+                <!-- Khu vực Upload -->
+                <div class="border-dashed border-success"
+                     style="border: 2px dashed ; border-radius: 10px; padding: 40px; text-align: center;">
+                    <MudIcon Icon="@Icons.Material.Filled.FolderZip" Size="Size.Large" Class="mb-2" Color="Color.Success"/>
+                    <MudText Typo="Typo.subtitle1" Class="fw-semibold mb-1 text-success">Tải lên tệp ZIP</MudText>
+                    <MudText Typo="Typo.body2" Class="text-muted">
+                        Kéo thả hoặc nhấp để chọn file ZIP<br/>
+                        Hỗ trợ: .zip (tối đa 100MB)
+                    </MudText>
+
+                    <InputFile OnChange="@OnZipFileSelected" accept=".zip"
+                               class="opacity-0 position-absolute w-100 h-100"/>
+                </div>
+
+                <!-- Nút hướng dẫn -->
+                <MudButton Variant="Variant.Outlined"
+                           StartIcon="@Icons.Material.Filled.Info"
+                           Color="Color.Success"
+                           FullWidth="true"
+                           Class="mt-4 fw-semibold">
+                    Xem hướng dẫn định dạng ZIP
+                </MudButton>
+
+                <!-- Danh sách tính năng -->
+                <MudPaper Elevation="0"
+                          Class="p-4 mt-4"
+                          Style="background-color: #e9f8f0; border-radius: 12px;">
+                    <MudText Typo="Typo.subtitle2" Class="text-success fw-semibold mb-2 d-flex align-items-center">
+                        <MudIcon Icon="@Icons.Material.Filled.Settings" Size="Size.Small" Class="me-1"/>
+                        Cấu trúc gói đề
+                    </MudText>
+
+                    <MudList T="string" Dense="true">
+                        <MudListItem T="string">File Word (.docx) – Bắt buộc</MudListItem>
+                        <MudListItem T="string">Thư mục /audio – Tùy chọn</MudListItem>
+                        <MudListItem T="string">Thư mục /images – Tùy chọn</MudListItem>
+                        <MudListItem T="string">Tự động chuyển đổi WebP</MudListItem>
+                    </MudList>
+                </MudPaper>
+
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+    
+</MudContainer>
+
+@code {
+    private IBrowserFile? wordFile;
+    private IBrowserFile? zipFile;
+   
+    private async Task OnZipFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        Console.WriteLine($"ZIP uploaded: {file.Name}");
+    }
+    private async Task OnWordFileSelected(InputFileChangeEventArgs e)
+    {
+        wordFile = e.File;
+        if (wordFile != null)
+        {
+            Snackbar.Add($"Đã chọn: {wordFile.Name}", Severity.Success);
+            // TODO: Gọi service xử lý Word
+        }
+    }
+
+   
+}

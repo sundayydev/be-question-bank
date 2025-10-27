@@ -2,7 +2,7 @@
 @inherits KhoaBase
 @inject ISnackbar Snackbar
 
-<MudPaper Class="pa-6 max-w-full w-full" Style="min-height:600px;">
+<MudPaper Style="min-height:600px ; width: 100%;padding: 30px">
     <MudText Typo="Typo.h4" Class="mb-6">Danh sách Khoa</MudText>
 
     <!-- Ô tìm kiếm + nút tạo mới -->
@@ -36,22 +36,22 @@
               @ref="table">
 
         <HeaderContent>
-            <MudTh><MudTableSortLabel SortLabel="TenKhoa" T="KhoaDto">Tên Khoa</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortLabel="MoTa" T="KhoaDto">Mô Tả</MudTableSortLabel></MudTh>
-            <MudTh Style="text-align:center;"><MudTableSortLabel SortLabel="NgayCapNhat" T="KhoaDto">Ngày Cập Nhật</MudTableSortLabel></MudTh>
-            <MudTh Style="text-align:center;">Thao Tác</MudTh>
+            <MudTh Style="width:25%;"><MudTableSortLabel SortLabel="TenKhoa" T="KhoaDto">Tên Khoa</MudTableSortLabel></MudTh>
+            <MudTh Style="width:35%;"><MudTableSortLabel SortLabel="MoTa" T="KhoaDto">Mô Tả</MudTableSortLabel></MudTh>
+            <MudTh Style="width:20%; text-align:center;"><MudTableSortLabel SortLabel="NgayCapNhat" T="KhoaDto">Ngày Cập Nhật</MudTableSortLabel></MudTh>
+            <MudTh Style="width:20%; text-align:center;">Thao Tác</MudTh>
         </HeaderContent>
 
         <RowTemplate>
-            <MudTd>@context.TenKhoa</MudTd>
-            <MudTd>@context.MoTa</MudTd>
-            <MudTd Style="text-align:center;">@context.NgayCapNhat.ToString("dd/MM/yyyy")</MudTd>
-            <MudTd Style="text-align:center;">
+            <MudTd Style="width:25%;">@context.TenKhoa</MudTd>
+            <MudTd Style="width:35%;">@context.MoTa</MudTd>
+            <MudTd Style="width:20%; text-align:center;">@context.NgayCapNhat.ToString("dd/MM/yyyy")</MudTd>
+            <MudTd Style="width:20%; text-align:center;">
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" Class="mx-1" OnClick="() => OnEdit(context)" />
                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" Class="mx-1" OnClick="() => OnConfirmDelete(context)" />
                 <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Info" Size="Size.Small" Class="mx-1" OnClick="() => OnViewDetail(context)" />
                 <MudIconButton Icon="@Icons.Material.Filled.List" Color="Color.Secondary" Size="Size.Small" Class="mx-1" OnClick="() => OnViewSubjects(context)" />
-                </MudTd>
+            </MudTd>
         </RowTemplate>
 
         <NoRecordsContent>
