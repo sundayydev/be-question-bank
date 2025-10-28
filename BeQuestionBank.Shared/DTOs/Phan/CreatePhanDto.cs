@@ -30,4 +30,6 @@ public class CreatePhanDto
     public bool LaCauHoiNhom { get; set; } = false;
 
     public bool XoaTam { get; set; } = false;
+    public int? MaSoPhan { get; set; }
+    
 }

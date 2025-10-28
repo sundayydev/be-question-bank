@@ -29,5 +29,11 @@ namespace FEQuestionBank.Client.Services
             var res = await _httpClient.GetFromJsonAsync<ApiResponse<List<T>>>(url);
             return res ?? new ApiResponse<List<T>>(500, "Error");
         }
+        protected async Task<ApiResponse<T>> GetAsync<T>(string endpoint)
+        {
+            var response = await _httpClient.GetAsync(endpoint);
+            return await response.Content.ReadFromJsonAsync<ApiResponse<T>>() 
+                   ?? new ApiResponse<T>(500, "Error");
+        }
     }
 }

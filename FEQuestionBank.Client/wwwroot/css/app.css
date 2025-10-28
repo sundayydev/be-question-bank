@@ -83,11 +83,7 @@ a, .btn-link {
         transform: rotate(-90deg);
     }
 
-        .loading-progress circle:last-child {
-            stroke: #1b6ec2;
-            stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
-            transition: stroke-dasharray 0.05s ease-in-out;
-        }
+
 
 .loading-progress-text {
     position: absolute;
@@ -96,9 +92,6 @@ a, .btn-link {
     inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
 }
 
-    .loading-progress-text:after {
-        content: var(--blazor-load-percentage-text, "Loading");
-    }
 
 code {
     color: #c02d76;
@@ -136,4 +129,56 @@ code {
     transform: translateY(-3px);
     box-shadow: 0 6px 12px rgba(0,0,0,0.08);
 }
+.custom-input-group .input-group-text {
+    height: 42px;
+    border-radius: 10px 0 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    border: 1px solid #ced4da;
+}
 
+/* Tinh chỉnh MudTextField cho khớp Bootstrap */
+.custom-input-group .mud-input-root {
+    height: 42px;
+    display: flex;
+    align-items: center;
+}
+
+.custom-input-group .mud-input-slot input {
+    height: 38px !important;
+    padding: 0 10px !important;
+    font-size: 0.95rem;
+}
+
+.custom-input-group .mud-input-adornment {
+    display: none !important; /* Ẩn adornment mặc định nếu có */
+}
+
+/* Nút Lưu - hover */
+.btn-save {
+    transition: all 0.25s ease;
+}
+.btn-save:hover {
+    background-color: #1565c0 !important; /* xanh đậm hơn */
+}
+
+/* Nút Xem trước - hover */
+.btn-preview {
+    transition: all 0.25s ease;
+}
+.btn-preview:hover {
+    background-color: #e3f2fd !important;
+    border-color: #1565c0 !important;
+}
+
+/* Nút Quay lại - hover */
+.btn-back {
+    transition: all 0.25s ease;
+}
+.btn-back:hover {
+    background-color: #ffebee !important;
+    border-color: #c62828 !important;
+
+}

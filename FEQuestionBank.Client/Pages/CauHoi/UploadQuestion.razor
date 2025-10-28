@@ -41,8 +41,13 @@
 
                 <!-- Tiêu đề -->
                 <MudStack Row="true" AlignItems="@AlignItems.Center" Spacing="1" Class="mb-4">
-                    <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Primary" Size="Size.Medium" />
-                    <MudText Typo="Typo.h6" Class="fw-bold text-primary">Upload File Word</MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.Description" Style="@($"color:{Colors.Blue.Darken3};")" Size="Size.Medium" />
+                    <MudText Typo="Typo.h6"
+                             Class="fw-bold"
+                             Style="@($"color:{Colors.Blue.Darken3};")">
+                        Nhập từ Word
+                    </MudText>
+
 
                     <MudTooltip Text="Tải lên file Word để hệ thống tự động đọc câu hỏi từ nội dung.">
                         <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Default" Size="Size.Small" Class="ms-1" />
@@ -52,7 +57,7 @@
                 <!-- Khu vực Upload -->
                 <div class="border-dashed border-primary"
                      style="border: 2px dashed #3f51b5; border-radius: 10px; padding: 40px; text-align: center;">
-                    <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Large" Class="mb-2" Color="Color.Primary" />
+                    <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Large" Class="mb-2" Style="@($"color:{Colors.Blue.Darken3};")" />
                     <MudText Typo="Typo.subtitle1" Class="fw-semibold mb-1">Tải lên file Word</MudText>
                     <MudText Typo="Typo.body2" Class="text-muted">
                         Kéo thả hoặc nhấp để chọn file<br />
@@ -65,7 +70,7 @@
                 <!-- Nút hướng dẫn -->
                 <MudButton Variant="Variant.Outlined"
                            StartIcon="@Icons.Material.Filled.Info"
-                           Color="Color.Primary"
+                           Style="@($"color:{Colors.Blue.Darken3};")"
                            FullWidth="true"
                            Class="mt-4 fw-semibold">
                     Xem hướng dẫn định dạng Word
@@ -75,7 +80,8 @@
                 <MudPaper Elevation="0"
                           Class="p-4 mt-4"
                           Style="background-color: #f5f8ff; border-radius: 12px;">
-                    <MudText Typo="Typo.subtitle2" Class="text-primary fw-semibold mb-2 d-flex align-items-center">
+                    <MudText Typo="Typo.subtitle2" Class="fw-semibold mb-2 d-flex align-items-center"
+                             Style="@($"color:{Colors.Blue.Darken3};")">
                         <MudIcon Icon="@Icons.Material.Filled.Settings" Size="Size.Small" Class="me-1" />
                         Tính năng:
                     </MudText>
@@ -97,18 +103,23 @@
 
                 <!-- Tiêu đề -->
                 <MudStack Row="true" AlignItems="@AlignItems.Center" Spacing="1" Class="mb-4">
-                    <MudIcon Icon="@Icons.Material.Filled.FolderZip" Color="Color.Success" Size="Size.Medium"/>
-                    <MudText Typo="Typo.h6" Class="fw-bold text-success">Upload File Zip</MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.FolderZip"  Style="@($"color:{Colors.Green.Darken2};")" Size="Size.Medium"/>
+                    <MudText Typo="Typo.h6" Class="fw-bold"
+                             Style="@($"color:{Colors.Green.Darken2};")">
+                        Upload File Zip
+                    </MudText>
 
                     <MudTooltip Text="Tải lên tệp ZIP để hệ thống tự động đọc cấu trúc và nội dung.">
-                        <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Default" Size="Size.Small" Class="ms-1"/>
+                        <MudIcon Icon="@Icons.Material.Filled.Info" Style="@($"color:{Colors.Green.Darken2};")" 
+                                 Size="Size.Small" Class="ms-1"/>
                     </MudTooltip>
                 </MudStack>
 
                 <!-- Khu vực Upload -->
                 <div class="border-dashed border-success"
                      style="border: 2px dashed ; border-radius: 10px; padding: 40px; text-align: center;">
-                    <MudIcon Icon="@Icons.Material.Filled.FolderZip" Size="Size.Large" Class="mb-2" Color="Color.Success"/>
+                    <MudIcon Icon="@Icons.Material.Filled.FolderZip" Size="Size.Large" Class="mb-2" 
+                             Style="@($"color:{Colors.Green.Darken2};")"/>
                     <MudText Typo="Typo.subtitle1" Class="fw-semibold mb-1 text-success">Tải lên tệp ZIP</MudText>
                     <MudText Typo="Typo.body2" Class="text-muted">
                         Kéo thả hoặc nhấp để chọn file ZIP<br/>
@@ -122,7 +133,7 @@
                 <!-- Nút hướng dẫn -->
                 <MudButton Variant="Variant.Outlined"
                            StartIcon="@Icons.Material.Filled.Info"
-                           Color="Color.Success"
+                           Style="@($"color:{Colors.Green.Darken2};")"
                            FullWidth="true"
                            Class="mt-4 fw-semibold">
                     Xem hướng dẫn định dạng ZIP
@@ -132,7 +143,8 @@
                 <MudPaper Elevation="0"
                           Class="p-4 mt-4"
                           Style="background-color: #e9f8f0; border-radius: 12px;">
-                    <MudText Typo="Typo.subtitle2" Class="text-success fw-semibold mb-2 d-flex align-items-center">
+                    <MudText Typo="Typo.subtitle2" Class=" fw-semibold mb-2 d-flex align-items-center"
+                             Style="@($"color:{Colors.Green.Darken2};")">
                         <MudIcon Icon="@Icons.Material.Filled.Settings" Size="Size.Small" Class="me-1"/>
                         Cấu trúc gói đề
                     </MudText>

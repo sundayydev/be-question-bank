@@ -10,19 +10,34 @@
 
     <!-- Ô tìm kiếm + nút tạo mới -->
     <div class="row mb-3 g-2 align-items-center">
+        <!-- Ô tìm kiếm -->
         <div class="col">
-            <MudTextField @bind-Value="_searchTerm"
-                          Placeholder="Tìm theo tên môn học..."
-                          Adornment="Adornment.Start"
-                          AdornmentIcon="@Icons.Material.Filled.Search"
-                          Immediate="true"
-                          OnKeyDown="@(e => { if (e.Key == "Enter") { table?.ReloadServerData(); } })"
-                          Style="width: 100%;" />
-        </div>
+            <div class="input-group align-items-center custom-input-group">
+                <span class="input-group-text bg-light"
+                      style="border-radius: 10px 0 0 10px; border: 1px solid #ced4da; border-right: none;">
+                    <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Medium" 
+                             Style="@($"color:{Colors.Blue.Darken3};")"/>
+                </span>
 
+                <div class="flex-grow-1">
+                    <MudTextField @bind-Value="_searchTerm"
+                                  Placeholder="Tìm theo tên mon hoc..."
+                                  Variant="Variant.Text"
+                                  Immediate="true"
+                                  OnKeyDown="@(e => { if (e.Key == "Enter") table?.ReloadServerData(); })"
+                                  Class="shadow-none"
+                                  Style="border-radius: 0 10px 10px 0; height:42px; padding-left:10px;" />
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nút tạo mới -->
         <div class="col-auto">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OnCreateNew">
-                <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-1" /> Tạo mới
+            <MudButton Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       Style="@($"background-color:{Colors.Blue.Darken2}; color:white; border-radius:10px; padding:6px 16px;")"
+                       OnClick="OnCreateNew">
+                Tạo mới
             </MudButton>
         </div>
     </div>
@@ -51,21 +66,28 @@
             <MudTd>@context.MaSoMonHoc</MudTd>
             <MudTd>@GetKhoaName(context.MaKhoa)</MudTd>
             <MudTd Style="text-align:center;">
-                <MudChip T="string" Color="@(context.XoaTam == true ? Color.Error : Color.Success)">
+                <MudChip T="string"
+                         Variant="Variant.Filled"
+                         Style="@(
+                                context.XoaTam == true 
+                                    ? $"background-color:{Colors.Red.Lighten4}; color:{Colors.Red.Darken3}; font-weight:400;"
+                                    : $"background-color:{Colors.Green.Lighten4}; color:{Colors.Green.Darken3}; font-weight:400;"
+                                )">
                     @(context.XoaTam == true ? "Đã xóa tạm" : "Hoạt động")
                 </MudChip>
             </MudTd>
+
             <MudTd Style="text-align:center;">
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" Class="mx-1" OnClick="() => OnEdit(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Style="@($"color:{Colors.Blue.Darken3};")" Size="Size.Small" Class="mx-1" OnClick="() => OnEdit(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Style="@($"color:{Colors.Yellow.Darken3};")" Size="Size.Small" Class="mx-1" OnClick="() => OnViewDetail(context)" />
                 @if (context.XoaTam == true)
                 {
-                    <MudIconButton Icon="@Icons.Material.Filled.Restore" Color="Color.Success" Size="Size.Small" Class="mx-1" OnClick="() => OnRestore(context)" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Restore" Style="@($"color:{Colors.Gray.Darken3};")" Size="Size.Small" Class="mx-1" OnClick="() => OnRestore(context)" />
                 }
                 else
                 {
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" Class="mx-1" OnClick="() => OnConfirmDelete(context)" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Style="@($"color:{Colors.Red.Darken3};")" Size="Size.Small" Class="mx-1" OnClick="() => OnConfirmDelete(context)" />
                 }
-                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Info" Size="Size.Small" Class="mx-1" OnClick="() => OnViewDetail(context)" />
             </MudTd>
         </RowTemplate>
 
@@ -78,7 +100,10 @@
         </LoadingContent>
 
         <PagerContent>
-            <MudTablePager InfoFormat="Hiển thị {first_item}-{last_item} của {all_items} mục" />
+            <MudTablePager 
+                RowsPerPageString="Hàng mỗi trang"
+                InfoFormat="Hiển thị {first_item}-{last_item} của {all_items} mục" />
         </PagerContent>
+
     </MudTable>
 </MudPaper>
