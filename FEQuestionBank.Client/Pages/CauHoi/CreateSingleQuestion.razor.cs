@@ -46,7 +46,7 @@ public class CreateSingleQuestionBase : ComponentBase
         Console.WriteLine("Xem trước câu hỏi");
     }
 
-    protected void GoBack() => Navigation.NavigateTo("/create-question");
+    protected void GoBack() => Navigation.NavigateTo("/question/create-question");
 }
 
 public class AnswerModel

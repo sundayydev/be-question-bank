@@ -1,0 +1,70 @@
+﻿@using BeQuestionBank.Shared.DTOs.Phan
+@using MudBlazor
+
+<MudDialog MaxWidth="MaxWidth.Small" FullWidth="true">
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="font-weight-bold mb-2">Chi tiết Phần</MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <div class="d-flex flex-column gap-3 p-3">
+            <MudTextField Label="Tên Phần"
+                          Value="Phan.TenPhan"
+                          Variant="Variant.Outlined"
+                          ReadOnly="true"
+                          FullWidth="true" />
+
+            <MudTextField Label="Nội dung"
+                          Value="Phan.NoiDung"
+                          Variant="Variant.Outlined"
+                          Lines="4"
+                          ReadOnly="true"
+                          FullWidth="true" />
+
+            <MudTextField Label="Mã số phần"
+                          Value="Phan.MaSoPhan?.ToString()"
+                          Variant="Variant.Outlined"
+                          ReadOnly="true"
+                          FullWidth="true" />
+
+            <MudTextField Label="Thứ tự"
+                          Value="Phan.ThuTu.ToString()"
+                          Variant="Variant.Outlined"
+                          ReadOnly="true"
+                          FullWidth="true" />
+
+            <MudTextField Label="Số lượng câu hỏi"
+                          Value="Phan.SoLuongCauHoi.ToString()"
+                          Variant="Variant.Outlined"
+                          ReadOnly="true"
+                          FullWidth="true" />
+
+            <MudTextField Label="Là nhóm"
+                          Value="@(Phan.LaCauHoiNhom ? "Có" : "Không")"
+                          Variant="Variant.Outlined"
+                          ReadOnly="true"
+                          FullWidth="true" />
+
+            <MudTextField Label="Ngày Cập Nhật"
+                          Value="@Phan.NgayCapNhat.ToString("dd/MM/yyyy HH:mm")"
+                          Variant="Variant.Outlined"
+                          ReadOnly="true"
+                          FullWidth="true" />
+        </div>
+    </DialogContent>
+
+    <DialogActions>
+        <div class="p-3">
+            <MudButton OnClick="Cancel" Color="Color.Secondary" Variant="Variant.Filled">
+                Đóng
+            </MudButton>
+        </div>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public PhanDto Phan { get; set; } = new();
+
+    private void Cancel() => MudDialog.Cancel();
+}
