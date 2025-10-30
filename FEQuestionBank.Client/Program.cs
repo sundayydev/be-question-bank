@@ -14,7 +14,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://
 builder.Services.AddScoped<IKhoaApiClient, KhoaApiClient>();
 builder.Services.AddScoped<IMonHocApiClient, MonHocApiClient>();
 builder.Services.AddScoped<IPhanApiClient,PhanApiClient>();
-
+builder.Services.AddScoped<INguoiDungApiClient,NguoiDungApiClient>();
 
 // Đăng ký dịch vụ MudBlazor
 builder.Services.AddMudServices(config =>

@@ -1,4 +1,8 @@
 ﻿@page "/user/list"
+@using BEQuestionBank.Shared.DTOs.user
+@using BeQuestionBank.Shared.Enums
+@inherits NguoiDungBase
+@inject ISnackbar Snackbar
 
 <MudGrid Spacing="3" Style="padding: 15px ; margin-top: 5px">
     <MudItem xs="12" sm="6" md="4">
@@ -26,3 +30,98 @@
             BackgroundColor="#f5f9ff" />
     </MudItem>
 </MudGrid>
+<MudPaper Style="min-height:600px; width: 100%; padding: 30px">
+    <MudText Typo="Typo.h4" Class="mb-6">Danh sách Người Dùng</MudText>
+
+    <!-- Tìm kiếm + Tạo mới -->
+    <div class="row mb-3 g-2 align-items-center">
+        <div class="col">
+            <div class="input-group align-items-center custom-input-group">
+                <span class="input-group-text bg-light"
+                      style="border-radius: 10px 0 0 10px; border: 1px solid #ced4da; border-right: none;">
+                    <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Medium"
+                             Style="@($"color:{Colors.Blue.Darken3};")" />
+                </span>
+                <div class="flex-grow-1">
+                    <MudTextField @bind-Value="_searchTerm"
+                                  Placeholder="Tìm theo tên, email..."
+                                  Variant="Variant.Text"
+                                  Immediate="true"
+                                  OnKeyDown="@(e => { if (e.Key == "Enter") table?.ReloadServerData(); })"
+                                  Class="shadow-none"
+                                  Style="border-radius: 0 10px 10px 0; height:42px; padding-left:10px;" />
+                </div>
+            </div>
+        </div>
+        <div class="col-auto">
+            <MudButton Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       Style="@($"background-color:{Colors.Blue.Darken2}; color:white; border-radius:10px; padding:6px 16px;")"
+                       OnClick="OnCreateNew">
+                Tạo mới
+            </MudButton>
+        </div>
+    </div>
+
+    <!-- Bảng dữ liệu -->
+    <MudTable ServerData="LoadServerData"
+              Bordered="true"
+              Hover="true"
+              Striped="true"
+              Dense="false"
+              RowsPerPage="10"
+              PageSizeOptions="new int[] {10,20,50}"
+              Class="w-full text-base"
+              @ref="table">
+
+        <HeaderContent>
+            <MudTh Style="width:20%;"><MudTableSortLabel SortLabel="HoTen" T="NguoiDungDto">Họ Tên</MudTableSortLabel></MudTh>
+            <MudTh Style="width:18%;"><MudTableSortLabel SortLabel="TenDangNhap" T="NguoiDungDto">Tên Đăng Nhập</MudTableSortLabel></MudTh>
+            <MudTh Style="width:22%;"><MudTableSortLabel SortLabel="Email" T="NguoiDungDto">Email</MudTableSortLabel></MudTh>
+            <MudTh Style="width:12%; text-align:center;"><MudTableSortLabel SortLabel="VaiTro" T="NguoiDungDto">Vai Trò</MudTableSortLabel></MudTh>
+            <MudTh Style="width:10%; text-align:center;">Trạng Thái</MudTh>
+            <MudTh Style="width:18%; text-align:center;">Thao Tác</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd>@context.HoTen</MudTd>
+            <MudTd>@context.TenDangNhap</MudTd>
+            <MudTd>@context.Email</MudTd>
+            <MudTd Style="text-align:center;">
+                <MudChip T="string" Color="@(context.VaiTro == EnumRole.Admin ? Color.Primary : Color.Secondary)"
+                         Size="Size.Small">
+                    @(context.VaiTro == EnumRole.Admin ? "Admin" : "User")
+                </MudChip>
+            </MudTd>
+
+            <MudTd Style="text-align:center;">
+                <MudChip T="string" Color="@(context.BiKhoa ? Color.Error : Color.Success)"
+                         Size="Size.Small">
+                    @(context.BiKhoa ? "Đã khóa" : "Hoạt động")
+                </MudChip>
+            </MudTd>
+            <MudTd Style="text-align:center;">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Style="@($"color:{Colors.Blue.Darken2};")" Size="Size.Small" Class="mx-1" OnClick="() => OnEdit(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Style="@($"color:{Colors.Yellow.Darken2};")" Size="Size.Small" Class="mx-1" OnClick="() => OnViewDetail(context)" />
+                <MudIconButton Icon="@(context.BiKhoa ? Icons.Material.Filled.LockOpen : Icons.Material.Filled.Lock)" 
+                               Style="@($"color:{(context.BiKhoa ? Colors.Green.Darken1 : Colors.Red.Darken1)};")" 
+                               Size="Size.Small" Class="mx-1" 
+                               OnClick="() => OnToggleLock(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Style="@($"color:{Colors.Red.Darken2};")" Size="Size.Small" Class="mx-1" OnClick="() => OnConfirmDelete(context)" />
+            </MudTd>
+        </RowTemplate>
+
+        <NoRecordsContent>
+            <MudText>Không tìm thấy người dùng nào</MudText>
+        </NoRecordsContent>
+
+        <LoadingContent>
+            <MudText>Đang tải dữ liệu...</MudText>
+        </LoadingContent>
+
+        <PagerContent>
+            <MudTablePager RowsPerPageString="Hàng mỗi trang"
+                           InfoFormat="Hiển thị {first_item}-{last_item} của {all_items} mục" />
+        </PagerContent>
+    </MudTable>
+</MudPaper>
