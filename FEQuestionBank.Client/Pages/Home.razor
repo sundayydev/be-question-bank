@@ -23,70 +23,75 @@
 
     <!-- Các tính năng -->
     <MudGrid Justify="Justify.Center" Spacing="4" Class="mb-8">
-        <!-- CARD 1 -->
-        <MudItem xs="12" sm="6" md="4">
-            <MudCard Class="mud-theme-light pa-4 text-center hover-card-scale" Elevation="2">
-                <MudCardContent>
-                    <div class="d-flex justify-content-center mb-3">
-                        <MudPaper Class=" pa-3 rounded-circle d-flex align-center justify-center" 
-                                  Style="@($"width:50px; height:50px;"
-                                         +$" background-color:{Colors.Blue.Darken3};")">
-                            <MudIcon Icon="@Icons.Material.Filled.Book" Style="@($"color:{Colors.Blue.Lighten4};")" />
-                        </MudPaper>
-                    </div>
-                    <MudText Typo="Typo.h6" Class="fw-bold mb-2" Style="@($"color:{Colors.Blue.Darken3};")">
-                        Kho câu hỏi đa dạng
-                    </MudText>
-                    <MudText Typo="Typo.body2" Class="text-secondary" Style="min-height: 48px; display: flex; align-items: center; justify-content: center;">
-                        Hơn 350+ câu hỏi trắc nghiệm chất lượng cao từ nhiều môn học khác nhau.
-                    </MudText>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
 
-        <!-- CARD 2 -->
-        <MudItem xs="12" sm="6" md="4">
-            <MudCard Class="mud-theme-light pa-4 text-center hover-card-scale" Elevation="2">
-                <MudCardContent>
-                    <div class="d-flex justify-content-center mb-3">
-                        <MudPaper Class="pa-3 rounded-circle d-flex align-center justify-center"
-                                  Style="@($"width:50px; height:50px;" 
-                                         + $" background-color:{Colors.Green.Darken3};")">
-                            <MudIcon Icon="@Icons.Material.Filled.Description"
-                                     Style="@($"color:{Colors.Green.Accent2};")"/>
-                        </MudPaper>
-                    </div>
-                    <MudText Typo="Typo.h6"  Style="@($"color:{Colors.Green.Darken2};")" Class="fw-bold mb-2">
-                        Tạo đề thi dễ dàng
-                    </MudText>
-                    <MudText Typo="Typo.body2" Class="text-secondary" Style="min-height: 48px; display: flex; align-items: center; justify-content: center;">
-                        Tạo và quản lý các đề thi với nhiều cấu trúc và mức độ khác nhau.
-                    </MudText>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
+    <!-- CARD 1 -->
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard Class="mud-theme-light pa-4 text-center hover-card-scale" Elevation="2"    
+                 Style="border: 2px solid #dce6ff; border-radius: 12px;">
+            <MudCardContent>
+                <div class="d-flex justify-content-center mb-3">
+                    <MudPaper Class="pa-3 d-flex align-center justify-center"
+                              Style="@($"width:50px; height:50px; background-color:{Colors.Blue.Darken3}; border-radius:12px;")">
+                        <MudIcon Icon="@Icons.Material.Filled.Book" Style="@($"color:{Colors.Blue.Lighten4};")" />
+                    </MudPaper>
+                </div>
+                <MudText Typo="Typo.h6" Class="fw-bold mb-2" Style="@($"color:{Colors.Blue.Darken3};")">
+                    Kho câu hỏi đa dạng
+                </MudText>
+                <MudText Typo="Typo.body2" Class="text-secondary"
+                         Style="min-height: 48px; display: flex; align-items: center; justify-content: center;">
+                    Hơn 350+ câu hỏi trắc nghiệm chất lượng cao từ nhiều môn học khác nhau.
+                </MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
 
-        <!-- CARD 3 -->
-        <MudItem xs="12" sm="6" md="4">
-            <MudCard Class="pa-4 text-center hover-card-scale" Elevation="2">
-                <MudCardContent>
-                    <div class="d-flex justify-content-center mb-3">
-                        <MudPaper Class="pa-3 rounded-circle d-flex align-center justify-content-center" 
-                                  Style="@($"width:50px; height:50px;"
-                                         + $" background-color:{Colors.LightBlue.Lighten1};")">
-                            <MudIcon Icon="@Icons.Material.Filled.Search" Style="@($"color:{Colors.LightBlue.Lighten5};")" />
-                        </MudPaper>
-                    </div>
-                    <MudText Typo="Typo.h6" Style="@($"color:{Colors.LightBlue.Accent3};")" Class="fw-bold mb-2">
-                        Tìm kiếm thông minh
-                    </MudText>
-                    <MudText Typo="Typo.body2" Class="text-secondary" Style="min-height: 48px; display: flex; align-items: center; justify-content: center;">
-                        Dễ dàng tìm kiếm câu hỏi theo nhiều tiêu chí khác nhau.
-                    </MudText>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-    </MudGrid>
+    <!-- CARD 2 -->
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard Class="mud-theme-light pa-4 text-center hover-card-scale" Elevation="2"
+                 Style="border: 2px solid #dce6ff; border-radius: 12px;">
+            <MudCardContent>
+                <div class="d-flex justify-content-center mb-3">
+                    <MudPaper Class="pa-3 d-flex align-center justify-center"
+                              Style="@($"width:50px; height:50px; background-color:{Colors.Green.Darken3}; border-radius:12px;")">
+                        <MudIcon Icon="@Icons.Material.Filled.Description" Style="@($"color:{Colors.Green.Accent2};")" />
+                    </MudPaper>
+                </div>
+                <MudText Typo="Typo.h6" Style="@($"color:{Colors.Green.Darken2};")" Class="fw-bold mb-2">
+                    Tạo đề thi dễ dàng
+                </MudText>
+                <MudText Typo="Typo.body2" Class="text-secondary"
+                         Style="min-height: 48px; display: flex; align-items: center; justify-content: center;">
+                    Tạo và quản lý các đề thi với nhiều cấu trúc và mức độ khác nhau.
+                </MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+    <!-- CARD 3 -->
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard Class="pa-4 text-center hover-card-scale" Elevation="2"
+                 Style="border: 2px solid #dce6ff; border-radius: 12px;">
+            <MudCardContent>
+                <div class="d-flex justify-content-center mb-3">
+                    <MudPaper Class="pa-3 d-flex align-center justify-center"
+                              Style="@($"width:50px; height:50px; background-color:{Colors.LightBlue.Lighten1}; border-radius:12px;")">
+                        <MudIcon Icon="@Icons.Material.Filled.Search" Style="@($"color:{Colors.LightBlue.Lighten5};")" />
+                    </MudPaper>
+                </div>
+                <MudText Typo="Typo.h6" Style="@($"color:{Colors.LightBlue.Accent3};")" Class="fw-bold mb-2">
+                    Tìm kiếm thông minh
+                </MudText>
+                <MudText Typo="Typo.body2" Class="text-secondary"
+                         Style="min-height: 48px; display: flex; align-items: center; justify-content: center;">
+                    Dễ dàng tìm kiếm câu hỏi theo nhiều tiêu chí khác nhau.
+                </MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+</MudGrid>
+
 
     <!-- Bắt đầu sử dụng và Công cụ chính -->
     <MudGrid Justify="Justify.Center" Spacing="4" Class="mb-8">

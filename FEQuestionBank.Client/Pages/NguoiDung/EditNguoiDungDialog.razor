@@ -1,0 +1,91 @@
+﻿@using BEQuestionBank.Shared.DTOs.user
+@using BeQuestionBank.Shared.Enums
+@using MudBlazor
+
+<MudDialog FullWidth="true">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@DialogTitle</MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <MudTextField Label="Tên Đăng Nhập"
+                      @bind-Value="NguoiDung.TenDangNhap"
+                      Required="true"
+                      Variant="Variant.Outlined" />
+
+        @if (NguoiDung.MaNguoiDung == Guid.Empty)
+        {
+            <MudTextField Label="Mật Khẩu"
+                          @bind-Value="NguoiDung.MatKhau"
+                          Required="true"
+                          InputType="InputType.Password"
+                          Variant="Variant.Outlined" />
+        }
+        else
+        {
+            <MudTextField Label="Mật Khẩu Mới (để trống nếu không đổi)"
+                          @bind-Value="NguoiDung.MatKhau"
+                          InputType="InputType.Password"
+                          Variant="Variant.Outlined" />
+        }
+
+        <MudTextField Label="Họ Tên"
+                      @bind-Value="NguoiDung.HoTen"
+                      Required="true"
+                      Variant="Variant.Outlined" />
+
+        <MudTextField Label="Email"
+                      @bind-Value="NguoiDung.Email"
+                      Required="true"
+                      Variant="Variant.Outlined" />
+
+        <!-- ✅ Phải thêm T="EnumRole" và dùng @EnumRole.Admin -->
+        <MudSelect T="EnumRole"
+                   Label="Vai Trò"
+                   @bind-Value="NguoiDung.VaiTro"
+                   Variant="Variant.Outlined">
+            <MudSelectItem Value="@EnumRole.Admin">Admin</MudSelectItem>
+            <MudSelectItem Value="@EnumRole.User">User</MudSelectItem>
+        </MudSelect>
+
+        <!-- ✅ MudSwitch cần chỉ rõ T="bool" -->
+        <MudSwitch T="bool"
+                   @bind-Checked="NguoiDung.BiKhoa"
+                   Label="Khóa tài khoản"
+                   Color="Color.Error" />
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel"
+                   Color="Color.Secondary"
+                   Variant="Variant.Text">
+            Hủy
+        </MudButton>
+
+        <!-- ✅ Disabled cần bọc điều kiện trong @() -->
+        <MudButton OnClick="Submit"
+                   Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   Disabled="@(
+                       string.IsNullOrWhiteSpace(NguoiDung.TenDangNhap)
+                       || string.IsNullOrWhiteSpace(NguoiDung.HoTen)
+                   )">
+            Lưu
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public NguoiDungDto NguoiDung { get; set; } = new();
+    [Parameter] public string DialogTitle { get; set; } = "Chỉnh sửa";
+    [Parameter] public EventCallback<NguoiDungDto> OnSave { get; set; }
+
+    private async Task Submit()
+    {
+        await OnSave.InvokeAsync(NguoiDung);
+        MudDialog.Close(DialogResult.Ok(NguoiDung));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

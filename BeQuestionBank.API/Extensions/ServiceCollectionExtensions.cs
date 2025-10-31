@@ -1,6 +1,7 @@
 ﻿using BeQuestionBank.Domain.Interfaces.IRepositories;
 using BEQuestionBank.Core.Repositories;
 using BEQuestionBank.Core.Services;
+using BEQuestionBank.Domain.Interfaces.Repo;
 
 namespace BeQuestionBank.API.Extensions;
 
@@ -29,6 +30,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IYeuCauRutTrichRepository,YeuCauRutTrichRepository>();
         services.AddScoped<CauHoiRepository>();
         services.AddScoped<ICauHoiRepository,CauHoiRepository>();
+        
+        //nguoidung
+        services.AddScoped<NguoiDungService>();
+        services.AddScoped<INguoiDungRepository,NguoiDungRepository>();
+
        
         return services;
     }

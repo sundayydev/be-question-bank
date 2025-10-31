@@ -1,0 +1,77 @@
+﻿@using BEQuestionBank.Shared.DTOs.user
+@using BeQuestionBank.Shared.Enums
+@using MudBlazor
+
+<MudDialog MaxWidth="MaxWidth.Medium" FullWidth="true">
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="font-weight-bold mb-2">
+            Chi tiết Người Dùng
+        </MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <MudGrid Class="p-3" Spacing="2">
+            <MudItem xs="12" sm="6">
+                <MudTextField Label="Họ Tên" 
+                              Value="@NguoiDung.HoTen" 
+                              ReadOnly="true" 
+                              Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudTextField Label="Tên Đăng Nhập" 
+                              Value="@NguoiDung.TenDangNhap" 
+                              ReadOnly="true" 
+                              Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudTextField Label="Email" 
+                              Value="@NguoiDung.Email" 
+                              ReadOnly="true" 
+                              Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudTextField Label="Vai Trò" 
+                              Value="@((NguoiDung.VaiTro == EnumRole.Admin) ? "Admin" : "User")" 
+                              ReadOnly="true" 
+                              Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudTextField Label="Trạng Thái" 
+                              Value="@(NguoiDung.BiKhoa ? "Đã khóa" : "Hoạt động")" 
+                              ReadOnly="true" 
+                              Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudTextField Label="Ngày Tạo" 
+                              Value="@NguoiDung.NgayTao.ToString("dd/MM/yyyy HH:mm")" 
+                              ReadOnly="true" 
+                              Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudTextField Label="Đăng Nhập Cuối" 
+                              Value="@NguoiDung.NgayDangNhapCuoi?.ToString("dd/MM/yyyy HH:mm")" 
+                              ReadOnly="true" 
+                              Variant="Variant.Outlined" />
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel" Color="Color.Secondary" Variant="Variant.Filled">
+            Đóng
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public NguoiDungDto NguoiDung { get; set; } = new();
+
+    private void Cancel() => MudDialog.Cancel();
+}
