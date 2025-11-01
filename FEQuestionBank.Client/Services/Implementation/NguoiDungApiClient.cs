@@ -3,6 +3,7 @@ using BeQuestionBank.Shared.DTOs.Pagination;
 
 using System.Net.Http.Json;
 using System.Web;
+using BeQuestionBank.Shared.DTOs.user;
 using BEQuestionBank.Shared.DTOs.user;
 
 namespace FEQuestionBank.Client.Services;
@@ -50,5 +51,22 @@ public class NguoiDungApiClient : BaseApiClient, INguoiDungApiClient
         var res = await _httpClient.PatchAsync($"api/NguoiDung/{id}/MoKhoa", null);
         return await res.Content.ReadFromJsonAsync<ApiResponse<string>>()
                ?? new ApiResponse<string>(500, "Lỗi khi mở khóa tài khoản");
+    }
+    public async Task<ApiResponse<ImportResultDto>> ImportUsersAsync(MultipartFormDataContent content)
+    {
+        var response = await _httpClient.PostAsync("api/NguoiDung/Import", content);
+
+        // Đảm bảo HTTP thành công (200-299)
+        if (!response.IsSuccessStatusCode)
+        {
+            return new ApiResponse<ImportResultDto>(
+                (int)response.StatusCode,
+                await response.Content.ReadAsStringAsync()
+            );
+        }
+
+        // Đọc JSON → ApiResponse<ImportResultDto>
+        return await response.Content.ReadFromJsonAsync<ApiResponse<ImportResultDto>>()
+               ?? new ApiResponse<ImportResultDto>(500, "Lỗi deserialize response");
     }
 }

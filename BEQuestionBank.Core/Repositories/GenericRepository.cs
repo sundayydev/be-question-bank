@@ -64,5 +64,10 @@ namespace BEQuestionBank.Core.Repositories
         {
             return await _context.Database.BeginTransactionAsync();
         }
+        public async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _context.Set<T>().AnyAsync(predicate);
+        }
+
     }
 }

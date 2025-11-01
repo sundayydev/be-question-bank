@@ -34,5 +34,11 @@ namespace BeQuestionBank.Shared.DTOs.Common
 
         public static ApiResponse<object> ServerError(string message = "Lỗi hệ thống")
             => new ApiResponse<object>(HttpStatusCodes.InternalServerError, message);
+        
+        public static ApiResponse<object> ServerErrorOb(string message = "Lỗi hệ thống", object? errors = null)
+            => new ApiResponse<object>(HttpStatusCodes.InternalServerError, message, null, errors);
+
+        public static ApiResponse<T> BadRequest<T>(T data, string message = "Yêu cầu không hợp lệ", object? errors = null)
+            => new ApiResponse<T>(HttpStatusCodes.BadRequest, message, data, errors);
     }
 }

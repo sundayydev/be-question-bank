@@ -4,35 +4,35 @@
 @inherits NguoiDungBase
 @inject ISnackbar Snackbar
 
-<MudGrid Spacing="3" Style="padding: 15px ; margin-top: 5px">
-    <MudItem xs="12" sm="6" md="4">
-        <InfoCard 
-            Icon="@Icons.Material.Filled.People"
-            IconColor="Color.Primary"
-            Title="Tổng số người dùng"
-            Value="256" />
-    </MudItem>
-
-    <MudItem xs="12" sm="6" md="4">
-        <InfoCard 
-            Icon="@Icons.Material.Filled.Assignment"
-            IconColor="Color.Success"
-            Title="Tổng số bài thi"
-            Value="42" />
-    </MudItem>
-
-    <MudItem xs="12" sm="6" md="4">
-        <InfoCard 
-            Icon="@Icons.Material.Filled.CloudUpload"
-            IconColor="Color.Info"
-            Title="File đã tải lên"
-            Value="1,024"
-            BackgroundColor="#f5f9ff" />
-    </MudItem>
-</MudGrid>
-<MudPaper Style="min-height:600px; width: 100%; padding: 30px">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8 mb-8">
     <MudText Typo="Typo.h4" Class="mb-6">Danh sách Người Dùng</MudText>
+    <MudGrid Spacing="3" Style="margin-top: 5px; margin-bottom: 10px">
+        <MudItem xs="12" sm="6" md="4">
+            <InfoCard
+                Icon="@Icons.Material.Filled.People"
+                IconColor="Color.Primary"
+                Title="Tổng số người dùng"
+                Value="@TotalUsers.ToString()"/>
+        </MudItem>
 
+        <MudItem xs="12" sm="6" md="4">
+            <InfoCard
+                Icon="@Icons.Material.Filled.Assignment"
+                IconColor="Color.Success"
+                Title="Người dùng hoạt động"
+                Value="@ActiveUsers.ToString()"/>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <InfoCard
+                Icon="@Icons.Material.Filled.CloudUpload"
+                IconColor="Color.Info"
+                Title="Người dùng bị khóa"
+                Value="@LockedUsers.ToString()"
+                BackgroundColor="#f5f9ff"/>
+        </MudItem>
+    </MudGrid>
+    
     <!-- Tìm kiếm + Tạo mới -->
     <div class="row mb-3 g-2 align-items-center">
         <div class="col">
@@ -56,7 +56,8 @@
         <div class="col-auto">
             <MudButton Variant="Variant.Filled"
                        StartIcon="@Icons.Material.Filled.Add"
-                       Style="@($"background-color:{Colors.Blue.Darken2}; color:white; border-radius:10px; padding:6px 16px;")"
+                       Style="@($"background-color:{Colors.Blue.Darken2}; " +
+                              $"color:white; border-radius:10px; padding:6px 16px;")"
                        OnClick="OnCreateNew">
                 Tạo mới
             </MudButton>
@@ -88,17 +89,33 @@
             <MudTd>@context.TenDangNhap</MudTd>
             <MudTd>@context.Email</MudTd>
             <MudTd Style="text-align:center;">
-                <MudChip T="string" Color="@(context.VaiTro == EnumRole.Admin ? Color.Primary : Color.Secondary)"
-                         Size="Size.Small">
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Style="@(
+                                context.VaiTro == EnumRole.Admin
+                                    ? $"background-color:{Colors.Blue.Lighten4}; color:{Colors.Blue.Darken3};" +
+                                      $" font-weight:400; width:60px "
+                                    : $"background-color:{Colors.Orange.Lighten4}; color:{Colors.Orange.Darken3};" +
+                                      $" font-weight:400; width:60px"
+                                )">
                     @(context.VaiTro == EnumRole.Admin ? "Admin" : "User")
                 </MudChip>
+
             </MudTd>
 
             <MudTd Style="text-align:center;">
-                <MudChip T="string" Color="@(context.BiKhoa ? Color.Error : Color.Success)"
-                         Size="Size.Small">
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Style="@(
+                                context.BiKhoa
+                                    ? $"background-color:{Colors.Red.Lighten4}; color:{Colors.Red.Darken3}; " +
+                                      $"font-weight:400; width:80px"
+                                    : $"background-color:{Colors.Green.Lighten4}; color:{Colors.Green.Darken3};" +
+                                      $" font-weight:400; width:80px"
+                                )">
                     @(context.BiKhoa ? "Đã khóa" : "Hoạt động")
                 </MudChip>
+
             </MudTd>
             <MudTd Style="text-align:center;">
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Style="@($"color:{Colors.Blue.Darken2};")" Size="Size.Small" Class="mx-1" OnClick="() => OnEdit(context)" />
@@ -124,4 +141,5 @@
                            InfoFormat="Hiển thị {first_item}-{last_item} của {all_items} mục" />
         </PagerContent>
     </MudTable>
-</MudPaper>
+
+</MudContainer>

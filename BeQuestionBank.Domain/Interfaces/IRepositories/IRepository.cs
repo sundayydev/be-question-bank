@@ -18,4 +18,5 @@ public interface IRepository<T> where T : class
     Task UpdateAsync(T entity);
     Task DeleteAsync(T entity);
     Task<IDbContextTransaction> BeginTransactionAsync();
+    Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate);
 }

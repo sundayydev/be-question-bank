@@ -67,13 +67,15 @@
             <MudTd>@GetKhoaName(context.MaKhoa)</MudTd>
             <MudTd Style="text-align:center;">
                 <MudChip T="string"
-                         Variant="Variant.Filled"
+                         Size="Size.Small"
                          Style="@(
                                 context.XoaTam == true 
-                                    ? $"background-color:{Colors.Red.Lighten4}; color:{Colors.Red.Darken3}; font-weight:400;"
-                                    : $"background-color:{Colors.Green.Lighten4}; color:{Colors.Green.Darken3}; font-weight:400;"
+                                    ? $"background-color:{Colors.Red.Lighten4}; color:{Colors.Red.Darken3}; " +
+                                      $"font-weight:400; width:80px"
+                                    : $"background-color:{Colors.Green.Lighten4}; color:{Colors.Green.Darken3};" +
+                                      $" font-weight:400; width:80px"
                                 )">
-                    @(context.XoaTam == true ? "Đã xóa tạm" : "Hoạt động")
+                    @(context.XoaTam == true  ? "Đã khóa" : "Hoạt động")
                 </MudChip>
             </MudTd>
 
