@@ -1,4 +1,5 @@
-﻿using BeQuestionBank.Domain.Interfaces.IRepositories;
+﻿using BEQuestionBank.Core.Helpers;
+using BeQuestionBank.Domain.Interfaces.IRepositories;
 using BEQuestionBank.Core.Repositories;
 using BEQuestionBank.Core.Services;
 using BEQuestionBank.Domain.Interfaces.Repo;
@@ -35,6 +36,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<NguoiDungService>();
         services.AddScoped<INguoiDungRepository,NguoiDungRepository>();
 
+        services.AddScoped<JwtHelper>();
+        services.AddScoped<RedisService>();
+        services.AddScoped<AuthService>();
        
         return services;
     }

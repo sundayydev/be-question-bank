@@ -5,46 +5,61 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
+using StackExchange.Redis;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+var configuration = builder.Configuration;
 
-// Add services to the container.
+// ----------------------------
+// 1️⃣ Serilog Logging
+// ----------------------------
+builder.Host.UseSerilog((ctx, lc) =>
+    lc.ReadFrom.Configuration(ctx.Configuration));
+
+// ----------------------------
+// 2️⃣ Add services
+// ----------------------------
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
-}); //Cần có để Swagger hiển thị API
-builder.Services.AddEndpointsApiExplorer(); //Cho minimal APIs
-builder.Services.AddSwaggerGen(); //Cấu hình Swagger
-
-// Add DbContext
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("PostgresConnection"),
-        x => x.MigrationsAssembly("BEQuestionBank.Core") // 👈 Thêm dòng này
-    ));
-
-// Cấu hình CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:5273") //Đúng port React
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials(); //nếu dùng cookie hoặc auth
-        });
 });
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-// Cấu hình JWT Authentication
-var key = builder.Configuration["Jwt:Key"];
-if (string.IsNullOrEmpty(key))
+// ----------------------------
+// 3️⃣ Database: PostgreSQL
+// ----------------------------
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(
+        configuration.GetConnectionString("PostgresConnection"),
+        x => x.MigrationsAssembly("BEQuestionBank.Core")
+    ));
+
+// ----------------------------
+// 4️⃣ CORS cho frontend
+// ----------------------------
+builder.Services.AddCors(options =>
 {
-    throw new InvalidOperationException("JWT Key is missing in configuration.");
-}
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5273")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
+// ----------------------------
+// 5️⃣ JWT Authentication
+// ----------------------------
+var jwtSettings = configuration.GetSection("JwtSettings");
+var secretKey = jwtSettings["SecretKey"];
+
+if (string.IsNullOrEmpty(secretKey))
+    throw new InvalidOperationException("JwtSettings:SecretKey is missing in configuration.");
 
 builder.Services.AddAuthentication(options =>
 {
@@ -59,26 +74,51 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
     };
 });
 
-builder.Services.AddSingleton<string>(provider => "wwwroot/uploads");
+// ----------------------------
+// 6️⃣ Cấu hình Redis Cloud
+// ----------------------------
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var redisConfig = builder.Configuration.GetSection("Redis");
+    var connString =
+        $"{redisConfig["Host"]}:{redisConfig["Port"]},user={redisConfig["User"]},password={redisConfig["Password"]},ssl=True,abortConnect=False";
+    return ConnectionMultiplexer.Connect(connString);
+});
 
 
-// Gọi extension từ Core
+// Service Redis custom của bạn
+builder.Services.AddSingleton<RedisService>();
+
+// Nếu dùng cache phân tán
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    var redisConfig = configuration.GetSection("Redis");
+    options.Configuration = $"{redisConfig["Host"]}:{redisConfig["Port"]},password={redisConfig["Password"]},user={redisConfig["User"]},ssl={redisConfig["Ssl"]}";
+    options.InstanceName = "BeQuestionBank_";
+});
+
+// ----------------------------
+// 7️⃣ Core services + uploads
+// ----------------------------
 builder.Services.AddCoreServices();
+builder.Services.AddSingleton<string>(_ => "wwwroot/uploads");
 
-// Bật annotation Swagger
+// ----------------------------
+// 8️⃣ Swagger + JWT
+// ----------------------------
 builder.Services.AddSwaggerGen(c =>
 {
     c.EnableAnnotations();
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Please enter JWT with Bearer into field",
+        Description = "Nhập JWT token (Bearer {token})",
         Name = "Authorization",
         Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
         Scheme = "Bearer"
@@ -99,39 +139,26 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Đọc cấu hình từ appsettings.json (nếu có)
-//Log.Logger = new LoggerConfiguration()
-//    .ReadFrom.Configuration(builder.Configuration)
-//    .WriteTo.Seq("http://localhost:5341")
-//    .Enrich.FromLogContext()
-//    .WriteTo.Console()
-//    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
-//    .CreateLogger();
-
-// Thay logger mặc định của ASP.NET Core bằng Serilog
-builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
-
-builder.Services.AddOpenApi();
-
+// ----------------------------
+// 9️⃣ Build app
+// ----------------------------
 var app = builder.Build();
 
-// Thêm middleware custom
+// Middleware custom
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
 
-// Configure the HTTP request pipeline.
+// Swagger
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger(); // ✅ Bắt buộc
-    app.UseSwaggerUI(); // ✅ Bắt buộc
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseCors("AllowFrontend");
-
 app.UseHttpsRedirection();
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.MapControllers();
