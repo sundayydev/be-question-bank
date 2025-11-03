@@ -1,11 +1,15 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
 
 <MudLayout>
-    <!-- Header -->
-    <Header OnMenuClick="ToggleDrawer" />
+    @if (!HideLayout)
+    {
+        <!-- Header -->
+        <Header OnMenuClick="ToggleDrawer" />
 
-    <!-- Sidebar -->
-    <Sidebar Open="_drawerOpen" />
+        <!-- Sidebar -->
+        <Sidebar Open="_drawerOpen" />
+    }
 
     <!-- Nội dung chính -->
     <MudMainContent>
@@ -19,6 +23,19 @@
     private void ToggleDrawer()
     {
         _drawerOpen = !_drawerOpen;
-        StateHasChanged(); // Đảm bảo giao diện cập nhật
+        StateHasChanged();
+    }
+
+    private bool HideLayout => ShouldHideLayout();
+
+    private bool ShouldHideLayout()
+    {
+        // Lấy đường dẫn hiện tại, loại bỏ domain
+        var relativePath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri).ToLower();
+
+        // Danh sách các route muốn ẩn Header + Sidebar
+        var hiddenPages = new[] { "login", "register", "forgot-password" };
+
+        return hiddenPages.Any(p => relativePath.StartsWith(p));
     }
 }

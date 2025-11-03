@@ -83,11 +83,16 @@ builder.Services.AddAuthentication(options =>
 // ----------------------------
 // 6️⃣ Cấu hình Redis Cloud
 // ----------------------------
+// builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+// {
+//     var redisConfig = builder.Configuration.GetSection("Redis");
+//     var connString =
+//         $"{redisConfig["Host"]}:{redisConfig["Port"]},user={redisConfig["User"]},password={redisConfig["Password"]},ssl=True,abortConnect=False";
+//     return ConnectionMultiplexer.Connect(connString);
+// });
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
-    var redisConfig = builder.Configuration.GetSection("Redis");
-    var connString =
-        $"{redisConfig["Host"]}:{redisConfig["Port"]},user={redisConfig["User"]},password={redisConfig["Password"]},ssl=True,abortConnect=False";
+    var connString = configuration.GetConnectionString("Redis");
     return ConnectionMultiplexer.Connect(connString);
 });
 

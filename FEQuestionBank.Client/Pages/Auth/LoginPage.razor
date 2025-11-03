@@ -1,0 +1,73 @@
+﻿@page "/login"
+@using MudBlazor
+@inject NavigationManager NavigationManager
+@inherits LoginBase
+
+<div class="login-page">
+    <!-- Background Image -->
+    <div class="login-bg"></div>
+    <!-- Login Card -->
+    <MudPaper Class="login-card pa-6" Elevation="12">
+        <div class="d-flex flex-column align-center">
+            <!-- Logo + Title -->
+            <MudImage Src="images/LogoHutechFull.png" Alt="HUTECH Logo"  Height="90" />
+            <MudText Typo="Typo.h6" Class="mt-3 mb-2">HUTECH ID SSO</MudText>
+            <MudText Typo="Typo.body2" Class="text-center mb-6">
+                Chào mừng trở lại, Đăng nhập để tiếp tục truy cập
+            </MudText>
+
+            <!-- Form -->
+            <MudForm @ref="Form" OnValidSubmit="HandleValidSubmit" OnInvalidSubmit="HandleInvalidSubmit" Class="w-100">
+                <MudTextField @bind-Value="Username"
+                              Label="Tài khoản của bạn"
+                              Variant="Variant.Outlined"
+                              Class="mb-4"
+                              Style="background: white;" />
+
+                <MudTextField @bind-Value="Password"
+                              Label="Mật khẩu của bạn"
+                              Variant="Variant.Outlined"
+                              InputType="@PasswordInputType"
+                              Class="mb-2"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@PasswordIcon"
+                              OnAdornmentClick="@TogglePasswordVisibility"
+                              Style="background: white;" />
+                
+                <div class="d-flex justify-end mb-4">
+                    <MudLink Href="#" Color="Color.Primary" Typo="Typo.body2">Quên mật khẩu?</MudLink>
+                </div>
+
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           FullWidth="true"
+                           Size="Size.Large"
+                           Disabled="@IsSubmitting"
+                           Class="mb-4 login-btn">
+                    @if (IsSubmitting)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    }
+                    Đăng nhập
+                </MudButton>
+            </MudForm>
+
+            <!-- Footer -->
+            <MudText Typo="Typo.caption" Align="Align.Center" >
+                Version 3.4.31 <br />
+                © 2012 - 2025. Bản quyền của HUTECH
+            </MudText>
+        </div>
+    </MudPaper>
+</div>
+
+<style>
+    /* Reset margin & full height */
+    html, body, #app, .mud-main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 100% !important;
+        overflow: hidden;
+    }
+</style>

@@ -14,15 +14,18 @@ public class AuthService
     private readonly INguoiDungRepository _nguoiDungRepo;
     private readonly JwtHelper _jwt;
     private readonly IConfiguration _config;
+    private readonly RedisService _redis;
 
     public AuthService(
         INguoiDungRepository nguoiDungRepo,
         JwtHelper jwt,
-        IConfiguration config)
+        IConfiguration config,
+        RedisService redis)
     {
         _nguoiDungRepo = nguoiDungRepo;
         _jwt = jwt;
         _config = config;
+        _redis = redis;
     }
 
     public async Task<TokenResponse?> LoginAsync(LoginDto request)
@@ -37,6 +40,11 @@ public class AuthService
         var role = user.VaiTro == EnumRole.Admin ? "Admin" : "User";
         var accessToken = _jwt.GenerateAccessToken(user.MaNguoiDung.ToString(), user.TenDangNhap, role);
         var refreshToken = GenerateRefreshToken();
+        //  TTL cho refresh token
+        var refreshDays = int.Parse(_config["JwtSettings:RefreshTokenExpireDays"] ?? "7");
+        var expiry = TimeSpan.FromDays(refreshDays);
+        
+        await _redis.SetRefreshTokenAsync(user.MaNguoiDung.ToString(), refreshToken, expiry);
 
         // Cập nhật thời gian đăng nhập cuối
         user.NgayDangNhapCuoi = DateTime.UtcNow;
@@ -52,7 +60,6 @@ public class AuthService
 
     public async Task<TokenResponse?> RefreshTokenAsync(RefreshRequest request)
     {
-        // Chỉ cần validate JWT refresh token nếu bạn mã hoá nó theo chuẩn
         var principal = _jwt.GetPrincipalFromExpiredToken(request.RefreshToken);
         if (principal == null) return null;
 
@@ -62,9 +69,18 @@ public class AuthService
         var user = await _nguoiDungRepo.GetByIdAsync(Guid.Parse(userId));
         if (user == null || user.BiKhoa) return null;
 
+        //  Kiểm tra token trong Redis
+        var savedToken = await _redis.GetRefreshTokenAsync(userId);
+        if (savedToken != request.RefreshToken)
+            return null; // Refresh token không khớp → từ chối
+
         var role = user.VaiTro == EnumRole.Admin ? "Admin" : "User";
         var newAccessToken = _jwt.GenerateAccessToken(user.MaNguoiDung.ToString(), user.TenDangNhap, role);
         var newRefreshToken = GenerateRefreshToken();
+
+        // 🔁 Ghi đè refresh token mới trong Redis
+        var refreshDays = int.Parse(_config["JwtSettings:RefreshTokenExpireDays"] ?? "7");
+        await _redis.SetRefreshTokenAsync(userId, newRefreshToken, TimeSpan.FromDays(refreshDays));
 
         return new TokenResponse
         {
@@ -74,10 +90,12 @@ public class AuthService
         };
     }
 
-    public Task<bool> LogoutAsync(string userId)
+
+    public async  Task<bool> LogoutAsync(string userId)
     {
         // Nếu không lưu refresh token, logout chỉ là thao tác client-side
-        return Task.FromResult(true);
+        return await _redis.RevokeTokenAsync(userId);
+       // return Task.FromResult(true);
     }
 
     public async Task<NguoiDung?> RegisterAsync(RegisterDto request)
