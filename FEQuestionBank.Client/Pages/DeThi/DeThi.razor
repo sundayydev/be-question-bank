@@ -1,0 +1,107 @@
+﻿@page "/dethi"
+@using BEQuestionBank.Shared.DTOs.DeThi
+@inherits DeThiBase
+@inject ISnackbar Snackbar
+@inject NavigationManager Nav
+
+<MudPaper Style="min-height:600px; width: 100%; padding: 30px">
+    <!-- Ô tìm kiếm + nút tạo mới -->
+    <div class="row mb-3 g-2 align-items-center">
+        <!-- Ô tìm kiếm -->
+        <div class="col">
+            <div class="input-group align-items-center custom-input-group">
+                <span class="input-group-text bg-light"
+                      style="border-radius: 10px 0 0 10px; border: 1px solid #ced4da; border-right: none;">
+                    <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Medium"
+                             Style="@($"color:{Colors.Blue.Darken3};")" />
+                </span>
+
+                <div class="flex-grow-1">
+                    <MudTextField @bind-Value="_searchTerm"
+                                  Placeholder="Tìm theo tên đề thi..."
+                                  Variant="Variant.Text"
+                                  Immediate="true"
+                                  OnKeyDown="@(e => { if (e.Key == "Enter") table?.ReloadServerData(); })"
+                                  Class="shadow-none"
+                                  Style="border-radius: 0 10px 10px 0; height:42px; padding-left:10px;" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Nút tạo mới -->
+        <div class="col-auto">
+            <MudButton Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       Style="@($"background-color:{Colors.Blue.Darken2}; color:white; border-radius:10px; padding:6px 16px;")"
+                       OnClick="OnCreateNew">
+                Tạo mới
+            </MudButton>
+        </div>
+    </div>
+
+    <!-- Bảng dữ liệu -->
+    <MudTable T="DeThiDto"
+              ServerData="LoadServerData"
+              Bordered="true"
+              Hover="true"
+              Striped="true"
+              Dense="false"
+              RowsPerPage="10"
+              PageSizeOptions="new int[] {10,20,50}"
+              Class="w-full text-base"
+              @ref="table">
+
+        <HeaderContent>
+            <MudTh Style="width:25%;"><MudTableSortLabel T="DeThiDto" SortBy="x => x.TenDeThi">Tên Đề Thi</MudTableSortLabel></MudTh>
+            <MudTh Style="width:15%;"><MudTableSortLabel T="DeThiDto" SortBy="x => x.SoCauHoi">Số Câu Hỏi</MudTableSortLabel></MudTh>
+            <MudTh Style="width:15%;"><MudTableSortLabel T="DeThiDto" SortBy="x => x.DaDuyet">Trạng Thái</MudTableSortLabel></MudTh>
+            <MudTh Style="width:20%;"><MudTableSortLabel T="DeThiDto" SortBy="x => x.NgayTao">Ngày Tạo</MudTableSortLabel></MudTh>
+            <MudTh Style="width:25%; text-align:center;">Thao Tác</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd Style="width:25%;">@context.TenDeThi</MudTd>
+            <MudTd Style="width:15%;">@context.SoCauHoi</MudTd>
+            <MudTd Style="width:15%;">
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Style="@(
+                            context.DaDuyet ==true
+                                ? $"background-color:{Colors.Red.Lighten4}; color:{Colors.Red.Darken3}; font-weight:500; width:90px;"
+                                : $"background-color:{Colors.Green.Lighten4}; color:{Colors.Green.Darken3}; font-weight:500; width:90px;"
+                            )">
+                    @(context.DaDuyet==true ? "Đã khóa" : "Hoạt động")
+                </MudChip>
+            </MudTd>
+            <MudTd Style="width:20%;">@context.NgayTao.ToString("dd/MM/yyyy HH:mm")</MudTd>
+            <MudTd Style="width:25%; text-align:center;">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Class="mx-1"
+                               Style="@($"color:{Colors.Blue.Darken2};")"
+                               OnClick="() => OnEdit(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" 
+                               Size="Size.Small" 
+                               Class="mx-1"
+                               Style="@($"color:{Colors.Yellow.Darken2};")"
+                               OnClick="@(() => Nav.NavigateTo($"/dethi/{context.MaDeThi}"))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Class="mx-1"
+                               Color="Color.Error"
+                               OnClick="() => OnConfirmDelete(context)" />
+                
+            </MudTd>
+        </RowTemplate>
+
+        <NoRecordsContent>
+            <MudText>Không tìm thấy đề thi nào</MudText>
+        </NoRecordsContent>
+
+        <LoadingContent>
+            <MudText>Đang tải dữ liệu...</MudText>
+        </LoadingContent>
+
+        <PagerContent>
+            <MudTablePager 
+                RowsPerPageString="Hàng mỗi trang"
+                InfoFormat="Hiển thị {first_item}-{last_item} của {all_items} mục" />
+        </PagerContent>
+    </MudTable>
+</MudPaper>

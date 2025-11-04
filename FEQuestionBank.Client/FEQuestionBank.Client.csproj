@@ -8,6 +8,7 @@
 
     <ItemGroup>
         <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="9.0.10" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.9" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.9" PrivateAssets="all" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0-rc.2.25502.107" />
@@ -16,5 +17,9 @@
 
     <ItemGroup>
       <ProjectReference Include="..\BeQuestionBank.Shared\BeQuestionBank.Shared.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Auth\" />
     </ItemGroup>
 </Project>

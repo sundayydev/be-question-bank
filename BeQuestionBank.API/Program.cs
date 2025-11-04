@@ -45,12 +45,16 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5273")
+        policy.WithOrigins(
+                "http://localhost:5273",
+                "http://localhost:5173" // thêm origin này nữa
+            )
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
     });
 });
+
 
 // ----------------------------
 // 5️⃣ JWT Authentication

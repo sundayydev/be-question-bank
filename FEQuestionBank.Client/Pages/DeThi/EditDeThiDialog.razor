@@ -1,0 +1,118 @@
+﻿@using BEQuestionBank.Shared.DTOs.DeThi
+@using BeQuestionBank.Shared.DTOs.MonHoc
+@using MudBlazor
+
+<MudDialog FullWidth="true">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@_dialogTitle</MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <MudTextField Label="Tên Đề Thi" 
+                      @bind-Value="DeThi.TenDeThi" 
+                      Variant="Variant.Outlined"
+                      Required="true"
+                      ErrorText="Tên đề thi là bắt buộc" />
+
+        <MudSelect Label="Môn Học" 
+                   @bind-Value="DeThi.MaMonHoc" 
+                   Variant="Variant.Outlined"
+                   Required="true"
+                   ErrorText="Môn học là bắt buộc">
+            @foreach (var mon in MonHocs)
+            {
+                <MudSelectItem Value="@mon.MaMonHoc">
+                    @mon.TenMonHoc (@mon.MaSoMonHoc)
+                </MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudTextField Label="Tên Môn Học" 
+                      Value="@(MonHocs.FirstOrDefault(m => m.MaMonHoc == DeThi.MaMonHoc)?.TenMonHoc)" 
+                      Variant="Variant.Outlined"
+                      ReadOnly="true"
+                      Class="mt-3" />
+
+        <MudTextField Label="Số Câu Hỏi" 
+                      @bind-Value="DeThi.SoCauHoi" 
+                      Variant="Variant.Outlined"
+                      Type="number"
+                      Min="1"
+                      Class="mt-3" />
+
+        <MudCheckBox  T="bool" @bind-Checked="DeThi.DaDuyet" 
+                     Label="Đã Duyệt" 
+                     Color="Color.Success"
+                     Class="mt-3" />
+
+        <MudTextField Label="Ngày Tạo" 
+                      Value="@DeThi.NgayTao.ToString("dd/MM/yyyy HH:mm")" 
+                      Variant="Variant.Outlined"
+                      ReadOnly="true"
+                      Class="mt-3" />
+
+        <MudTextField Label="Ngày Cập Nhật" 
+                      @bind-Value="DeThi.NgayCapNhap" 
+                      Variant="Variant.Outlined"
+                      Type="datetime-local"
+                      Class="mt-3" />
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel" Color="Color.Secondary" Variant="Variant.Text">
+            Đóng
+        </MudButton>
+        <MudButton OnClick="Submit" 
+                   Color="Color.Primary" 
+                   Variant="Variant.Filled"
+                   Disabled="@(!IsValid)">
+            Lưu
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public DeThiDto DeThi { get; set; } = new();
+    [Parameter] public string DialogTitle { get; set; } = string.Empty;
+    [Parameter] public List<MonHocDto> MonHocs { get; set; } = new();
+    [Parameter] public EventCallback<DeThiDto> OnSave { get; set; }
+
+    private string _dialogTitle = string.Empty;
+
+    private bool IsValid =>
+        !string.IsNullOrWhiteSpace(DeThi.TenDeThi) &&
+        DeThi.MaMonHoc != Guid.Empty &&
+        DeThi.SoCauHoi > 0;
+
+    protected override void OnParametersSet()
+    {
+        _dialogTitle = DialogTitle;
+
+        // Đảm bảo ngày cập nhật hợp lệ
+        if (DeThi.NgayCapNhap == default)
+            DeThi.NgayCapNhap = DateTime.Now;
+
+        // Nếu tạo mới
+        if (DeThi.MaDeThi == Guid.Empty)
+        {
+            DeThi.NgayTao = DateTime.Now;
+            DeThi.NgayCapNhap = DateTime.Now;
+            DeThi.DaDuyet = false;
+        }
+    }
+
+    private async Task Submit()
+    {
+        if (!IsValid) return;
+
+        // Cập nhật ngày cập nhật
+        DeThi.NgayCapNhap = DateTime.Now;
+
+        await OnSave.InvokeAsync(DeThi);
+        MudDialog.Close(DialogResult.Ok(DeThi));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}
