@@ -7,6 +7,7 @@ using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using BeQuestionBank.Shared.DTOs.user;
 using BEQuestionBank.Shared.DTOs.user;
 
 namespace BeQuestionBank.API.Controllers;
@@ -283,6 +284,69 @@ public class NguoiDungController(NguoiDungService service, ILogger<NguoiDungCont
             _logger.LogError(ex, "Lỗi khi lấy danh sách người dùng phân trang");
             return StatusCode(StatusCodes.Status500InternalServerError,
                 ApiResponseFactory.ServerError("Đã xảy ra lỗi khi xử lý."));
+        }
+    }
+    [HttpPost("Import")]
+    [SwaggerOperation(Summary = "Nhập danh sách người dùng từ file Excel")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> ImportUsers([FromForm] ImportUserFileDto model)
+    {
+        try
+        {
+            // Kiểm tra file
+            if (model.File == null || model.File.Length == 0)
+            {
+                var errorResult = new ImportResultDto
+                {
+                    SuccessCount = 0,
+                    ErrorCount = 1,
+                    Errors = new List<string> { "File không được trống hoặc không hợp lệ." },
+                    Message = "File không hợp lệ."
+                };
+                return BadRequest(ApiResponseFactory.BadRequest(errorResult, "File không hợp lệ."));
+            }
+
+            if (!model.File.FileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                var errorResult = new ImportResultDto
+                {
+                    SuccessCount = 0,
+                    ErrorCount = 1,
+                    Errors = new List<string> { "Chỉ chấp nhận file định dạng .xlsx." },
+                    Message = "Định dạng file không hợp lệ."
+                };
+                return BadRequest(ApiResponseFactory.BadRequest(errorResult, "Định dạng file không hợp lệ."));
+            }
+
+            // Gọi service
+            var (successCount, errors) = await _service.ImportUsersFromExcelAsync(model.File);
+
+            var result = new ImportResultDto
+            {
+                SuccessCount = successCount,
+                ErrorCount = errors.Count,
+                Errors = errors,
+                Message = successCount > 0
+                    ? $"Nhập thành công {successCount} người dùng, có {errors.Count} lỗi."
+                    : "Không nhập được người dùng nào do có lỗi."
+            };
+
+            // Luôn trả 200 OK, vì đây là partial success
+            return Ok(ApiResponseFactory.Success(result, result.Message));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi hệ thống khi nhập người dùng từ Excel.");
+
+            var errorResult = new ImportResultDto
+            {
+                SuccessCount = 0,
+                ErrorCount = 1,
+                Errors = new List<string> { "Lỗi hệ thống: " + ex.Message },
+                Message = "Đã xảy ra lỗi khi xử lý file."
+            };
+
+            return StatusCode(500, ApiResponseFactory.ServerErrorOb("Lỗi hệ thống khi xử lý file.", errorResult));
         }
     }
 

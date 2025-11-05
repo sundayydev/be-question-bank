@@ -27,6 +27,7 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
+		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.0-rc.2.25502.107" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.8" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.8" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.8" />
@@ -37,6 +38,7 @@
   <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
   <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
   <PackageReference Include="Serilog.Sinks.Seq" Version="9.0.0" />
+  <PackageReference Include="StackExchange.Redis" Version="2.9.32" />
 
 
 	</ItemGroup>

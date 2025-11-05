@@ -10,4 +10,10 @@
     <PackageReference Include="NPOI" Version="2.7.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="Microsoft.AspNetCore.Http.Features">
+      <HintPath>..\..\..\..\Users\duyho\.dotnet\packs\Microsoft.AspNetCore.App.Ref\9.0.9\ref\net9.0\Microsoft.AspNetCore.Http.Features.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

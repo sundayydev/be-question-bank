@@ -1,0 +1,19 @@
+﻿@using BEQuestionBank.Shared.DTOs.DeThi
+<MudDialog>
+    <TitleContent><MudText Typo="Typo.h6">Chi tiết đề thi</MudText></TitleContent>
+    <DialogContent>
+        <MudTextField Label="Tên đề" Value="@DeThi.TenDeThi" ReadOnly />
+        <MudTextField Label="Số câu" Value="@DeThi.SoCauHoi" ReadOnly />
+        <MudTextField Label="Trạng thái" Value="@(DeThi.DaDuyet==true ? "Đã duyệt" : "Chưa duyệt")" ReadOnly />
+        <MudTextField Label="Ngày tạo" Value="@DeThi.NgayTao.ToString("dd/MM/yyyy HH:mm")" ReadOnly />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Đóng</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public DeThiDto DeThi { get; set; } = default!;
+    void Cancel() => MudDialog.Cancel();
+}

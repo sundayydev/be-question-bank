@@ -1,0 +1,108 @@
+﻿@page "/user/create-manual"
+@using BeQuestionBank.Shared.Enums
+@inherits FEQuestionBank.Client.Pages.User.CreateUserManualBase
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
+    <MudText Typo="Typo.h5" Class="font-weight-bold mb-4" Style="@($"color:{Colors.Teal.Darken2};")">
+        Thêm người dùng thủ công
+    </MudText>
+
+    <!-- KHỐI 1: FORM -->
+    <MudPaper Elevation="2" Rounded="true" Class="pa-6 mb-6">
+        <MudGrid Spacing="3">
+
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="User.TenDangNhap"
+                              Label="Tên đăng nhập *"
+                              Variant="Variant.Outlined"
+                              Required="true" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="User.MatKhau"
+                              Label="Mật khẩu *"
+                              InputType="InputType.Password"
+                              Variant="Variant.Outlined"
+                              Required="true" />
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudTextField @bind-Value="User.HoTen"
+                              Label="Họ và tên *"
+                              Variant="Variant.Outlined"
+                              Required="true" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="User.Email"
+                              Label="Email *"
+                              InputType="InputType.Email"
+                              Variant="Variant.Outlined"
+                              Required="true" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudSelect T="Guid?" @bind-Value="User.MaKhoa"
+                           Label="Khoa *"
+                           Variant="Variant.Outlined"
+                           Required="true"
+                           HelperText="Chọn khoa của người dùng">
+                    @if (DanhSachKhoa != null)
+                    {
+                        @foreach (var khoa in DanhSachKhoa)
+                        {
+                            <MudSelectItem Value="@((Guid?)khoa.MaKhoa)">@khoa.TenKhoa</MudSelectItem>
+                        }
+                    }
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudSelect T="EnumRole" @bind-Value="User.VaiTro"
+                           Label="Vai trò *"
+                           Variant="Variant.Outlined"
+                           Required="true">
+                    <MudSelectItem Value="EnumRole.User">Người dùng thường</MudSelectItem>
+                    <MudSelectItem Value="EnumRole.Admin">Quản trị viên</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudSwitch T="bool"
+                           @bind-Checked="User.BiKhoa"
+                           Label="Khóa tài khoản"
+                           Color="Color.Error"
+                           Class="mt-4" />
+            </MudItem>
+
+        </MudGrid>
+    </MudPaper>
+
+    <!-- KHỐI 2: HÀNH ĐỘNG -->
+    <MudPaper Elevation="2" Rounded="true" Class="pa-6">
+
+        <div class="d-flex justify-content-between align-items-center gap-3">
+            <MudButton Variant="Variant.Filled"
+                       Style="@($"background-color:{Colors.Green.Darken2}; color:white; border-radius:10px; padding:6px 16px;")"
+                       Size="Size.Medium"
+                       OnClick="SaveUser"
+                       Disabled="@(!IsValid || IsSubmitting)"
+                       Class="flex-grow-1">
+                @if (IsSubmitting)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate Class="me-2" />
+                }
+                Lưu người dùng
+            </MudButton>
+
+            <MudButton Variant="Variant.Filled"
+                       Style="@($"background-color:{Colors.Red.Darken2}; color:white; border-radius:10px; padding:6px 16px;")"
+                       StartIcon="@Icons.Material.Filled.ArrowBack"
+                       OnClick="GoBack"
+                       Size="Size.Medium"
+                       Class="flex-grow-1">
+                Quay lại
+            </MudButton>
+        </div>
+    </MudPaper>
+</MudContainer>

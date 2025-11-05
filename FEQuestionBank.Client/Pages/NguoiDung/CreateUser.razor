@@ -1,0 +1,64 @@
+﻿@page "/user/create-user"
+@inherits CreateUserBase
+
+<MudContainer MaxWidth="MaxWidth.Large" Style="padding: 20px">
+    <MudText Typo="Typo.h5"
+             Style="@($"color:{Colors.Red.Darken2};")"
+             Class="mb-6 text-center text-uppercase fw-bold">
+        Chọn cách tạo người dùng
+    </MudText>
+
+    <MudGrid Justify="Justify.Center" Spacing="4">
+
+        <!-- Card: Thêm thủ công -->
+        <MudItem xs="12" sm="6" md="5">
+            <MudPaper Elevation="3"
+                      Class="p-6 text-center hover-card-question"
+                      Style="height:220px; display:flex; flex-direction:column; 
+                             justify-content:center; align-items:center;
+                             border-radius:12px; cursor:pointer; transition: all 0.3s;"
+                      @onclick="@(() => SelectCreateMethod("manual"))">
+
+                <MudIcon Icon="@Icons.Material.Filled.PersonAdd"
+                         Style="@($"color:{Colors.Purple.Darken1};")" 
+                         Size="Size.Large" />
+
+                <MudText Typo="Typo.h6" Class="mt-3" Style="@($"color:{Colors.Purple.Darken1};")">
+                    Thêm thủ công
+                </MudText>
+
+                <MudText Typo="Typo.body2" Class="mt-2 text-secondary">
+                    Nhập thông tin từng người dùng một
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Card: Tải lên từ Excel -->
+        <MudItem xs="12" sm="6" md="5">
+            <MudPaper Elevation="3"
+                      Class="p-6 text-center hover-card-question"
+                      Style="height:220px; display:flex; flex-direction:column; 
+                             justify-content:center; align-items:center;
+                             border-radius:12px; cursor:pointer; transition: all 0.3s;"
+                      @onclick="@(() => SelectCreateMethod("excel"))">
+
+                <MudIcon Icon="@Icons.Material.Filled.TableChart"
+                         Style="@($"color:{Colors.Teal.Darken1};")" 
+                         Size="Size.Large" />
+
+                <MudText Typo="Typo.h6" Class="mt-3" Style="@($"color:{Colors.Teal.Darken1};")">
+                    Tải lên từ Excel
+                </MudText>
+
+                <MudText Typo="Typo.body2" Class="mt-2 text-secondary">
+                    Nhập nhiều người dùng từ file .xlsx
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+    </MudGrid>
+</MudContainer>
+
+@code {
+    // Code-behind sẽ nằm trong CreateUserBase (file .razor.cs)
+}

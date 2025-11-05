@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using BeQuestionBank.Shared.DTOs.Pagination;
 using BEQuestionBank.Shared.DTOs.user;
 using FEQuestionBank.Client.Pages.NguoiDung;
+using System.Linq;
 
 namespace FEQuestionBank.Client.Pages
 {
@@ -22,6 +23,10 @@ namespace FEQuestionBank.Client.Pages
 
         protected string? _searchTerm;
         protected MudTable<NguoiDungDto>? table;
+        protected int TotalUsers { get; set; }
+        protected int ActiveUsers { get; set; }
+        protected int LockedUsers { get; set; }
+        
 
         protected async Task<TableData<NguoiDungDto>> LoadServerData(TableState state, CancellationToken cancellationToken)
         {
@@ -40,7 +45,24 @@ namespace FEQuestionBank.Client.Pages
                     url += $"&filter={Uri.EscapeDataString(_searchTerm)}";
 
                 var response = await Http.GetFromJsonAsync<ApiResponse<PagedResult<NguoiDungDto>>>(url, cancellationToken);
+                
+                if (response?.Success == true && response.Data != null)
+                {
+                    // Tổng số người dùng
+                    TotalUsers = response.Data.TotalCount;
 
+                    // Tạm tính số lượng active/locked trong trang hiện tại
+                    ActiveUsers = response.Data.Items.Count(u => !u.BiKhoa);
+                    LockedUsers = response.Data.Items.Count(u => u.BiKhoa);
+                    StateHasChanged(); 
+
+                    return new TableData<NguoiDungDto>
+                    {
+                        Items = response.Data.Items ?? new List<NguoiDungDto>(),
+                        TotalItems = response.Data.TotalCount
+                    };
+                }
+                
                 if (response?.Success == true && response.Data != null)
                 {
                     return new TableData<NguoiDungDto>

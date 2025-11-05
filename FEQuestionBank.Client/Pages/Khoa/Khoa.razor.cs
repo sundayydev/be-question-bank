@@ -23,6 +23,7 @@ namespace FEQuestionBank.Client.Pages
 
         protected string? _searchTerm;
         protected MudTable<KhoaDto>? table;
+        
 
         protected async Task<TableData<KhoaDto>> LoadServerData(TableState state, CancellationToken cancellationToken)
         {

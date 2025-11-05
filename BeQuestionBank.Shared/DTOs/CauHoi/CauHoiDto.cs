@@ -1,9 +1,11 @@
 ﻿using BeQuestionBank.Shared.Enums;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BeQuestionBank.Shared.DTOs.CauTraLoi;
 
 namespace BeQuestionBank.Shared.DTOs.CauHoi;
 
@@ -26,4 +28,5 @@ public class CauHoiDto
     public EnumCLO? CLO { get; set; }
     public string LoaiCauHoi { get; set; }
     public List<CauHoiDto> CauHoiCons { get; set; } = new List<CauHoiDto>();
+    public List<CauTraLoiDto> CauTraLois { get; set; } = new List<CauTraLoiDto>();
 }

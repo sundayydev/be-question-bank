@@ -1,6 +1,7 @@
 ﻿using BeQuestionBank.Shared.DTOs.Pagination;
 using System.Threading.Tasks;
 using BeQuestionBank.Shared.DTOs.Common;
+using BeQuestionBank.Shared.DTOs.user;
 using BEQuestionBank.Shared.DTOs.user;
 
 namespace FEQuestionBank.Client.Services;
@@ -16,4 +17,6 @@ public interface INguoiDungApiClient
     Task<ApiResponse<string>> DeleteNguoiDungAsync(string id);
     Task<ApiResponse<string>> LockNguoiDungAsync(string id);
     Task<ApiResponse<string>> UnlockNguoiDungAsync(string id);
+    Task<ApiResponse<ImportResultDto>> ImportUsersAsync(MultipartFormDataContent content);
+
 }

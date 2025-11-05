@@ -72,6 +72,5 @@ namespace BEQuestionBank.Core.Repositories
                 .AsNoTracking()
                 .ToListAsync();
         }
-        
     }
 }

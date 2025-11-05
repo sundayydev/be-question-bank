@@ -1,7 +1,10 @@
 ﻿using BEQuestionBank.Core.Services;
 using BeQuestionBank.Shared.DTOs.Common;
 using BEQuestionBank.Shared.DTOs.DeThi;
+using BeQuestionBank.Shared.DTOs.Khoa;
 using BEQuestionBank.Shared.DTOs.MaTran;
+using BeQuestionBank.Shared.DTOs.MonHoc;
+using BeQuestionBank.Shared.DTOs.Pagination;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -294,6 +297,74 @@ public async Task<IActionResult> GetApprovedDeThisAsync()
                 ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
     }
+ // GET: api/Khoa/paged
+    [HttpGet("paged")]
+    [SwaggerOperation("Lấy danh sách Khoa có phân trang, filter, sort")]
+    public async Task<IActionResult> GetPagedAsync(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? sort = null,
+        [FromQuery] string? filter = null)
+    {
+        try
+        {
+            var query = await _service.GetAllBasicAsync(); 
 
+            // Filtering
+            if (!string.IsNullOrWhiteSpace(filter))
+            {
+                query = query.Where(k => k.TenDeThi.Contains(filter, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // Sorting
+            if (!string.IsNullOrWhiteSpace(sort))
+            {
+                var parts = sort.Split(',');
+                var column = parts[0];
+                var direction = parts.Length > 1 ? parts[1] : "asc";
+
+                query = column switch
+                {
+                    "TenDeThi" when direction == "asc" => query.OrderBy(k => k.TenDeThi),
+                    "TenDeThi" when direction == "desc" => query.OrderByDescending(k => k.TenDeThi),
+                    _ => query.OrderBy(k => k.TenDeThi)
+                };
+            }
+
+            var totalCount = query.Count();
+
+            var items = query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(d => new DeThiDto
+                {
+                    MaDeThi = d.MaDeThi,
+                    MaMonHoc = d.MaMonHoc,
+                    TenDeThi = d.TenDeThi,
+                    DaDuyet = d.DaDuyet,
+                    SoCauHoi = d.SoCauHoi,
+                    NgayTao = d.NgayTao,
+                    NgayCapNhap = d.NgayCapNhap
+                })
+                .ToList();
+
+
+            var result = new PagedResult<DeThiDto>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
+
+            return Ok(ApiResponseFactory.Success(result, "Lấy danh sách Khoa có phân trang thành công"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi lấy danh sách Khoa có phân trang");
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponseFactory.ServerError("Đã xảy ra lỗi khi xử lý."));
+        }
+    }
 
 }
