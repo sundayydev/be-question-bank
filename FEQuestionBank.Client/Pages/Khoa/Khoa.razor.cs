@@ -23,6 +23,9 @@ namespace FEQuestionBank.Client.Pages
 
         protected string? _searchTerm;
         protected MudTable<KhoaDto>? table;
+        protected int TotalKhoa { get; set; }
+        protected int ActiveKhoa { get; set; }
+        protected int LockedKhoa { get; set; }
         
 
         protected async Task<TableData<KhoaDto>> LoadServerData(TableState state, CancellationToken cancellationToken)
@@ -43,14 +46,30 @@ namespace FEQuestionBank.Client.Pages
 
                 var response = await Http.GetFromJsonAsync<ApiResponse<PagedResult<KhoaDto>>>(url, cancellationToken);
 
-                if (response is { Success: true, Data: not null })
+                if (response?.Success == true && response.Data != null)
                 {
-                    var tableData = new TableData<KhoaDto>
+                    // Tổng số người dùng
+                    TotalKhoa = response.Data.TotalCount;
+
+                    // Tạm tính số lượng active/locked trong trang hiện tại
+                    ActiveKhoa = response.Data.Items.Count(u => u.XoaTam == false);
+                    LockedKhoa = response.Data.Items.Count(u => u.XoaTam == true);
+                    StateHasChanged(); 
+
+                    return new TableData<KhoaDto>()
                     {
                         Items = response.Data.Items ?? new List<KhoaDto>(),
                         TotalItems = response.Data.TotalCount
                     };
-                    return tableData;
+                }
+                
+                if (response?.Success == true && response.Data != null)
+                {
+                    return new TableData<KhoaDto>
+                    {
+                        Items = response.Data.Items ?? new List<KhoaDto>(),
+                        TotalItems = response.Data.TotalCount
+                    };
                 }
 
                 return new TableData<KhoaDto> { Items = new List<KhoaDto>(), TotalItems = 0 };
