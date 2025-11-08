@@ -31,6 +31,6 @@ namespace FEQuestionBank.Client.Pages.DeThi
             }
         }
 
-        protected void GoBack() => Nav.NavigateTo("/dethi");
+        protected void GoBack() => Nav.NavigateTo("/exams");
     }
 }

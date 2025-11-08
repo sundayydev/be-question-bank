@@ -26,8 +26,33 @@ namespace FEQuestionBank.Client.Pages
         protected int TotalKhoa { get; set; }
         protected int ActiveKhoa { get; set; }
         protected int LockedKhoa { get; set; }
-        
+        private List<KhoaDto> allKhoas = new List<KhoaDto>();
+        protected override async Task OnInitializedAsync()
+        {
+            await LoadAllKhoasForInfoCardAsync();
+        }
 
+        private async Task LoadAllKhoasForInfoCardAsync()
+        {
+            try
+            {
+                var response = await KhoaApiClient.GetAllKhoasAsync();
+                if (response.Success && response.Data != null)
+                {
+                    allKhoas = response.Data;
+
+                    // Cập nhật InfoCard từ toàn bộ dữ liệu
+                    TotalKhoa = allKhoas.Count;
+                    ActiveKhoa = allKhoas.Count(k => k.XoaTam==false);
+                    LockedKhoa = allKhoas.Count(k => k.XoaTam==true);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Lỗi khi tải số liệu: {ex.Message}", Severity.Error);
+            }
+        }
+        
         protected async Task<TableData<KhoaDto>> LoadServerData(TableState state, CancellationToken cancellationToken)
         {
             try
@@ -48,13 +73,13 @@ namespace FEQuestionBank.Client.Pages
 
                 if (response?.Success == true && response.Data != null)
                 {
-                    // Tổng số người dùng
-                    TotalKhoa = response.Data.TotalCount;
-
-                    // Tạm tính số lượng active/locked trong trang hiện tại
-                    ActiveKhoa = response.Data.Items.Count(u => u.XoaTam == false);
-                    LockedKhoa = response.Data.Items.Count(u => u.XoaTam == true);
-                    StateHasChanged(); 
+                    // // Tổng số người dùng
+                    // TotalKhoa = response.Data.TotalCount;
+                    //
+                    // // Tạm tính số lượng active/locked trong trang hiện tại
+                    // ActiveKhoa = response.Data.Items.Count(u => u.XoaTam == false);
+                    // LockedKhoa = response.Data.Items.Count(u => u.XoaTam == true);
+                    // StateHasChanged(); 
 
                     return new TableData<KhoaDto>()
                     {

@@ -137,8 +137,7 @@ public class DeThiService
                 return (false, "Đề thi phải có ít nhất một câu hỏi.", null);
             if (deThiDto.ChiTietDeThis.Any(ct => ct.MaCauHoi == Guid.Empty || ct.MaPhan == Guid.Empty))
                 return (false, "Mã câu hỏi hoặc mã phần trong chi tiết đề thi không hợp lệ.", null);
-
-            // ✅ Tạo ID trước
+            
             var maDeThi = Guid.NewGuid();
 
             // Map DTO → Entity
@@ -153,14 +152,13 @@ public class DeThiService
                 NgayCapNhat = DateTime.UtcNow,
                 ChiTietDeThis = deThiDto.ChiTietDeThis.Select(ct => new ChiTietDeThi
                 {
-                    MaDeThi = maDeThi, // ✅ gán FK đúng
+                    MaDeThi = maDeThi, 
                     MaPhan = ct.MaPhan,
                     MaCauHoi = ct.MaCauHoi,
                     ThuTu = ct.ThuTu
                 }).ToList()
             };
-
-            // Save vào DB
+            
             await _deThiRepository.AddAsync(entity);
 
             return (true, "Thêm đề thi thành công.", entity.MaDeThi);
@@ -170,10 +168,7 @@ public class DeThiService
             return (false, $"Lỗi khi thêm đề thi: {ex.Message}", null);
         }
     }
-
-
-
-
+    
     /// <summary>
     /// update
     /// </summary>
@@ -438,6 +433,7 @@ public class DeThiService
 
         return (true, "Đủ câu hỏi theo từng phần.", totalAvailable);
     }
+    
     private async Task<(bool Success, string Message, int AvailableQuestions)>
         CheckAvailableQuestionsNoPartAsync(MaTranDto maTran, Guid maMonHoc)
     {
@@ -476,6 +472,7 @@ public class DeThiService
 
         return (true, "Đủ câu hỏi không theo phần.", totalAvailable);
     }
+    
     public async Task<(bool Success, string Message, int AvailableQuestions)>
         CheckAvailableQuestionsAsync(MaTranDto maTran, Guid maMonHoc)
     {
@@ -554,7 +551,7 @@ public class DeThiService
                 chiTietDeThis.AddRange(selected.Select(q => new ChiTietDeThi
                 {
                     MaDeThi = maDeThi,
-                    MaPhan = q.MaPhan, // không theo part thì gán trực tiếp từ câu hỏi
+                    MaPhan = q.MaPhan,
                     MaCauHoi = q.MaCauHoi,
                     ThuTu = thuTu++
                 }));
@@ -594,7 +591,6 @@ public class DeThiService
             {
                 return (false, "Ma trận không được để trống.", null);
             }
-
             MaTranDto maTran;
             try
             {
@@ -646,6 +642,7 @@ public class DeThiService
             // Cập nhật trạng thái yêu cầu rút trích
             yeuCau.DaXuLy = true;
             yeuCau.NgayXuLy = DateTime.UtcNow;
+            
             await _yeuCauRutTrichRepository.UpdateAsync(yeuCau);
 
             return (true, "Rút trích đề thi thành công.", maDeThi);
