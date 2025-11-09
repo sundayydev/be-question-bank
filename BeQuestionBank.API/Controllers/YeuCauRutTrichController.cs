@@ -147,17 +147,18 @@ public class YeuCauRutTrichController : ControllerBase
         }
     }
     
-     [HttpPost]
+    [HttpPost]
     [SwaggerOperation("Thêm yêu cầu rút trích mới")]
     public async Task<IActionResult> AddAsync([FromBody] CreateYeuCauRutTrichDto dto)
     {
-        if (dto == null)
-            return StatusCode(StatusCodes.Status400BadRequest,
-                ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ."));
-
         try
         {
+            if (dto == null)
+                return StatusCode(StatusCodes.Status400BadRequest,
+                    ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ."));
+            
             var (success, message, maYeuCau) = await _service.AddAsync(dto);
+            
             if (!success)
                 return StatusCode(StatusCodes.Status400BadRequest,
                     ApiResponseFactory.ValidationError<object>(message));
@@ -250,22 +251,21 @@ public class YeuCauRutTrichController : ControllerBase
 
         try
         {
-           
-
-            // Tạo yêu cầu rút trích (không serialize ở đây)
+            // Tạo yêu cầu rút trích
             var (success, message, maYeuCau) = await _service.AddAsync(dto);
             if (!success)
             {
                 return StatusCode(StatusCodes.Status400BadRequest,
                     ApiResponseFactory.ValidationError<object>(message));
             }
-            // Sinh tên đề thi tự động (sau khi có mã yêu cầu)
-            string tenDeThi = $"Đề thi {dto.MaMonHoc} - YC_{maYeuCau.ToString().Substring(0, 8)}";
+            int year = DateTime.Now.Year;
+            string namHoc = $"{year}-{year + 1}";
+            string tenDeThi = $"Đề thi năm học {namHoc} - YC_{maYeuCau.ToString().Substring(0, 8)}";
             // Gọi DeThiService để rút trích đề thi
             var deThiService = HttpContext.RequestServices.GetService<DeThiService>();
             if (deThiService == null)
             {
-                await _service.DeleteAsync(maYeuCau); // Xóa yêu cầu nếu không lấy được DeThiService
+                await _service.DeleteAsync(maYeuCau); 
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     ApiResponseFactory.ServerError("Không thể khởi tạo DeThiService."));
             }

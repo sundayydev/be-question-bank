@@ -16,7 +16,7 @@ public class CreateQuestionBase : ComponentBase
                 Navigation.NavigateTo("/create-question/group");
                 break;
             case "upload":
-                Navigation.NavigateTo("/create-question/upload");
+                Navigation.NavigateTo("/question/upload");
                 break;
         }
     }

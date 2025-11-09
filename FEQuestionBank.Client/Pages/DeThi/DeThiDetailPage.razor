@@ -1,4 +1,4 @@
-﻿@page "/dethi/{MaDeThi:guid}"
+﻿@page "/exams/{MaDeThi:guid}"
 @using BeQuestionBank.Shared.DTOs.DeThi
 @using BEQuestionBank.Shared.DTOs.DeThi
 @using FEQuestionBank.Client.Services
@@ -6,18 +6,27 @@
 @inject IDeThiApiClient DeThiApiClient
 @inject NavigationManager Nav
 @inject ISnackbar Snackbar
+@inherits DeThiDetailBase
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
     <div class="d-flex justify-space-between align-center mb-4">
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="GoBack">
+        <MudButton Variant="Variant.Filled" Style=@($"color:{Colors.Blue.Darken3}; border-radius:10px") StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="GoBack">
             Quay lại danh sách đề thi
         </MudButton>
 
         <div class="d-flex gap-2">
-            <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description">
+            <MudButton Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.Description"
+                       Style=@("color:white; background-color:" + Colors.Blue.Darken3 + 
+                             "; border-radius:8px; height:42px; width:150px; text-transform:none;")>
                 Tải Word
             </MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.PictureAsPdf">
+
+            <!-- Nút Tải PDF - màu đỏ -->
+            <MudButton Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                       Style=@("color:white; background-color:" + Colors.Red.Darken3 + 
+                             "; border-radius:8px; height:42px; width:150px; text-transform:none; margin-left:10px;")>
                 Tải PDF
             </MudButton>
         </div>
@@ -32,12 +41,13 @@
         <MudGrid Spacing="4">
             <!-- Thông tin đề thi -->
             <MudItem xs="12" md="4">
-                <MudPaper Class="pa-4" Elevation="3">
-                    <MudText Typo="Typo.h6" Class="mb-3">Thông tin đề thi</MudText>
+                <MudPaper Class="pa-4" Elevation="3" Style="border-radius: 10px">
+                    <MudText Typo="Typo.h6" Class="mb-3" Style=@($"color:{Colors.Red.Darken3};")>
+                        Thông tin đề thi
+                    </MudText>
                     <MudText><strong>Tên đề:</strong> @DeThi.TenDeThi</MudText>
                     <MudText Class="mt-2"><strong>Môn học:</strong> @DeThi.TenMonHoc</MudText>
                     <MudText Class="mt-2"><strong>Khoa:</strong> @DeThi.TenKhoa</MudText>
-                    <MudText Class="mt-2"><strong>Thời gian:</strong> Chưa xác định</MudText>
                     <MudText Class="mt-2"><strong>Ngày tạo:</strong> @DeThi.NgayTao.ToString("dd/MM/yyyy")</MudText>
 
                     <MudDivider Class="my-4" />
@@ -46,7 +56,7 @@
                     <ul class="pl-4 mt-2">
                         @if (DeThi.ChiTietDeThis?.Any() == true)
                         {
-                            foreach (var ct in DeThi.ChiTietDeThis)
+                            foreach (var ct in DeThi.ChiTietDeThis.OrderBy(x => x.ThuTu))
                             {
                                 <li>Phần @(ct.ThuTu): @(ct.CauHoi?.MaSoCauHoi ?? ct.ThuTu) câu</li>
                             }
@@ -59,7 +69,7 @@
                 </MudPaper>
 
                 <!-- Thống kê -->
-                <MudPaper Class="pa-4 mt-4" Elevation="3">
+                <MudPaper Class="pa-4 mt-4" Elevation="3"  Style="border-radius: 10px">
                     <MudText Typo="Typo.h6" Class="mb-3">Thống kê câu hỏi</MudText>
                     <MudText><strong>Tổng số câu hỏi:</strong> @(DeThi.SoCauHoi)</MudText>
                     <MudText><strong>Tổng câu hỏi đơn:</strong> @(DeThi.ChiTietDeThis?.Count(c => c.CauHoi?.SoCauHoiCon == 0) ?? 0)</MudText>
@@ -72,34 +82,32 @@
                 <MudTabs Elevation="2" Rounded="true" PanelClass="pa-4">
                     <MudTabPanel Text="Danh sách câu hỏi">
                         <ChildContent>
-                            <MudPaper Style="max-height: 700px; overflow-y: auto;" Class="pa-3">
+                            <MudPaper Style="max-height: 465px; overflow-y: auto;" Class="pa-3">
                                 @if (!DeThi.ChiTietDeThis?.Any() ?? true)
                                 {
                                     <MudText Typo="Typo.body1" Class="text-center">Chưa có câu hỏi nào.</MudText>
                                 }
                                 else
                                 {
-                                    int stt = 1;
-                                    foreach (var ct in DeThi.ChiTietDeThis!)
+                                    @foreach (var ct in DeThi.ChiTietDeThis.OrderBy(x => x.ThuTu))
                                     {
                                         var ch = ct.CauHoi!;
-                                        <div class="mb-5 p-4 border rounded">
+                                        <div class="mb-5 p-4" style="border:1px solid #ccc; border-radius:10px;">
                                             <div class="d-flex align-center gap-3 mb-3">
-                                                <MudText Typo="Typo.h6">Câu @stt</MudText>
+                                                <MudText Typo="Typo.h6">Câu @ct.ThuTu</MudText>
+
                                                 @if (ch.SoCauHoiCon > 0)
                                                 {
-                                                    <MudChip T="string" Color="Color.Primary" Size="Size.Small"> (@ch.SoCauHoiCon câu)</MudChip>
+                                                    <MudChip T="string" Color="Color.Primary" Size="Size.Small">(@ch.SoCauHoiCon câu)</MudChip>
                                                 }
                                             </div>
 
-                                            <div class="mb-3">
-                                                @((MarkupString)ch.NoiDung)
-                                            </div>
+                                            <div class="mb-3">@((MarkupString)ch.NoiDung)</div>
 
                                             @if (ch.CauTraLois?.Any() == true)
                                             {
                                                 <div class="pl-4">
-                                                    @foreach (var da in ch.CauTraLois)
+                                                    @foreach (var da in ch.CauTraLois.OrderBy(x => x.ThuTu))
                                                     {
                                                         var label = da.ThuTu switch
                                                         {
@@ -110,18 +118,19 @@
                                                             _ => $"{da.ThuTu}."
                                                         };
 
-                                                        <div class="d-flex align-start gap-2 mb-2">
+                                                        <div class="d-flex align-start gap-2 mb-2"
+                                                             style="@(da.LaDapAn
+                                                                        ? "border:2px solid #2e7d32; border-radius:8px; padding:8px 12px; background-color:#e8f5e9;"
+                                                                        : "border:1px solid #ddd; border-radius:8px; padding:8px 12px;")">
                                                             <MudText Class="font-weight-bold">@label</MudText>
-                                                            <MudText Class="@(da.LaDapAn ? "text-success font-weight-bold" : "")">
-                                                                @((MarkupString)da.NoiDung)
-                                                            </MudText>
+                                                            <MudText>@((MarkupString)da.NoiDung)</MudText>
                                                         </div>
                                                     }
                                                 </div>
                                             }
                                         </div>
-                                        stt++;
                                     }
+
                                 }
                             </MudPaper>
                         </ChildContent>
@@ -129,18 +138,68 @@
 
                     <MudTabPanel Text="Tóm tắt đề">
                         <ChildContent>
-                            <MudPaper Class="pa-4" Style="height: 700px; overflow-y: auto;">
-                                <MudText Typo="Typo.body1">
-                                    Đề thi gồm <strong>@DeThi.SoCauHoi câu hỏi</strong>.
-                                </MudText>
+                            <MudPaper Class="pa-4" Style="height: 400px; overflow-y: auto;">
+                                <MudGrid Class="mb-4">
+                                    <!-- Tổng số câu hỏi -->
+                                    <MudItem xs="12" sm="4">
+                                        <MudPaper Class="pa-4" Elevation="0"
+                                                  Style=@($"border:1px solid {Colors.Blue.Darken3};" +
+                                                        $" border-radius:12px;" +
+                                                        $" background-color:{Colors.Blue.Lighten5};")>
+                                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">Tổng số câu hỏi</MudText>
+                                            <MudText Typo="Typo.h5" Color="Color.Primary" Class="font-weight-bold">
+                                                @DeThi.SoCauHoi
+                                            </MudText>
+                                        </MudPaper>
+                                    </MudItem>
+
+                                    <!-- Tổng câu hỏi đơn -->
+                                    <MudItem xs="12" sm="4">
+                                        <MudPaper Class="pa-4" Elevation="0"
+                                                  Style=@($"border:1px solid {Colors.Green.Darken3};" +
+                                                        $" border-radius:12px;" +
+                                                        $" background-color:{Colors.Green.Lighten5};")>
+                                            <MudText Typo="Typo.subtitle2" Color="Color.Success">Tổng câu hỏi đơn</MudText>
+                                            <MudText Typo="Typo.h5" Color="Color.Success" Class="font-weight-bold">
+                                                @(DeThi.ChiTietDeThis?.Count(c => c.CauHoi?.SoCauHoiCon == 0) ?? 0)
+                                            </MudText>
+                                        </MudPaper>
+                                    </MudItem>
+
+                                    <!-- Tổng câu hỏi nhóm -->
+                                    <MudItem xs="12" sm="4">
+                                        <MudPaper Class="pa-4" Elevation="0"
+                                                  Style=@($"border:1px solid {Colors.Red.Darken3};" +
+                                                        $" border-radius:12px;" +
+                                                        $" background-color:{Colors.Red.Lighten5};")>
+                                            <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Tổng câu hỏi nhóm</MudText>
+                                            <MudText Typo="Typo.h5" Color="Color.Secondary" Class="font-weight-bold">
+                                                @(DeThi.ChiTietDeThis?.Count(c => c.CauHoi?.SoCauHoiCon > 0) ?? 0)
+                                            </MudText>
+                                        </MudPaper>
+                                    </MudItem>
+                                </MudGrid>
+
+                                <MudDivider Class="my-2" />
+
+                                <!-- Thông tin đề thi -->
+                                <MudText Typo="Typo.h6" Class="mb-3 font-weight-bold" Style=@($"color:{Colors.Red.Darken3};")>Thông tin đề thi</MudText>
+                                <MudText><strong>Tên đề:</strong> @DeThi.TenDeThi</MudText>
+                                <MudText Class="mt-1"><strong>Môn học:</strong> @DeThi.TenMonHoc</MudText>
+                                <MudText Class="mt-1"><strong>Khoa:</strong> @DeThi.TenKhoa</MudText>
+
                                 <MudText Class="mt-3">
-                                    Thuộc môn <strong>@DeThi.TenMonHoc</strong>, khoa <strong>@DeThi.TenKhoa</strong>.
+                                    <strong>Ngày tạo:</strong>
+                                    <span Style=@($"color:{Colors.Blue.Darken3};")>
+                                        @DeThi.NgayTao.ToString("dd/MM/yyyy")
+                                    </span>
                                 </MudText>
-                                <MudText Class="mt-2">
-                                    Ngày tạo: <strong>@DeThi.NgayTao:dd/MM/yyyy</strong>
-                                </MudText>
-                                <MudText Class="mt-2">
-                                    Trạng thái: <strong>@(DeThi.DaDuyet == true ? "Đã duyệt" : "Chưa duyệt")</strong>
+
+                                <MudText>
+                                    <strong>Ngày cập nhật:</strong>
+                                    <span Style=@($"color:{Colors.Red.Darken3};")>
+                                        @DeThi.NgayCapNhap.ToString("dd/MM/yyyy")
+                                    </span>
                                 </MudText>
                             </MudPaper>
                         </ChildContent>
@@ -150,24 +209,3 @@
         </MudGrid>
     }
 </MudContainer>
-
-@code {
-    [Parameter] public Guid MaDeThi { get; set; }
-    private DeThiWithChiTietAndCauTraLoiDto? DeThi;
-
-    protected override async Task OnInitializedAsync()
-    {
-        var res = await DeThiApiClient.GetByIdWithChiTietAndCauTraLoiAsync(MaDeThi);
-        if (res.Success && res.Data != null)
-        {
-            DeThi = res.Data;
-        }
-        else
-        {
-            Snackbar.Add("Không tải được đề thi!", Severity.Error);
-            Nav.NavigateTo("/dethi");
-        }
-    }
-
-    private void GoBack() => Nav.NavigateTo("/dethi");
-}
