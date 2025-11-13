@@ -26,7 +26,15 @@ namespace FEQuestionBank.Client.Pages
         protected int TotalKhoa { get; set; }
         protected int ActiveKhoa { get; set; }
         protected int LockedKhoa { get; set; }
+        
         private List<KhoaDto> allKhoas = new List<KhoaDto>();
+        protected List<BreadcrumbItem> _breadcrumbs = new()
+        {
+            new BreadcrumbItem("Trang chủ", href: "/"),
+            new BreadcrumbItem("Quản lý đề", href: "#", disabled: true),
+            new BreadcrumbItem("Danh sách khoa", href: "/khoa")
+        };
+        
         protected override async Task OnInitializedAsync()
         {
             await LoadAllKhoasForInfoCardAsync();
@@ -64,30 +72,13 @@ namespace FEQuestionBank.Client.Pages
                 if (!string.IsNullOrEmpty(state.SortLabel))
                     sort = $"{state.SortLabel},{(state.SortDirection == SortDirection.Ascending ? "asc" : "desc")}";
 
-                string url = $"api/Khoa/paged?page={page}&pageSize={pageSize}";
-                if (!string.IsNullOrEmpty(sort)) url += $"&sort={sort}";
-                if (!string.IsNullOrEmpty(_searchTerm))
-                    url += $"&filter={Uri.EscapeDataString(_searchTerm)}";
-
-                var response = await Http.GetFromJsonAsync<ApiResponse<PagedResult<KhoaDto>>>(url, cancellationToken);
-
-                if (response?.Success == true && response.Data != null)
-                {
-                    // // Tổng số người dùng
-                    // TotalKhoa = response.Data.TotalCount;
-                    //
-                    // // Tạm tính số lượng active/locked trong trang hiện tại
-                    // ActiveKhoa = response.Data.Items.Count(u => u.XoaTam == false);
-                    // LockedKhoa = response.Data.Items.Count(u => u.XoaTam == true);
-                    // StateHasChanged(); 
-
-                    return new TableData<KhoaDto>()
-                    {
-                        Items = response.Data.Items ?? new List<KhoaDto>(),
-                        TotalItems = response.Data.TotalCount
-                    };
-                }
-                
+                // string url = $"api/Khoa/paged?page={page}&pageSize={pageSize}";
+                // if (!string.IsNullOrEmpty(sort)) url += $"&sort={sort}";
+                // if (!string.IsNullOrEmpty(_searchTerm))
+                //     url += $"&filter={Uri.EscapeDataString(_searchTerm)}";
+                //
+                // var response = await Http.GetFromJsonAsync<ApiResponse<PagedResult<KhoaDto>>>(url, cancellationToken);
+                var response = await KhoaApiClient.GetKhoasAsync(page, pageSize, sort, _searchTerm);
                 if (response?.Success == true && response.Data != null)
                 {
                     return new TableData<KhoaDto>
@@ -97,12 +88,22 @@ namespace FEQuestionBank.Client.Pages
                     };
                 }
 
-                return new TableData<KhoaDto> { Items = new List<KhoaDto>(), TotalItems = 0 };
+                // Trường hợp lỗi hoặc không có dữ liệu
+                Snackbar.Add(response?.Message ?? "Lỗi khi tải dữ liệu", Severity.Error);
+                return new TableData<KhoaDto>
+                {
+                    Items = new List<KhoaDto>(),
+                    TotalItems = 0
+                };
             }
             catch (Exception ex)
             {
                 Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
-                return new TableData<KhoaDto> { Items = new List<KhoaDto>(), TotalItems = 0 };
+                return new TableData<KhoaDto>
+                {
+                    Items = new List<KhoaDto>(),
+                    TotalItems = 0
+                };
             }
         }
 

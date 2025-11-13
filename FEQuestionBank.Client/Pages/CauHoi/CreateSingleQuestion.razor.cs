@@ -1,11 +1,19 @@
 ﻿using Microsoft.AspNetCore.Components;
 using System.Collections.Generic;
+using MudBlazor;
 
 public class CreateSingleQuestionBase : ComponentBase
 {
     [Inject] NavigationManager Navigation { get; set; } = default!;
 
     protected string QuestionContent { get; set; } = string.Empty;
+    protected List<BreadcrumbItem> _breadcrumbs = new()
+    {
+        new BreadcrumbItem("Trang chủ", href: "/"),
+        new BreadcrumbItem("Quản lý câu hỏi", href: "#", disabled: true),
+        new BreadcrumbItem("Thêm câu hỏi", href: "/question/create-question"),
+        new BreadcrumbItem("Tạo câu hỏi đơn", href: "/create-question/single")
+    };
 
     protected List<AnswerModel> Answers { get; set; } = new()
     {

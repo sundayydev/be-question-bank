@@ -27,7 +27,13 @@ namespace FEQuestionBank.Client.Pages
         protected int ActiveUsers { get; set; }
         protected int LockedUsers { get; set; }
         
-
+        protected List<BreadcrumbItem> _breadcrumbs = new()
+        {
+            new BreadcrumbItem("Trang chủ", href: "/"),
+            new BreadcrumbItem("Quản lý", href: "#", disabled: true),
+            new BreadcrumbItem("Danh sách người dùng", href: "/user/list")
+        };
+        
         protected async Task<TableData<NguoiDungDto>> LoadServerData(TableState state, CancellationToken cancellationToken)
         {
             try

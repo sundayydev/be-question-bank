@@ -228,16 +228,16 @@ public class KhoaController(KhoaService service, ILogger<KhoaController> logger)
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? sort = null,
-        [FromQuery] string? filter = null)
+        [FromQuery] string? search = null)
     {
         try
         {
             var query = await _service.GetAllKhoasAsync(); // Trả về IQueryable hoặc List<Khoa>
 
             // Filtering
-            if (!string.IsNullOrWhiteSpace(filter))
+            if (!string.IsNullOrWhiteSpace(search))
             {
-                query = query.Where(k => k.TenKhoa.Contains(filter, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(k => k.TenKhoa.Contains(search, StringComparison.OrdinalIgnoreCase));
             }
 
             // Sorting

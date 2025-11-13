@@ -30,6 +30,8 @@ namespace FEQuestionBank.Client.Pages.MonHoc
         protected List<KhoaDto> Khoas { get; set; } = new();
         protected Guid? MaKhoaFilter { get; set; }
         protected string PageTitle { get; set; } = "Danh sách Môn Học";
+        protected List<BreadcrumbItem> _breadcrumbs = new();
+
 
         protected override async Task OnInitializedAsync()
         {
@@ -54,6 +56,7 @@ namespace FEQuestionBank.Client.Pages.MonHoc
                 PageTitle = khoa != null
                     ? $"Danh sách Môn Học của Khoa {khoa.TenKhoa}"
                     : "Danh sách Môn Học (Khoa không xác định)";
+                UpdateBreadcrumbs();
 
                 if (table != null)
                 {
@@ -64,7 +67,8 @@ namespace FEQuestionBank.Client.Pages.MonHoc
             {
                 MaKhoaFilter = null;
                 PageTitle = "Danh sách Môn Học";
-               
+                UpdateBreadcrumbs();
+                await table!.ReloadServerData();
             }
 
         }
@@ -271,5 +275,26 @@ namespace FEQuestionBank.Client.Pages.MonHoc
             var khoa = Khoas.Find(k => k.MaKhoa == maKhoa);
             return khoa?.TenKhoa ?? "Không xác định";
         }
+        private void UpdateBreadcrumbs()
+        {
+            _breadcrumbs.Clear();
+            _breadcrumbs.Add(new BreadcrumbItem("Trang chủ", href: "/"));
+            _breadcrumbs.Add(new BreadcrumbItem("Quản lý môn học", href: "/monhoc"));
+
+            if (MaKhoaFilter.HasValue)
+            {
+                var khoa = Khoas.Find(k => k.MaKhoa == MaKhoaFilter.Value);
+                var tenKhoa = khoa != null ? khoa.TenKhoa : "Khoa không xác định";
+                _breadcrumbs.Add(new BreadcrumbItem($" {tenKhoa}", href: $"/monhoc/khoa/{MaKhoaFilter}", disabled: true));
+            }
+            else
+            {
+                _breadcrumbs.Add(new BreadcrumbItem("Danh sách môn học", null, true));
+                
+            }
+
+        }
+
     }
+    
 }

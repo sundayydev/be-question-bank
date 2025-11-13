@@ -1,8 +1,11 @@
 ﻿@page "/user/upload-excel"
 @inherits FEQuestionBank.Client.Pages.User.UploadExcelUserBase
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
-    <MudText Typo="Typo.h5" Color="Color.Primary" Class="fw-bold mb-3">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+    <MudBreadcrumbs Items="_breadcrumbs" Style="margin-top:2px;" />
+    <MudText Typo="Typo.h5"
+             Style="@($"color:{Colors.Red.Darken2};")"
+             Class="mb-6 text-center text-uppercase fw-bold">
         Tải lên danh sách người dùng từ Excel
     </MudText>
 
@@ -10,7 +13,7 @@
         <!-- KHỐI UPLOAD -->
         <MudItem xs="12">
             <MudPaper Elevation="2" Rounded="true" Class="p-4 mb-3">
-                <MudText Typo="Typo.subtitle1"  Class="fw-semibold mb-3" Style="@($"color:{Colors.Blue.Darken3};")" >
+                <MudText Typo="Typo.subtitle1" Class="fw-semibold mb-3" Style="@($"color:{Colors.Blue.Darken3};")">
                     Chọn file Excel (.xlsx)
                 </MudText>
 
@@ -51,16 +54,16 @@
                                Style="border-radius:10px; padding:6px 16px; color:white !important;">
                         @if (IsUploading)
                         {
-                            <MudProgressCircular Size="Size.Small" Indeterminate Class="me-2" />
+                            <MudProgressCircular Size="Size.Small" Indeterminate Class="me-2"/>
                             <span>Đang tải lên...</span>
                         }
                         else
                         {
-                            <MudIcon Icon="@Icons.Material.Filled.Upload" Class="me-2" />
+                            <MudIcon Icon="@Icons.Material.Filled.Upload" Class="me-2"/>
                             <span>Tải lên</span>
                         }
                     </MudButton>
-                    
+
                     <!-- Nút hủy file -->
                     <MudButton Variant="Variant.Outlined"
                                StartIcon="@Icons.Material.Filled.Delete"

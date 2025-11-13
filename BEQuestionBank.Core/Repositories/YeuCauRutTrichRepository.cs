@@ -39,4 +39,13 @@ public class YeuCauRutTrichRepository  : GenericRepository<YeuCauRutTrich> , IYe
             .Where(y => y.DaXuLy == daXuLy)
             .ToListAsync();
     }
+    public async Task<IEnumerable<YeuCauRutTrich>> GetAllAsync()
+    {
+        return await _context.YeuCauRutTrichs
+            .Include(nd => nd.NguoiDung)
+            .Include(y => y.MonHoc)
+            .ThenInclude(ct => ct.Khoa)
+            .AsNoTracking()
+            .ToListAsync();
+    }
 }

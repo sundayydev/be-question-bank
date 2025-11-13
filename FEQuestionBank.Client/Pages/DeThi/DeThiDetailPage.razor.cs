@@ -16,6 +16,7 @@ namespace FEQuestionBank.Client.Pages.DeThi
         [Inject] protected IDeThiApiClient DeThiApiClient { get; set; } = default!;
         [Inject] protected NavigationManager Nav { get; set; } = default!;
         [Inject] protected ISnackbar Snackbar { get; set; } = default!;
+        protected List<BreadcrumbItem> _breadcrumbs = new();
 
         protected override async Task OnInitializedAsync()
         {
@@ -23,14 +24,22 @@ namespace FEQuestionBank.Client.Pages.DeThi
             if (res.Success && res.Data != null)
             {
                 DeThi = res.Data;
+                UpdateBreadcrumbs();
             }
             else
             {
                 Snackbar.Add("Không tải được đề thi!", Severity.Error);
-                Nav.NavigateTo("/dethi");
+                Nav.NavigateTo("/exams");
             }
         }
 
         protected void GoBack() => Nav.NavigateTo("/exams");
+        private void UpdateBreadcrumbs()
+        {
+            _breadcrumbs.Clear();
+            _breadcrumbs.Add(new BreadcrumbItem("Trang chủ", href: "/"));
+            _breadcrumbs.Add(new BreadcrumbItem("Danh sách đề thi", href: "/exams"));
+            _breadcrumbs.Add(new BreadcrumbItem(DeThi?.TenDeThi ?? "Chi tiết đề thi", null,disabled: true));
+        }
     }
 }

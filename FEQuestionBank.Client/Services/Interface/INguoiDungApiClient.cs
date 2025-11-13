@@ -10,7 +10,7 @@ public interface INguoiDungApiClient
 {
     Task<ApiResponse<List<NguoiDungDto>>> GetAllNguoiDungsAsync();
     Task<ApiResponse<PagedResult<NguoiDungDto>>> GetNguoiDungsAsync(
-        int page = 1, int limit = 10, string? sort = null, string? filter = null);
+        int page = 1, int pageSize = 10, string? sort = null, string? filter = null);
 
     Task<ApiResponse<NguoiDungDto>> CreateNguoiDungAsync(NguoiDungDto model);
     Task<ApiResponse<NguoiDungDto>> UpdateNguoiDungAsync(string id, NguoiDungDto model);

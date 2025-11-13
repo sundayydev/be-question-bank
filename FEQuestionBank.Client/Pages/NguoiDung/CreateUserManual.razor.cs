@@ -18,6 +18,13 @@ namespace FEQuestionBank.Client.Pages.User
         protected NguoiDungDto User { get; set; } = new();
         protected List<KhoaDto> DanhSachKhoa { get; set; } = new();
         protected bool IsSubmitting { get; set; }
+        protected List<BreadcrumbItem> _breadcrumbs = new()
+        {
+            new BreadcrumbItem("Trang chủ", href: "/"),
+            new BreadcrumbItem("Quản lý", href: "#", disabled: true),
+            new BreadcrumbItem("Tạo mới người dùng", href: "/user/create-user"),
+            new BreadcrumbItem("Tạo mới thủ công", href: "/user/create-manual"),
+        };
 
         protected bool IsValid =>
             !string.IsNullOrWhiteSpace(User.TenDangNhap) &&

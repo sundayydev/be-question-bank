@@ -72,8 +72,8 @@ public class DeThiService
     /// </summary>
     public async Task<IEnumerable<DeThiDto>> GetAllBasicAsync()
     {
-        var deThis = await _deThiRepository.GetAllAsync();
-        return deThis.Select(MapToBasicDto).ToList();
+        var deThis = await _deThiRepository.GetAllBasicAsync();
+        return deThis.Cast<DeThi>().Select(MapToBasicDto).ToList();
     }
 
     /// <summary>

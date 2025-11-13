@@ -1,9 +1,9 @@
 ﻿@page "/create-question/single"
 @inherits CreateSingleQuestionBase
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Style="padding: 20px ">
-    
-    <MudText Typo="Typo.h5" Class="font-bold p-3 ms-2" Style="@($"color:{Colors.Blue.Darken3};")">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+    <MudBreadcrumbs Items="_breadcrumbs" Style="margin-top:2px;" />
+    <MudText Typo="Typo.h5" Class="font-bold p-2 ms-2" Style="@($"color:{Colors.Blue.Darken3};")">
         Tạo câu hỏi đơn
     </MudText>
     <MudGrid >
@@ -24,7 +24,7 @@
 
                 <MudText Typo="Typo.subtitle1" Class="font-semibold mb-2">Câu trả lời</MudText>
 
-                <MudScrollArea Style="max-height: 300px;">
+                <MudPaper Style="max-height:300px; overflow-y:auto; padding:8px;">
                     @foreach (var answer in Answers)
                     {
                         <MudPaper Class="d-flex align-items-center mb-2 p-2 rounded-lg bg-grey-lighten-4">
@@ -52,7 +52,7 @@
                                            Class="ms-1"/>
                         </MudPaper>
                     }
-                </MudScrollArea>
+                </MudPaper>
 
                 <MudButton Variant="Variant.Outlined"
                            Style="@($"color:{Colors.Blue.Darken3};")"

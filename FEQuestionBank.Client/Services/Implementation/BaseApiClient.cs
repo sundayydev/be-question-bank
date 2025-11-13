@@ -14,14 +14,25 @@ namespace FEQuestionBank.Client.Services
         }
 
         protected async Task<ApiResponse<PagedResult<T>>> GetPagedAsync<T>(
-            string url, int page, int limit, string? sort, string? filter)
+            string url,
+            int page,
+            int pageSize,
+            string? sort = null,
+            string? filter = null,
+            string? search = null,
+            bool? daXuLy = null)  
         {
-            var fullUrl = $"{url}?page={page}&limit={limit}";
-            if (!string.IsNullOrEmpty(sort)) fullUrl += $"&sort={sort}";
-            if (!string.IsNullOrEmpty(filter)) fullUrl += $"&filter={filter}";
+            var query = System.Web.HttpUtility.ParseQueryString(string.Empty);
+            query["page"] = page.ToString();
+            query["pageSize"] = pageSize.ToString(); 
+            if (!string.IsNullOrEmpty(sort)) query["sort"] = sort;
+            if (!string.IsNullOrEmpty(search)) query["search"] = search;
+            else if (!string.IsNullOrEmpty(filter)) query["search"] = filter;
+            if (daXuLy.HasValue) query["daXuLy"] = daXuLy.Value.ToString().ToLower();
 
+            var fullUrl = $"{url}?{query}";
             var res = await _httpClient.GetFromJsonAsync<ApiResponse<PagedResult<T>>>(fullUrl);
-            return res ?? new ApiResponse<PagedResult<T>>(500, "Error");
+            return res ?? new ApiResponse<PagedResult<T>>(500, "Lỗi khi gọi API");
         }
 
         protected async Task<ApiResponse<List<T>>> GetListAsync<T>(string url)

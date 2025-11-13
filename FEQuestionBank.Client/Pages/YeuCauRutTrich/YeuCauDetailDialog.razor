@@ -1,0 +1,61 @@
+﻿@using BeQuestionBank.Shared.DTOs.YeuCauRutTrich
+@inherits YeuCauDetailDialogBase
+
+<MudDialog MaxWidth="MaxWidth.Medium" FullWidth="true">
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="font-weight-bold">Chi Tiết Yêu Cầu Rút Trích</MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <MudGrid Spacing="3" Class="pa-3">
+            <MudItem xs="12" md="6"><strong>Mã yêu cầu:</strong> @YeuCau.MaYeuCau</MudItem>
+            <MudItem xs="12" md="6"><strong>Người yêu cầu:</strong> @YeuCau.TenNguoiDung</MudItem>
+            <MudItem xs="12" md="6"><strong>Môn học:</strong> @YeuCau.TenMonHoc</MudItem>
+            <MudItem xs="12" md="6"><strong>Khoa:</strong> @YeuCau.TenKhoa</MudItem>
+            <MudItem xs="12"><strong>Nội dung rút trích:</strong><br/>@YeuCau.NoiDungRutTrich</MudItem>
+            <MudItem xs="12"><strong>Ghi chú:</strong><br/>@(string.IsNullOrWhiteSpace(YeuCau.GhiChu) ? "-" : YeuCau.GhiChu)</MudItem>
+            <MudItem xs="12" md="6"><strong>Ngày yêu cầu:</strong> @(YeuCau.NgayYeuCau?.ToString("dd/MM/yyyy HH:mm") ?? "-")</MudItem>
+            <MudItem xs="12" md="6"><strong>Ngày xử lý:</strong> @(YeuCau.NgayXuLy?.ToString("dd/MM/yyyy HH:mm") ?? "-")</MudItem>
+
+            <MudItem xs="12">
+                <strong>Trạng thái:</strong>
+                <MudChip T="string" Size="Size.Small"
+                         Color="@(YeuCau.DaXuLy == true ? Color.Success : Color.Warning)"
+                         Variant="Variant.Filled">
+                    @(YeuCau.DaXuLy == true ? "Đã xử lý" : "Chưa xử lý")
+                </MudChip>
+            </MudItem>
+
+            @if (!string.IsNullOrWhiteSpace(YeuCau.MaTran))
+            {
+                <MudItem xs="12">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <strong>Ma trận:</strong>
+
+                        <!-- Nút sao chép nhỏ -->
+                        <MudButton Size="Size.Small" Variant="Variant.Filled"
+                                   Style="@($"color:white;background:{Colors.Blue.Darken3}")"
+                                   StartIcon="@Icons.Material.Filled.ContentCopy"
+                                   OnClick="CopyMaTran">
+                            Sao chép
+                        </MudButton>
+
+
+                    </div>
+
+                    <MudText Typo="Typo.caption" Class="d-block">
+                        <pre style="background:#f5f5f5; padding:8px; border-radius:6px; font-size:0.85rem; overflow-x:auto;">
+                          @FormattedMaTran
+                        </pre>
+                    </MudText>
+                </MudItem>
+
+            }
+
+        </MudGrid>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Filled" Color="Color.Secondary">Đóng</MudButton>
+    </DialogActions>
+</MudDialog>

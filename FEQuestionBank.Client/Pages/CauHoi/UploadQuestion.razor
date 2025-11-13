@@ -2,11 +2,12 @@
 @inject NavigationManager Nav
 @inject ISnackbar Snackbar
 
-<MudContainer MaxWidth="MaxWidth.Large"  
-              Style="padding: 20px; min-height: 100vh;">
-
+<MudContainer MaxWidth="MaxWidth.Large">
     <!-- Breadcrumb hoặc tiêu đề -->
-    <MudText Typo="Typo.h5" Class="mb-5 fw-bold">Tải lên câu hỏi</MudText>
+    <MudBreadcrumbs Items="_breadcrumbs" Style="margin-top:2px;"/>
+    <MudText Typo="Typo.h5" Class="font-bold p-2 ms-2" Style="@($"color:{Colors.Blue.Darken3};")">
+        Tải lên câu hỏi
+    </MudText>
 
     <!-- Chọn Khoa, Môn, Chương/Phần -->
     <MudPaper Elevation="2" Class="pa-4 mb-6">

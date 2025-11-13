@@ -24,6 +24,40 @@ namespace FEQuestionBank.Client.Pages.DeThi
 
         protected string? _searchTerm;
         protected MudTable<DeThiDto>? table;
+        protected int TotalKhoa { get; set; }
+        protected int ActiveKhoa { get; set; }
+        protected int LockedKhoa { get; set; }
+        private List<DeThiDto> allDeThis = new List<DeThiDto>();
+        protected List<BreadcrumbItem> _breadcrumbs = new()
+        {
+            new BreadcrumbItem("Trang chủ", href: "/"),
+            new BreadcrumbItem("Quản lý đề", href: "#", disabled: true),
+            new BreadcrumbItem("Danh sách đề thi", href: "/exams")
+        };
+        protected override async Task OnInitializedAsync()
+        {
+            await LoadallDeThisForInfoCardAsync();
+        }
+        private async Task LoadallDeThisForInfoCardAsync()
+        {
+            try
+            {
+                var response = await DeThiApiClient.GetAllAsync();
+                if (response.Success && response.Data != null)
+                {
+                    allDeThis = response.Data;
+
+                    // Cập nhật InfoCard từ toàn bộ dữ liệu
+                    TotalKhoa = allDeThis.Count;
+                    ActiveKhoa = allDeThis.Count(k => k.DaDuyet==false);
+                    LockedKhoa = allDeThis.Count(k => k.DaDuyet==true);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Lỗi khi tải số liệu: {ex.Message}", Severity.Error);
+            }
+        }
 
         protected async Task<TableData<DeThiDto>> LoadServerData(TableState state, CancellationToken cancellationToken)
         {

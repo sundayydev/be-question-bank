@@ -8,7 +8,7 @@ namespace FEQuestionBank.Client.Services;
 public interface IDeThiApiClient
 {
     Task<ApiResponse<List<DeThiDto>>> GetAllAsync();
-    Task<ApiResponse<PagedResult<DeThiDto>>> GetPagedAsync(int page = 1, int limit = 10, string? sort = null, string? filter = null);
+    Task<ApiResponse<PagedResult<DeThiDto>>> GetPagedAsync(int page = 1, int pageSize = 10, string? sort = null, string? filter = null);
     Task<ApiResponse<DeThiDto>> GetByIdAsync(Guid id);
     Task<ApiResponse<DeThiDto>> CreateAsync(CreateDeThiDto model);
     Task<ApiResponse<DeThiDto>> UpdateAsync(Guid id, UpdateDeThiDto model);
