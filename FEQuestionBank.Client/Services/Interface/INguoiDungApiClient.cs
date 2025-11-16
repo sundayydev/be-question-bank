@@ -9,14 +9,14 @@ namespace FEQuestionBank.Client.Services;
 public interface INguoiDungApiClient
 {
     Task<ApiResponse<List<NguoiDungDto>>> GetAllNguoiDungsAsync();
-    Task<ApiResponse<PagedResult<NguoiDungDto>>> GetNguoiDungsAsync(
-        int page = 1, int pageSize = 10, string? sort = null, string? filter = null);
+    Task<ApiResponse<PagedResult<NguoiDungDto>>> GetNguoiDungsPagedAsync(
+        int page = 1, int pageSize = 10, string? sort = null, string? search = null);
 
     Task<ApiResponse<NguoiDungDto>> CreateNguoiDungAsync(NguoiDungDto model);
-    Task<ApiResponse<NguoiDungDto>> UpdateNguoiDungAsync(string id, NguoiDungDto model);
-    Task<ApiResponse<string>> DeleteNguoiDungAsync(string id);
-    Task<ApiResponse<string>> LockNguoiDungAsync(string id);
-    Task<ApiResponse<string>> UnlockNguoiDungAsync(string id);
+    Task<ApiResponse<NguoiDungDto>> UpdateNguoiDungAsync(Guid id, NguoiDungDto model);
+    Task<ApiResponse<Guid>> DeleteNguoiDungAsync(Guid id);
+    Task<ApiResponse<Guid>> LockNguoiDungAsync(Guid id);
+    Task<ApiResponse<Guid>> UnlockNguoiDungAsync(Guid id);
     Task<ApiResponse<ImportResultDto>> ImportUsersAsync(MultipartFormDataContent content);
 
 }

@@ -75,8 +75,8 @@ namespace FEQuestionBank.Client.Pages.DeThi
                 if (!string.IsNullOrEmpty(_searchTerm))
                     url += $"&filter={Uri.EscapeDataString(_searchTerm)}";
 
-                var response = await Http.GetFromJsonAsync<ApiResponse<PagedResult<DeThiDto>>>(url, cancellationToken);
-
+                //var response = await Http.GetFromJsonAsync<ApiResponse<PagedResult<DeThiDto>>>(url, cancellationToken);
+                var response = await DeThiApiClient.GetPagedAsync(page, pageSize, sort, _searchTerm);
                 if (response is { Success: true, Data: not null })
                 {
                     return new TableData<DeThiDto>

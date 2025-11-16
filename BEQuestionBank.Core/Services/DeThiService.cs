@@ -403,7 +403,7 @@ public class DeThiService
                     int required = Math.Min(clo.Num, questionType.Num);
 
                     var available = await _cauHoiRepository.CountAsync(ch =>
-                        ch.MaPhan == Guid.Parse(part.MaPhan) &&
+                        ch.MaPhan == part.MaPhan &&
                         ch.CLO == (EnumCLO?)clo.Clo &&
                         ch.LoaiCauHoi == questionType.Loai &&
                         ch.Phan.MaMonHoc == maMonHoc &&
@@ -503,7 +503,7 @@ public class DeThiService
                     if (numQuestions <= 0) continue;
 
                     var questions = await _cauHoiRepository.FindAsync(ch =>
-                        ch.MaPhan == Guid.Parse(part.MaPhan) &&
+                        ch.MaPhan == part.MaPhan &&
                         ch.CLO == (EnumCLO?)clo.Clo &&
                         ch.LoaiCauHoi == questionType.Loai &&
                         ch.Phan.MaMonHoc == maMonHoc &&
@@ -514,7 +514,7 @@ public class DeThiService
                     chiTietDeThis.AddRange(selected.Select(q => new ChiTietDeThi
                     {
                         MaDeThi = maDeThi,
-                        MaPhan = Guid.Parse(part.MaPhan),
+                        MaPhan = part.MaPhan,
                         MaCauHoi = q.MaCauHoi,
                         ThuTu = thuTu++
                     }));

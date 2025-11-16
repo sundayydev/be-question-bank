@@ -9,6 +9,7 @@
 
         public bool Success => StatusCode >= 200 && StatusCode < 300;
 
+        public ApiResponse() { } 
         public ApiResponse(int statusCode, string message, T? data = default, object? errors = null)
         {
             StatusCode = statusCode;

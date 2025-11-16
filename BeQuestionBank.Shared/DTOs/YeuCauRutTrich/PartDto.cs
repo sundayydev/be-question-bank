@@ -8,7 +8,7 @@ namespace BEQuestionBank.Shared.DTOs.MaTran;
 public class PartDto
 {
     [Required(ErrorMessage = "Mã phần không được để trống.")]
-    public string MaPhan { get; set; }
+    public Guid MaPhan { get; set; }
 
     [Required(ErrorMessage = "Số câu hỏi không được để trống.")]
     public int NumQuestions { get; set; }

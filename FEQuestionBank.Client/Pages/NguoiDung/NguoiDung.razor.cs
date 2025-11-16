@@ -27,12 +27,38 @@ namespace FEQuestionBank.Client.Pages
         protected int ActiveUsers { get; set; }
         protected int LockedUsers { get; set; }
         
+        private List<NguoiDungDto> allUsers = new List<NguoiDungDto>();
+        
         protected List<BreadcrumbItem> _breadcrumbs = new()
         {
             new BreadcrumbItem("Trang chủ", href: "/"),
             new BreadcrumbItem("Quản lý", href: "#", disabled: true),
             new BreadcrumbItem("Danh sách người dùng", href: "/user/list")
         };
+        protected override async Task OnInitializedAsync()
+        {
+            await LoadAllNguoiDungForInfoCardAsync();
+        }
+        private async Task LoadAllNguoiDungForInfoCardAsync()
+        {
+            try
+            {
+                var response = await NguoiDungApiClient.GetAllNguoiDungsAsync();
+                if (response.Success && response.Data != null)
+                {
+                    allUsers = response.Data;
+                    
+                    TotalUsers = allUsers.Count;
+                    ActiveUsers = allUsers.Count(k => k.BiKhoa==false);
+                    LockedUsers = allUsers.Count(k => k.BiKhoa==true);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Lỗi khi tải số liệu: {ex.Message}", Severity.Error);
+            }
+        }
+
         
         protected async Task<TableData<NguoiDungDto>> LoadServerData(TableState state, CancellationToken cancellationToken)
         {
@@ -44,13 +70,10 @@ namespace FEQuestionBank.Client.Pages
 
                 if (!string.IsNullOrEmpty(state.SortLabel))
                     sort = $"{state.SortLabel},{(state.SortDirection == SortDirection.Ascending ? "asc" : "desc")}";
+                
 
-                var url = $"api/NguoiDung/paged?page={page}&pageSize={pageSize}";
-                if (!string.IsNullOrEmpty(sort)) url += $"&sort={sort}";
-                if (!string.IsNullOrEmpty(_searchTerm))
-                    url += $"&filter={Uri.EscapeDataString(_searchTerm)}";
-
-                var response = await Http.GetFromJsonAsync<ApiResponse<PagedResult<NguoiDungDto>>>(url, cancellationToken);
+                //var response = await Http.GetFromJsonAsync<ApiResponse<PagedResult<NguoiDungDto>>>(url, cancellationToken);
+                var response = await NguoiDungApiClient.GetNguoiDungsPagedAsync(page, pageSize, sort, _searchTerm);
                 
                 if (response?.Success == true && response.Data != null)
                 {
@@ -136,8 +159,8 @@ namespace FEQuestionBank.Client.Pages
             if (confirm == true)
             {
                 var response = user.BiKhoa
-                    ? await NguoiDungApiClient.UnlockNguoiDungAsync(user.MaNguoiDung.ToString())
-                    : await NguoiDungApiClient.LockNguoiDungAsync(user.MaNguoiDung.ToString());
+                    ? await NguoiDungApiClient.UnlockNguoiDungAsync(user.MaNguoiDung)
+                    : await NguoiDungApiClient.LockNguoiDungAsync(user.MaNguoiDung);
 
                 Snackbar.Add(response.Success ? $"{(user.BiKhoa ? "Mở khóa" : "Khóa")} thành công!" : response.Message,
                              response.Success ? Severity.Success : Severity.Error);
@@ -155,7 +178,7 @@ namespace FEQuestionBank.Client.Pages
 
             if (confirm == true)
             {
-                var response = await NguoiDungApiClient.DeleteNguoiDungAsync(user.MaNguoiDung.ToString());
+                var response = await NguoiDungApiClient.DeleteNguoiDungAsync(user.MaNguoiDung);
                 Snackbar.Add(response.Success ? "Xóa thành công!" : response.Message,
                              response.Success ? Severity.Success : Severity.Error);
                 await table!.ReloadServerData();
@@ -177,7 +200,7 @@ namespace FEQuestionBank.Client.Pages
                     var createDto = new NguoiDungDto
                     {
                         TenDangNhap = user.TenDangNhap,
-                        MatKhau = user.MatKhau ?? "123456", // Mật khẩu mặc định
+                        MatKhau = user.MatKhau ?? "123456", 
                         HoTen = user.HoTen,
                         Email = user.Email,
                         VaiTro = user.VaiTro,
@@ -210,7 +233,7 @@ namespace FEQuestionBank.Client.Pages
                     if (!string.IsNullOrWhiteSpace(user.MatKhau))
                         updateDto.MatKhau = user.MatKhau;
 
-                    var response = await NguoiDungApiClient.UpdateNguoiDungAsync(user.MaNguoiDung.ToString(), updateDto);
+                    var response = await NguoiDungApiClient.UpdateNguoiDungAsync(user.MaNguoiDung, updateDto);
 
                     if (response.Success)
                         Snackbar.Add("Cập nhật thành công!", Severity.Success);

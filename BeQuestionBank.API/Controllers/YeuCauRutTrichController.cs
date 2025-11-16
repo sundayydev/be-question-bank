@@ -280,10 +280,10 @@ public class YeuCauRutTrichController : ControllerBase
                     ApiResponseFactory.ValidationError<object>(deThiMessage));
             }
 
-            var responseData = new
+            var responseData = new YeuCauRutTrichResultDto
             {
                 MaYeuCau = maYeuCau,
-                MaDeThi = maDeThi,
+                MaDeThi = maDeThi!.Value,
                 MaNguoiDung = dto.MaNguoiDung,
                 MaMonHoc = dto.MaMonHoc,
                 TenDeThi = tenDeThi,
@@ -349,13 +349,12 @@ public class YeuCauRutTrichController : ControllerBase
     {
         var query = await _service.GetAllBasicAsync();
 
-        // === 1. Lọc theo trạng thái ===
+        
         if (daXuLy.HasValue)
         {
             query = query.Where(k => k.DaXuLy == daXuLy.Value);
         }
-
-        // === 2. Tìm kiếm (search) ===
+        
         if (!string.IsNullOrWhiteSpace(search))
         {
             var keyword = search.Trim().ToLower();
@@ -397,18 +396,15 @@ public class YeuCauRutTrichController : ControllerBase
                 ("ngayyeucau", "asc") => query.OrderBy(k => k.NgayYeuCau),
                 ("ngayyeucau", "desc") => query.OrderByDescending(k => k.NgayYeuCau),
 
-                _ => query.OrderByDescending(k => k.NgayYeuCau) // mặc định
+                _ => query.OrderByDescending(k => k.NgayYeuCau) 
             };
         }
         else
         {
             query = query.OrderByDescending(k => k.NgayYeuCau);
         }
-
-        // === 4. Đếm tổng ===
+        
         var totalCount = query.Count();
-
-        // === 5. Phân trang ===
         var items = query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -428,8 +424,7 @@ public class YeuCauRutTrichController : ControllerBase
                 MaTran = k.MaTran
             })
             .ToList();
-
-        // === 6. Tạo kết quả phân trang ===
+        
         var result = new PagedResult<YeuCauRutTrichDto>
         {
             Items = items,

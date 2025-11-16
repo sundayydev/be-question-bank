@@ -82,7 +82,7 @@ namespace FEQuestionBank.Client.Pages.YeuCau
                 // if (_filterTrangThai.HasValue)
                 //     url += $"&daXuLy={_filterTrangThai.Value}";
 
-                var response = await YeuCauApi.GetPagedAsync(page, pageSize, sort, _searchTerm, _filterTrangThai);
+                var response = await YeuCauApi.GetYeuCauPagedAsync(page, pageSize, sort, _searchTerm, _filterTrangThai);
 
                 if (response?.Success == true && response.Data != null)
                 {

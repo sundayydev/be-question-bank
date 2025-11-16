@@ -19,7 +19,6 @@ namespace FEQuestionBank.Client.Pages
         [Inject] protected ISnackbar Snackbar { get; set; }
         [Inject] protected NavigationManager NavigationManager { get; set; }
         [Inject] protected IDialogService DialogService { get; set; }
-        [Inject] protected HttpClient Http { get; set; } = default!;
 
         protected string? _searchTerm;
         protected MudTable<KhoaDto>? table;
@@ -78,7 +77,7 @@ namespace FEQuestionBank.Client.Pages
                 //     url += $"&filter={Uri.EscapeDataString(_searchTerm)}";
                 //
                 // var response = await Http.GetFromJsonAsync<ApiResponse<PagedResult<KhoaDto>>>(url, cancellationToken);
-                var response = await KhoaApiClient.GetKhoasAsync(page, pageSize, sort, _searchTerm);
+                var response = await KhoaApiClient.GetKhoasPagedAsync(page, pageSize, sort, _searchTerm);
                 if (response?.Success == true && response.Data != null)
                 {
                     return new TableData<KhoaDto>
@@ -167,7 +166,7 @@ namespace FEQuestionBank.Client.Pages
 
             if (!result.Canceled)
             {
-                await DeleteKhoaAsync(khoa.MaKhoa.ToString());
+                await DeleteKhoaAsync(khoa.MaKhoa);
                 if (table != null) await table.ReloadServerData();
             }
         }
@@ -197,7 +196,7 @@ namespace FEQuestionBank.Client.Pages
                 else
                 {
                     var update = new UpdateKhoaDto { TenKhoa = khoa.TenKhoa, MoTa = khoa.MoTa };
-                    var response = await KhoaApiClient.UpdateKhoaAsync(khoa.MaKhoa.ToString(), update);
+                    var response = await KhoaApiClient.UpdateKhoaAsync(khoa.MaKhoa, update);
                     Snackbar.Add(response.Success ? "Cập nhật khoa thành công!" : $"Lỗi: {response.Message}", response.Success ? Severity.Success : Severity.Error);
                 }
             }
@@ -207,11 +206,12 @@ namespace FEQuestionBank.Client.Pages
             }
         }
 
-        private async Task DeleteKhoaAsync(string id)
+        private async Task DeleteKhoaAsync(Guid id)
         {
             var response = await KhoaApiClient.DeleteKhoaAsync(id);
             Snackbar.Add(response.Success ? "Xóa thành công!" : $"Lỗi: {response.Message}", response.Success ? Severity.Success : Severity.Error);
         }
+        
         protected void OnViewSubjects(KhoaDto khoa)
         {
             NavigationManager.NavigateTo($"/monhoc/khoa/{khoa.MaKhoa}");

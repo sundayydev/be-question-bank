@@ -3,6 +3,7 @@ using BeQuestionBank.Shared.DTOs.Common;
 using BeQuestionBank.Shared.DTOs.DeThi;
 using BEQuestionBank.Shared.DTOs.DeThi;
 using BeQuestionBank.Shared.DTOs.Pagination;
+using BeQuestionBank.Shared.DTOs.YeuCauRutTrich;
 
 namespace FEQuestionBank.Client.Services;
 
@@ -52,5 +53,30 @@ public class DeThiApiClient : BaseApiClient, IDeThiApiClient
         // Dùng GetFromJsonAsync → tự map camelCase
         var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<DeThiWithChiTietAndCauTraLoiDto>>();
         return apiResponse;
+    }
+
+    public async Task<ApiResponse<CheckQuestionResultDto>> CheckQuestionsAsync(MaTranDto maTran, Guid maMonHoc)
+    {
+        var url = $"api/dethi/CheckQuestions?maMonHoc={maMonHoc}";
+        var response = await _httpClient.PostAsJsonAsync(url, maTran);
+
+        var content = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return new ApiResponse<CheckQuestionResultDto>
+            {
+                StatusCode = (int)response.StatusCode,
+                Message = content
+            };
+        }
+
+        var data = await response.Content.ReadFromJsonAsync<CheckQuestionResultDto>();
+        return new ApiResponse<CheckQuestionResultDto>
+        {
+            StatusCode = 200,
+            Message = "Thành công",
+            Data = data
+        };
     }
 }

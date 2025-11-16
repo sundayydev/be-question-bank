@@ -34,7 +34,7 @@ public interface IYeuCauRutTrichApiClient
     /// <summary>
     /// Lấy danh sách phân trang + tìm kiếm + sắp xếp + lọc trạng thái
     /// </summary>
-    Task<ApiResponse<PagedResult<YeuCauRutTrichDto>>> GetPagedAsync(
+    Task<ApiResponse<PagedResult<YeuCauRutTrichDto>>> GetYeuCauPagedAsync(
         int page = 1,
         int limit = 10,
         string sort = "NgayYeuCau,desc",
@@ -44,12 +44,12 @@ public interface IYeuCauRutTrichApiClient
     /// <summary>
     /// Tạo yêu cầu rút trích mới
     /// </summary>
-    Task<ApiResponse<object>> CreateAsync(CreateYeuCauRutTrichDto dto);
+    Task<ApiResponse<YeuCauRutTrichDto>> CreateAsync(CreateYeuCauRutTrichDto dto);
 
     /// <summary>
     /// Tạo yêu cầu + rút trích đề thi luôn
     /// </summary>
-    Task<ApiResponse<object>> CreateAndRutTrichDeThiAsync(CreateYeuCauRutTrichDto dto);
+    Task<ApiResponse<YeuCauRutTrichResultDto>> CreateAndRutTrichDeThiAsync(CreateYeuCauRutTrichDto dto);
 
     /// <summary>
     /// Cập nhật yêu cầu (chỉ dùng cho admin)

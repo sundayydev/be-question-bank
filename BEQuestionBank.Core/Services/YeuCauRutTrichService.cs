@@ -194,7 +194,7 @@ public class YeuCauRutTrichService
 
                 var part = new PartDto
                 {
-                    MaPhan = maPhan.ToString(),
+                    MaPhan = maPhan,
                     NumQuestions = (int)(currentRow.GetCell(1)?.NumericCellValue ?? 0),
                     Clos = new List<CloDto>
                     {

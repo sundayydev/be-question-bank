@@ -234,7 +234,7 @@ public class KhoaController(KhoaService service, ILogger<KhoaController> logger)
         {
             var query = await _service.GetAllKhoasAsync(); // Trả về IQueryable hoặc List<Khoa>
 
-            // Filtering
+           
             if (!string.IsNullOrWhiteSpace(search))
             {
                 query = query.Where(k => k.TenKhoa.Contains(search, StringComparison.OrdinalIgnoreCase));

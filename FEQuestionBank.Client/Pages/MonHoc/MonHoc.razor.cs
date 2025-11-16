@@ -77,17 +77,12 @@ namespace FEQuestionBank.Client.Pages.MonHoc
         {
             try
             {
+                // Nếu filter theo Khoa
                 if (MaKhoaFilter.HasValue)
                 {
-                    var response = await Http.GetFromJsonAsync<ApiResponse<List<MonHocDto>>>(
-                        $"api/monhoc/khoa/{MaKhoaFilter}", cancellationToken);
+                    var response = await MonHocApiClient.GetMonHocsByMaKhoaAsync(MaKhoaFilter.Value);
 
-                    if (response == null)
-                    {
-                        return new TableData<MonHocDto> { Items = new List<MonHocDto>(), TotalItems = 0 };
-                    }
-
-                    if (response.Success && response.Data != null)
+                    if (response is { Success: true, Data: not null })
                     {
                         return new TableData<MonHocDto>
                         {
@@ -95,25 +90,27 @@ namespace FEQuestionBank.Client.Pages.MonHoc
                             TotalItems = response.Data.Count
                         };
                     }
-                    else
-                    {
-                        return new TableData<MonHocDto> { Items = new List<MonHocDto>(), TotalItems = 0 };
-                    }
+
+                    return new TableData<MonHocDto> { Items = new List<MonHocDto>(), TotalItems = 0 };
                 }
-                
+
+                // Lấy phân trang, sort, search từ state
                 int page = state.Page + 1;
                 int pageSize = state.PageSize;
+
                 string? sort = null;
-
                 if (!string.IsNullOrEmpty(state.SortLabel))
+                {
                     sort = $"{state.SortLabel},{(state.SortDirection == SortDirection.Ascending ? "asc" : "desc")}";
+                }
 
-                string url = $"api/monhoc/paged?page={page}&limit={pageSize}";
-                if (!string.IsNullOrEmpty(sort)) url += $"&sort={sort}";
-                if (!string.IsNullOrEmpty(_searchTerm))
-                    url += $"&filter={Uri.EscapeDataString(_searchTerm)}";
-                
-                var pagedResponse = await Http.GetFromJsonAsync<ApiResponse<PagedResult<MonHocDto>>>(url, cancellationToken);
+                var pagedResponse = await MonHocApiClient.GetMonHocsPagedAsync(
+                    page: page,
+                    pageSize:pageSize,
+                    sort: sort,
+                    search: _searchTerm
+                );
+
                 if (pagedResponse is { Success: true, Data: not null })
                 {
                     return new TableData<MonHocDto>
@@ -127,9 +124,11 @@ namespace FEQuestionBank.Client.Pages.MonHoc
             }
             catch (Exception ex)
             {
+                Console.Error.WriteLine(ex);
                 return new TableData<MonHocDto> { Items = new List<MonHocDto>(), TotalItems = 0 };
             }
         }
+
 
         protected async Task OnSearch(string? text)
         {
@@ -187,7 +186,7 @@ namespace FEQuestionBank.Client.Pages.MonHoc
 
             if (!result.Canceled)
             {
-                await DeleteMonHocAsync(monHoc.MaMonHoc.ToString());
+                await DeleteMonHocAsync(monHoc.MaMonHoc);
                 await table!.ReloadServerData();
             }
         }
@@ -203,7 +202,7 @@ namespace FEQuestionBank.Client.Pages.MonHoc
 
             if (!result.Canceled)
             {
-                await RestoreMonHocAsync(monHoc.MaMonHoc.ToString());
+                await RestoreMonHocAsync(monHoc.MaMonHoc);
                 await table!.ReloadServerData();
             }
         }
@@ -248,7 +247,7 @@ namespace FEQuestionBank.Client.Pages.MonHoc
                         MaKhoa = monHoc.MaKhoa,
                         XoaTam = monHoc.XoaTam
                     };
-                    var response = await MonHocApiClient.UpdateMonHocAsync(monHoc.MaMonHoc.ToString(), update);
+                    var response = await MonHocApiClient.UpdateMonHocAsync(monHoc.MaMonHoc, update);
                     Snackbar.Add(response.Success ? "Cập nhật môn học thành công!" : $"Lỗi: {response.Message}", response.Success ? Severity.Success : Severity.Error);
                 }
             }
@@ -258,13 +257,13 @@ namespace FEQuestionBank.Client.Pages.MonHoc
             }
         }
 
-        private async Task DeleteMonHocAsync(string id)
+        private async Task DeleteMonHocAsync(Guid id)
         {
             var response = await MonHocApiClient.SoftDeleteMonHocAsync(id);
             Snackbar.Add(response.Success ? "Xóa tạm thời thành công!" : $"Lỗi: {response.Message}", response.Success ? Severity.Success : Severity.Error);
         }
 
-        private async Task RestoreMonHocAsync(string id)
+        private async Task RestoreMonHocAsync(Guid id)
         {
             var response = await MonHocApiClient.RestoreMonHocAsync(id);
             Snackbar.Add(response.Success ? "Khôi phục thành công!" : $"Lỗi: {response.Message}", response.Success ? Severity.Success : Severity.Error);

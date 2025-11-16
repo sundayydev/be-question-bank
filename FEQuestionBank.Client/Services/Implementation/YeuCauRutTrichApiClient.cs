@@ -1,4 +1,5 @@
-﻿using BeQuestionBank.Shared.DTOs.Common;
+﻿using System.Net.Http.Json;
+using BeQuestionBank.Shared.DTOs.Common;
 using BeQuestionBank.Shared.DTOs.Pagination;
 using BeQuestionBank.Shared.DTOs.YeuCauRutTrich;
 
@@ -33,7 +34,7 @@ public class YeuCauRutTrichApiClient : BaseApiClient, IYeuCauRutTrichApiClient
         throw new NotImplementedException();
     }
 
-    public Task<ApiResponse<PagedResult<YeuCauRutTrichDto>>> GetPagedAsync(
+    public Task<ApiResponse<PagedResult<YeuCauRutTrichDto>>> GetYeuCauPagedAsync(
         int page = 1,
         int limit = 10,
         string sort = "NgayYeuCau,desc",
@@ -50,14 +51,33 @@ public class YeuCauRutTrichApiClient : BaseApiClient, IYeuCauRutTrichApiClient
         );
     }
 
-    public Task<ApiResponse<object>> CreateAsync(CreateYeuCauRutTrichDto dto)
+    public async Task<ApiResponse<YeuCauRutTrichDto>> CreateAsync(CreateYeuCauRutTrichDto dto)
     {
         throw new NotImplementedException();
     }
 
-    public Task<ApiResponse<object>> CreateAndRutTrichDeThiAsync(CreateYeuCauRutTrichDto dto)
+    public async Task<ApiResponse<YeuCauRutTrichResultDto>> CreateAndRutTrichDeThiAsync(CreateYeuCauRutTrichDto dto)
     {
-        throw new NotImplementedException();
+        
+        var response = await _httpClient.PostAsJsonAsync("api/yeucau/RutTrichDeThi", dto);
+        var content = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return new ApiResponse<YeuCauRutTrichResultDto>
+            {
+                StatusCode = (int)response.StatusCode,
+                Message = content
+            };
+        }
+
+        var data = await response.Content.ReadFromJsonAsync<YeuCauRutTrichResultDto>();
+        return new ApiResponse<YeuCauRutTrichResultDto>
+        {
+            StatusCode = 201,
+            Message = "Tạo thành công",
+            Data = data
+        };
     }
 
     public Task<ApiResponse<object>> UpdateAsync(Guid id, YeuCauRutTrichDto dto)

@@ -1,0 +1,148 @@
+﻿@page "/tools/exam-extract"
+@using BeQuestionBank.Shared.DTOs.YeuCauRutTrich
+@using BeQuestionBank.Shared.DTOs.MonHoc
+@using MudBlazor
+@inherits FEQuestionBank.Client.Pages.DeThi.ExtractQuestionPage
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="my-8">
+    <MudCard>
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h5">Rút Trích Đề Thi</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudForm @ref="_form" Model="_model">
+                
+                <!-- MÔN HỌC -->
+                <MudSelect T="Guid" 
+                           Label="Môn Học" 
+                           Variant="Variant.Outlined" 
+                           Value="_model.MaMonHoc"
+                           ValueChanged="@OnMonHocChanged"
+                           Required="true" 
+                           Class="mb-4">
+                    @foreach (var mh in _monHocs)
+                    {
+                        <MudSelectItem Value="@mh.MaMonHoc">@mh.TenMonHoc</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <!-- NỘI DUNG & GHI CHÚ -->
+                <MudTextField @bind-Value="_model.NoiDungRutTrich" Label="Nội Dung Rút Trích" Lines="3" Class="mb-4" />
+                <MudTextField @bind-Value="_model.GhiChu" Label="Ghi Chú" Lines="3" Class="mb-4" />
+
+                <!-- CHỌN CÁC PHẦN (MultiSelection) -->
+                @if (_availableParts.Any())
+                {
+                    <MudSelect T="Guid"
+                               Label="Chọn các phần"
+                               MultiSelection="true"
+                               SelectedValues="@_selectedPartIds"
+                               SelectedValuesChanged="@OnPartSelectionChanged"
+                               Variant="Variant.Outlined"
+                               Class="mt-4"
+                               Dense="true"
+                               AnchorOrigin="Origin.BottomCenter">
+
+                        @foreach (var part in _availableParts)
+                        {
+                            <MudSelectItem T="Guid" Value="@part.MaPhan">
+                                @(part.MaPhan.ToString("N").Substring(0, 8))...
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+
+                <!-- CHẾ ĐỘ RÚT TRÍCH: DÙNG SELECT NHƯNG GÁN VÀO CloPerPart -->
+                <MudSelect T="bool" Label="Chế độ rút trích" Variant="Variant.Outlined" @bind-Value="_maTran.CloPerPart" Class="mb-4">
+                    <MudSelectItem Value="@false">Rút trích theo CLO & Loại câu hỏi</MudSelectItem>
+                    <MudSelectItem Value="@true">Rút trích theo phần</MudSelectItem>
+                </MudSelect>
+
+                <MudDivider Class="my-4" />
+                <MudText Typo="Typo.h6">Cấu hình Ma Trận</MudText>
+
+                <!-- CHẾ ĐỘ: KHÔNG THEO PHẦN -->
+                @if (!_maTran.CloPerPart)
+                {
+                    <MudTable Items="_maTran.Clos" Dense Hover Bordered Class="mb-4">
+                        <ToolBarContent>
+                            <MudButton StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="AddClo" Size="Size.Small">Thêm CLO</MudButton>
+                        </ToolBarContent>
+                        <HeaderContent>
+                            <MudTh>CLO</MudTh>
+                            <MudTh>Số lượng</MudTh>
+                            <MudTh></MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>
+                                <MudSelect T="int" @bind-Value="context.Clo" Dense Margin="Margin.Dense">
+                                    <MudSelectItem Value="1">CLO 1</MudSelectItem>
+                                    <MudSelectItem Value="2">CLO 2</MudSelectItem>
+                                    <MudSelectItem Value="3">CLO 3</MudSelectItem>
+                                    <MudSelectItem Value="4">CLO 4</MudSelectItem>
+                                </MudSelect>
+                            </MudTd>
+                            <MudTd><MudNumericField @bind-Value="context.Num" Min="0" Dense Margin="Margin.Dense" /></MudTd>
+                            <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveClo(context)" /></MudTd>
+                        </RowTemplate>
+                    </MudTable>
+
+                    <MudTable Items="_maTran.QuestionTypes" Dense Hover Bordered Class="mb-4">
+                        <ToolBarContent>
+                            <MudButton StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="AddQuestionType" Size="Size.Small">Thêm Loại</MudButton>
+                        </ToolBarContent>
+                        <HeaderContent>
+                            <MudTh>Loại câu hỏi</MudTh>
+                            <MudTh>Số lượng</MudTh>
+                            <MudTh></MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>
+                                <MudSelect T="string" @bind-Value="context.Loai" Dense Margin="Margin.Dense">
+                                    @* <MudSelectItem Value="Trắc nghiệm">Trắc nghiệm</MudSelectItem> *@
+                                    @* <MudSelectItem Value="Tự luận">Tự luận</MudSelectItem> *@
+                                    @* <MudSelectItem Value="Điền khuyết">Điền khuyết</MudSelectItem> *@
+                                    @* <MudSelectItem Value="Đúng/Sai">Đúng/Sai</MudSelectItem> *@
+                                </MudSelect>
+                            </MudTd>
+                            <MudTd><MudNumericField @bind-Value="context.Num" Min="0" Dense Margin="Margin.Dense" /></MudTd>
+                            <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveQuestionType(context)" /></MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+
+                <!-- CHẾ ĐỘ: THEO PHẦN -->
+                @if (_maTran.CloPerPart && _maTran.Parts.Any())
+                {
+                    <MudTable Items="_maTran.Parts" Dense Hover Bordered Class="mb-4">
+                        <ToolBarContent>
+                            <MudButton StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="AddPart" Size="Size.Small">Thêm Phần</MudButton>
+                        </ToolBarContent>
+                        <HeaderContent>
+                            <MudTh>Mã Phần</MudTh>
+                            <MudTh>Số câu</MudTh>
+                            <MudTh>Ghi chú</MudTh>
+                            <MudTh></MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd><MudTextField @bind-Value="context.MaPhan" Dense Placeholder="PHAN1" MaxLength="20" /></MudTd>
+                            <MudTd><MudNumericField @bind-Value="context.NumQuestions" Min="1" Dense /></MudTd>
+                            <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemovePart(context)" /></MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+
+                <div class="d-flex gap-3 justify-end mt-6">
+                    <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.CheckCircle" OnClick="KiemTraMaTran" Disabled="@_isChecking">
+                        @_isChecking ? "Đang kiểm tra..." : "Kiểm Tra Ma Trận"
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AutoFixHigh" OnClick="RutTrichDeThi" Disabled="@_isProcessing">
+                        @_isProcessing ? "Đang rút..." : "Rút Trích Đề Thi"
+                    </MudButton>
+                </div>
+            </MudForm>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
