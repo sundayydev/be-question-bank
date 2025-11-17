@@ -2,9 +2,9 @@
 @inherits KhoaBase
 @inject ISnackbar Snackbar
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge"  Style="min-height:600px; width: 100%; padding: 30px">
-    <MudText Typo="Typo.h4" Class="mb-6">Danh sách Khoa</MudText>
-    <MudGrid Spacing="3" Style="margin-top: 5px; margin-bottom: 10px">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge"  Style="min-height:600px; width: 100%">
+    <MudBreadcrumbs Items="_breadcrumbs" Style="margin-top:2px;" />
+    <MudGrid Spacing="3" Style="margin-bottom: 10px">
         <MudItem xs="12" sm="6" md="4">
             <InfoCard
                 Icon="@Icons.Material.Filled.People"

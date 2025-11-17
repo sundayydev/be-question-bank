@@ -2,11 +2,13 @@
 @using BeQuestionBank.Shared.Enums
 @inherits FEQuestionBank.Client.Pages.User.CreateUserManualBase
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
-    <MudText Typo="Typo.h5" Class="font-weight-bold mb-4" Style="@($"color:{Colors.Teal.Darken2};")">
-        Thêm người dùng thủ công
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+    <MudBreadcrumbs Items="_breadcrumbs" Style="margin-top:2px;" />
+    <MudText Typo="Typo.h5"
+             Style="@($"color:{Colors.Red.Darken2};")"
+             Class="mb-6 text-center text-uppercase fw-bold">
+        Tạo thủ công
     </MudText>
-
     <!-- KHỐI 1: FORM -->
     <MudPaper Elevation="2" Rounded="true" Class="pa-6 mb-6">
         <MudGrid Spacing="3">

@@ -215,7 +215,7 @@ public class NguoiDungController(NguoiDungService service, ILogger<NguoiDungCont
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? sort = null,
-        [FromQuery] string? filter = null,
+        [FromQuery] string? search = null,
         [FromQuery] bool? biKhoa = null)
     {
         try
@@ -229,12 +229,12 @@ public class NguoiDungController(NguoiDungService service, ILogger<NguoiDungCont
             }
 
             // Lọc theo từ khóa
-            if (!string.IsNullOrWhiteSpace(filter))
+            if (!string.IsNullOrWhiteSpace(search))
             {
                 query = query.Where(u =>
-                    u.TenDangNhap.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
-                    u.HoTen.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
-                    u.Email.Contains(filter, StringComparison.OrdinalIgnoreCase)
+                    u.TenDangNhap.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                    u.HoTen.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                    u.Email.Contains(search, StringComparison.OrdinalIgnoreCase)
                 );
             }
 

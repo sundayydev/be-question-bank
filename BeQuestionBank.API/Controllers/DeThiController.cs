@@ -299,22 +299,26 @@ public async Task<IActionResult> GetApprovedDeThisAsync()
     }
  // GET: api/Khoa/paged
     [HttpGet("paged")]
-    [SwaggerOperation("Lấy danh sách Khoa có phân trang, filter, sort")]
+    [SwaggerOperation("Lấy danh sách Khoa có phân trang, sort")]
     public async Task<IActionResult> GetPagedAsync(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? sort = null,
-        [FromQuery] string? filter = null)
+        [FromQuery] string? search = null)
     {
         try
         {
             var query = await _service.GetAllBasicAsync(); 
 
             // Filtering
-            if (!string.IsNullOrWhiteSpace(filter))
+            if (!string.IsNullOrWhiteSpace(search))
             {
-                query = query.Where(k => k.TenDeThi.Contains(filter, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(k =>
+                    k.TenDeThi.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                    (k.TenMonHoc != null && k.TenMonHoc.Contains(search, StringComparison.OrdinalIgnoreCase))
+                );
             }
+
 
             // Sorting
             if (!string.IsNullOrWhiteSpace(sort))
@@ -344,6 +348,8 @@ public async Task<IActionResult> GetApprovedDeThisAsync()
                     DaDuyet = d.DaDuyet,
                     SoCauHoi = d.SoCauHoi,
                     NgayTao = d.NgayTao,
+                    TenMonHoc = d.TenMonHoc,
+                    TenKhoa = d.TenKhoa,
                     NgayCapNhap = d.NgayCapNhap
                 })
                 .ToList();

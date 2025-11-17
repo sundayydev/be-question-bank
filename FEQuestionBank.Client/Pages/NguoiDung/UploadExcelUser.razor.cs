@@ -15,6 +15,13 @@ namespace FEQuestionBank.Client.Pages.User
 
         protected IBrowserFile? SelectedFile;
         protected bool IsUploading;
+        protected List<BreadcrumbItem> _breadcrumbs = new()
+        {
+            new BreadcrumbItem("Trang chủ", href: "/"),
+            new BreadcrumbItem("Quản lý", href: "#", disabled: true),
+            new BreadcrumbItem("Tạo mới người dùng", href: "/user/create-user"),
+            new BreadcrumbItem("Tải lên tệp người dùng", href: "/user/upload-excel"),
+        };
 
         protected void OnFileSelected(InputFileChangeEventArgs e)
         {

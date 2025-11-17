@@ -1,7 +1,8 @@
 ﻿@page "/question/create-question"
 @inherits CreateQuestionBase
 
-<MudContainer MaxWidth="MaxWidth.Large" Style="padding: 20px">
+<MudContainer MaxWidth="MaxWidth.Large">
+    <MudBreadcrumbs Items="_breadcrumbs" Style="margin-top:2px;" />
     <MudText Typo="Typo.h5"
              Style="@($"color:{Colors.Red.Darken2};")"
              Class="mb-6 text-center text-uppercase fw-bold">
@@ -19,7 +20,7 @@
                       @onclick="@(() => SelectQuestionType("single"))">
 
                 <MudIcon Icon="@Icons.Material.Filled.CheckCircle"
-                         Style="@($"color:{Colors.Blue.Darken2};")" Size="Size.Large" />
+                         Style="@($"color:{Colors.Blue.Darken2};")" Size="Size.Large"/>
 
                 <MudText Typo="Typo.h6" Class="mt-2" Style="@($"color:{Colors.Blue.Darken2};")">
                     Trắc nghiệm một đáp án
@@ -40,8 +41,8 @@
                       justify-content:center; align-items:center;
                       border-radius:10px;"
                       @onclick="@(() => SelectQuestionType("group"))">
-                <MudIcon Icon="@Icons.Material.Filled.GridOn"  Style="@($"color:{Colors.Green.Darken1};")" Size="Size.Large"/>
-                <MudText Typo="Typo.h6" Class="mt-2"  Style="@($"color:{Colors.Green.Darken2};")">Câu hỏi nhóm</MudText>
+                <MudIcon Icon="@Icons.Material.Filled.GridOn" Style="@($"color:{Colors.Green.Darken1};")" Size="Size.Large"/>
+                <MudText Typo="Typo.h6" Class="mt-2" Style="@($"color:{Colors.Green.Darken2};")">Câu hỏi nhóm</MudText>
                 <MudText Typo="Typo.body2" Class="mt-1 text-secondary">
                     Nhóm các loại câu hỏi khác nhau
                 </MudText>
@@ -55,8 +56,8 @@
                       justify-content:center; align-items:center; 
                       border-radius:10px;"
                       @onclick="@(() => SelectQuestionType("upload"))">
-                <MudIcon Icon="@Icons.Material.Filled.CloudUpload"  Style="@($"color:{Colors.Yellow.Darken2};")" Size="Size.Large" />
-                <MudText Typo="Typo.h6" Class="mt-2"  Style="@($"color:{Colors.Yellow.Darken2};")">Tải lên từ tệp</MudText>
+                <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Style="@($"color:{Colors.Yellow.Darken2};")" Size="Size.Large"/>
+                <MudText Typo="Typo.h6" Class="mt-2" Style="@($"color:{Colors.Yellow.Darken2};")">Tải lên từ tệp</MudText>
                 <MudText Typo="Typo.body2" Class="mt-1 text-secondary">
                     Tạo nhiều câu hỏi từ file Word, Excel...
                 </MudText>

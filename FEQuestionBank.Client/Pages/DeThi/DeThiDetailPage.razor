@@ -8,7 +8,8 @@
 @inject ISnackbar Snackbar
 @inherits DeThiDetailBase
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+    <MudBreadcrumbs Items="_breadcrumbs" />
     <div class="d-flex justify-space-between align-center mb-4">
         <MudButton Variant="Variant.Filled" Style=@($"color:{Colors.Blue.Darken3}; border-radius:10px") StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="GoBack">
             Quay lại danh sách đề thi
@@ -17,7 +18,7 @@
         <div class="d-flex gap-2">
             <MudButton Variant="Variant.Filled"
                        StartIcon="@Icons.Material.Filled.Description"
-                       Style=@("color:white; background-color:" + Colors.Blue.Darken3 + 
+                       Style=@("color:white; background-color:" + Colors.Blue.Darken3 +
                              "; border-radius:8px; height:42px; width:150px; text-transform:none;")>
                 Tải Word
             </MudButton>
@@ -25,7 +26,7 @@
             <!-- Nút Tải PDF - màu đỏ -->
             <MudButton Variant="Variant.Filled"
                        StartIcon="@Icons.Material.Filled.PictureAsPdf"
-                       Style=@("color:white; background-color:" + Colors.Red.Darken3 + 
+                       Style=@("color:white; background-color:" + Colors.Red.Darken3 +
                              "; border-radius:8px; height:42px; width:150px; text-transform:none; margin-left:10px;")>
                 Tải PDF
             </MudButton>
@@ -34,7 +35,7 @@
 
     @if (DeThi == null)
     {
-        <MudProgressCircular Indeterminate="true" />
+        <MudProgressCircular Indeterminate="true"/>
     }
     else
     {
@@ -50,7 +51,7 @@
                     <MudText Class="mt-2"><strong>Khoa:</strong> @DeThi.TenKhoa</MudText>
                     <MudText Class="mt-2"><strong>Ngày tạo:</strong> @DeThi.NgayTao.ToString("dd/MM/yyyy")</MudText>
 
-                    <MudDivider Class="my-4" />
+                    <MudDivider Class="my-4"/>
 
                     <MudText Typo="Typo.subtitle1" Class="font-weight-bold">Cấu trúc phân chương:</MudText>
                     <ul class="pl-4 mt-2">
@@ -69,7 +70,7 @@
                 </MudPaper>
 
                 <!-- Thống kê -->
-                <MudPaper Class="pa-4 mt-4" Elevation="3"  Style="border-radius: 10px">
+                <MudPaper Class="pa-4 mt-4" Elevation="3" Style="border-radius: 10px">
                     <MudText Typo="Typo.h6" Class="mb-3">Thống kê câu hỏi</MudText>
                     <MudText><strong>Tổng số câu hỏi:</strong> @(DeThi.SoCauHoi)</MudText>
                     <MudText><strong>Tổng câu hỏi đơn:</strong> @(DeThi.ChiTietDeThis?.Count(c => c.CauHoi?.SoCauHoiCon == 0) ?? 0)</MudText>
@@ -180,7 +181,7 @@
                                     </MudItem>
                                 </MudGrid>
 
-                                <MudDivider Class="my-2" />
+                                <MudDivider Class="my-2"/>
 
                                 <!-- Thông tin đề thi -->
                                 <MudText Typo="Typo.h6" Class="mb-3 font-weight-bold" Style=@($"color:{Colors.Red.Darken3};")>Thông tin đề thi</MudText>

@@ -7,13 +7,14 @@ namespace FEQuestionBank.Client.Services
     public interface IMonHocApiClient
     {
         Task<ApiResponse<List<MonHocDto>>> GetAllMonHocsAsync();
-        Task<ApiResponse<PagedResult<MonHocDto>>> GetMonHocsAsync(int page = 1, int limit = 10, string? sort = null, string? filter = null);
-        Task<ApiResponse<MonHocDto>> GetMonHocByIdAsync(string id);
+        Task<ApiResponse<PagedResult<MonHocDto>>> GetMonHocsPagedAsync
+            (int page = 1, int pageSize = 10, string? sort = null, string? search = null);
+        Task<ApiResponse<MonHocDto>> GetMonHocByIdAsync(Guid id);
         Task<ApiResponse<MonHocDto>> CreateMonHocAsync(CreateMonHocDto model);
-        Task<ApiResponse<List<MonHocDto>>> GetMonHocsByMaKhoaAsync(string maKhoa);
-        Task<ApiResponse<MonHocDto>> UpdateMonHocAsync(string id, UpdateMonHocDto model);
-        Task<ApiResponse<string>> DeleteMonHocAsync(string id);
-        Task<ApiResponse<string>> SoftDeleteMonHocAsync(string id);
-        Task<ApiResponse<string>> RestoreMonHocAsync(string id);
+        Task<ApiResponse<List<MonHocDto>>> GetMonHocsByMaKhoaAsync(Guid maKhoa);
+        Task<ApiResponse<MonHocDto>> UpdateMonHocAsync(Guid id, UpdateMonHocDto model);
+        Task<ApiResponse<Guid>> DeleteMonHocAsync(Guid id);
+        Task<ApiResponse<Guid>> SoftDeleteMonHocAsync(Guid id);
+        Task<ApiResponse<Guid>> RestoreMonHocAsync(Guid id);
     }
 }

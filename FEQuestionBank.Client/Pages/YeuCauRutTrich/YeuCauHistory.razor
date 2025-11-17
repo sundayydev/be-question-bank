@@ -1,0 +1,151 @@
+﻿@page "/tools/extract-history"
+@inherits FEQuestionBank.Client.Pages.YeuCau.YeuCauHistoryBase
+@using BeQuestionBank.Shared.DTOs.YeuCauRutTrich
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Style="min-height:600px; width: 100%">
+    <MudBreadcrumbs Items="_breadcrumbs" Class="mb-4" />
+
+    <!-- Thống kê -->
+    <MudGrid Spacing="3" Style="margin-bottom:16px">
+        <MudItem xs="12" sm="6" md="3">
+            <InfoCard Icon="@Icons.Material.Filled.ListAlt" IconColor="Color.Primary"
+                      Title="Tổng yêu cầu" Value="@TotalYeuCau.ToString()" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <InfoCard Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success"
+                      Title="Đã xử lý" Value="@DaXuLyCount.ToString()" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <InfoCard Icon="@Icons.Material.Filled.HourglassEmpty" IconColor="Color.Warning"
+                      Title="Chờ xử lý" Value="@ChuaXuLyCount.ToString()" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <InfoCard Icon="@Icons.Material.Filled.Person" IconColor="Color.Info"
+                      Title="Người yêu cầu" Value="@UniqueUsers.ToString()" />
+        </MudItem>
+    </MudGrid>
+   <div class="row mb-3 g-2 align-items-center">
+    <!-- Ô tìm kiếm -->
+    <div class="col-md-7 col-12">
+        <div class="input-group align-items-center custom-input-group">
+            <span class="input-group-text bg-light">
+                <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Medium"
+                         Style="@($"color:{Colors.Blue.Darken3};")" />
+            </span>
+            <MudTextField @bind-Value="_searchTerm"
+                          Placeholder="Tìm tên người dùng, môn học, nội dung..."
+                          Variant="Variant.Text"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          DebounceInterval="500"
+                          Immediate="true"
+                          Class="flex-grow-1"
+                          Style="border-radius: 0 10px 10px 0; height:42px; padding-left:10px;"
+                          OnKeyDown="@(e => { if (e.Key == "Enter") table?.ReloadServerData(); })" />
+        </div>
+    </div>
+
+    <!-- Select trạng thái nhỏ gọn -->
+    <div class="col-md-3 col-12" >
+        <MudSelect T="bool?" @bind-Value="_filterTrangThai"
+                   Label="Trạng thái"
+                   Variant="Variant.Text"
+                   Adornment="Adornment.Start"
+                   Dense="true"      
+                   Class="flex-grow-1"
+                   Style="border-radius: 0 10px 10px 0; height:55px; padding-left:10px;">
+            <MudSelectItem Value="@((bool?)null)">Tất cả</MudSelectItem>
+            <MudSelectItem Value="@((bool?)true)">Đã xử lý</MudSelectItem>
+            <MudSelectItem Value="@((bool?)false)">Chưa xử lý</MudSelectItem>
+        </MudSelect>
+    </div>
+
+
+    <!-- Nút làm mới -->
+    <div class="col-md-2 col-12 d-flex justify-content-end">
+        <MudButton Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Refresh"
+                   Style="@($"background-color:{Colors.Blue.Darken2}; color:white; border-radius:10px; height:42px;")"
+                   Class="w-md-auto px-4"
+                   OnClick="ReloadTable">
+            Làm mới
+        </MudButton>
+    </div>
+</div>
+
+    <!-- Bảng -->
+    <MudTable ServerData="LoadServerData"
+              @ref="table"
+              Hover="true"
+              Striped="true"
+              Bordered="true"
+              Dense="false"
+              RowsPerPage="10"
+              Class="mud-width-full">
+
+        <HeaderContent>
+            <MudTh Style="width:10%;"><MudTableSortLabel SortLabel="MaYeuCau" T="YeuCauRutTrichDto">Mã YC</MudTableSortLabel></MudTh>
+            <MudTh Style="width:15%;"><MudTableSortLabel SortLabel="TenNguoiDung" T="YeuCauRutTrichDto">Người YC</MudTableSortLabel></MudTh>
+            <MudTh Style="width:15%;"><MudTableSortLabel SortLabel="TenMonHoc" T="YeuCauRutTrichDto">Môn học</MudTableSortLabel></MudTh>
+            <MudTh Style="width:25%;"><MudTableSortLabel SortLabel="NoiDungRutTrich" T="YeuCauRutTrichDto">Nội dung</MudTableSortLabel></MudTh>
+            <MudTh Style="width:10%; text-align:center;"><MudTableSortLabel SortLabel="DaXuLy" T="YeuCauRutTrichDto">Trạng thái</MudTableSortLabel></MudTh>
+            <MudTh Style="width:12%; text-align:center;"><MudTableSortLabel SortLabel="NgayYeuCau" T="YeuCauRutTrichDto">Ngày YC</MudTableSortLabel></MudTh>
+            <MudTh Style="width:13%; text-align:center;">Thao tác</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd DataLabel="Mã YC">@context.MaYeuCau.ToString("N").Substring(0,8)</MudTd>
+            <MudTd DataLabel="Người YC">@context.TenNguoiDung</MudTd>
+            <MudTd DataLabel="Môn học">
+                <MudText Typo="Typo.body2">@context.TenMonHoc</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">@context.TenKhoa</MudText>
+            </MudTd>
+            <MudTd DataLabel="Nội dung" Class="text-truncate" Style="max-width:280px;" Title="@context.NoiDungRutTrich">
+                @context.NoiDungRutTrich
+            </MudTd>
+            <MudTd DataLabel="Trạng thái" Class="text-center">
+                <MudChip T="string" Size="Size.Small"
+                         Color="@(context.DaXuLy == true ? Color.Success : Color.Warning)"
+                         Variant="Variant.Filled">
+                    @(context.DaXuLy == true ? "Đã xử lý" : "Chờ xử lý")
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Ngày YC" Class="text-center">
+                @(context.NgayYeuCau?.ToString("dd/MM HH:mm") ?? "-")
+            </MudTd>
+            <MudTd DataLabel="Thao tác" Class="text-center">
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" 
+                               Size="Size.Small" 
+                               Color="Color.Info"
+                               OnClick="() => OnViewDetail(context)" 
+                               Title="Xem chi tiết" />
+                @if (context.DaXuLy == true)
+                {
+                    <MudTooltip Text="Xem đề thi (nếu có)">
+                        <MudIconButton Icon="@Icons.Material.Filled.Description" 
+                                       Size="Size.Small" 
+                                       Color="Color.Primary"
+                                       OnClick="() => OnViewDeThi(context.MaYeuCau)"
+                                       Title="Xem đề thi" />
+                    </MudTooltip>
+                }
+            </MudTd>
+        </RowTemplate>
+
+        <NoRecordsContent>
+            <MudText Typo="Typo.body1" Class="pa-4">Không có yêu cầu nào</MudText>
+        </NoRecordsContent>
+
+        <LoadingContent>
+            <MudProgressCircular Indeterminate="true" Class="my-8" />
+        </LoadingContent>
+
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[] {10, 20, 50}"
+                           RowsPerPageString="Số dòng/trang"
+                           InfoFormat="Hiển thị {first_item}-{last_item} trong {all_items} yêu cầu" />
+        </PagerContent>
+    </MudTable>
+</MudContainer>

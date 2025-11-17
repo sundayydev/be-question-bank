@@ -12,8 +12,9 @@ namespace FEQuestionBank.Client.Services
         public Task<ApiResponse<List<KhoaDto>>> GetAllKhoasAsync()
             => GetListAsync<KhoaDto>("api/khoa");
 
-        public Task<ApiResponse<PagedResult<KhoaDto>>> GetKhoasAsync(int page = 1, int limit = 10, string? sort = null, string? filter = null)
-            => GetPagedAsync<KhoaDto>("api/khoa/paged", page, limit, sort, filter);
+        public Task<ApiResponse<PagedResult<KhoaDto>>> GetKhoasPagedAsync
+            (int page = 1, int pageSize = 10, string? sort = null, string? search = null)
+            => GetPagedAsync<KhoaDto>("api/khoa/paged", page, pageSize, sort, search: search);
 
         public async Task<ApiResponse<KhoaDto>> CreateKhoaAsync(CreateKhoaDto model)
         {
@@ -21,16 +22,16 @@ namespace FEQuestionBank.Client.Services
             return await res.Content.ReadFromJsonAsync<ApiResponse<KhoaDto>>() ?? new(500, "Error");
         }
 
-        public async Task<ApiResponse<KhoaDto>> UpdateKhoaAsync(string id, UpdateKhoaDto model)
+        public async Task<ApiResponse<KhoaDto>> UpdateKhoaAsync(Guid id, UpdateKhoaDto model)
         {
             var res = await _httpClient.PatchAsJsonAsync($"api/khoa/{id}", model);
             return await res.Content.ReadFromJsonAsync<ApiResponse<KhoaDto>>() ?? new(500, "Error");
         }
 
-        public async Task<ApiResponse<string>> DeleteKhoaAsync(string id)
+        public async Task<ApiResponse<Guid>> DeleteKhoaAsync(Guid id)
         {
             var res = await _httpClient.DeleteAsync($"api/khoa/{id}");
-            return await res.Content.ReadFromJsonAsync<ApiResponse<string>>() ?? new(500, "Error");
+            return await res.Content.ReadFromJsonAsync<ApiResponse<Guid>>() ?? new(500, "Error");
         }
     }
 }

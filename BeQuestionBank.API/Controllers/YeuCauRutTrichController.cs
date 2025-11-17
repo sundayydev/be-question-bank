@@ -1,5 +1,6 @@
 ﻿using BEQuestionBank.Core.Services;
 using BeQuestionBank.Shared.DTOs.Common;
+using BeQuestionBank.Shared.DTOs.Pagination;
 using BeQuestionBank.Shared.DTOs.YeuCauRutTrich;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -279,10 +280,10 @@ public class YeuCauRutTrichController : ControllerBase
                     ApiResponseFactory.ValidationError<object>(deThiMessage));
             }
 
-            var responseData = new
+            var responseData = new YeuCauRutTrichResultDto
             {
                 MaYeuCau = maYeuCau,
-                MaDeThi = maDeThi,
+                MaDeThi = maDeThi!.Value,
                 MaNguoiDung = dto.MaNguoiDung,
                 MaMonHoc = dto.MaMonHoc,
                 TenDeThi = tenDeThi,
@@ -334,5 +335,112 @@ public class YeuCauRutTrichController : ControllerBase
             return StatusCode(500, $"Lỗi: {ex.Message}");
         }
     }
+   // GET: api/YeuCauRutTrich/paged
+    [HttpGet("paged")]
+    [SwaggerOperation("Lấy danh sách yêu cầu rút trích có phân trang, tìm kiếm, sắp xếp")]
+    public async Task<IActionResult> GetPagedAsync(
+         [FromQuery] int page = 1,
+         [FromQuery] int pageSize = 10,
+         [FromQuery] string? sort = null,
+         [FromQuery] string? search = null,
+         [FromQuery] bool? daXuLy = null)
+{
+    try
+    {
+        var query = await _service.GetAllBasicAsync();
+
+        
+        if (daXuLy.HasValue)
+        {
+            query = query.Where(k => k.DaXuLy == daXuLy.Value);
+        }
+        
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var keyword = search.Trim().ToLower();
+            query = query.Where(k =>
+                (!string.IsNullOrEmpty(k.TenNguoiDung) && k.TenNguoiDung.ToLower().Contains(keyword)) ||
+                (!string.IsNullOrEmpty(k.TenMonHoc) && k.TenMonHoc.ToLower().Contains(keyword)) ||
+                (!string.IsNullOrEmpty(k.NoiDungRutTrich) && k.NoiDungRutTrich.ToLower().Contains(keyword)) ||
+                (!string.IsNullOrEmpty(k.TenKhoa) && k.TenKhoa.ToLower().Contains(keyword))
+            );
+        }
+
+        // === 3. Sắp xếp (sort) ===
+        if (!string.IsNullOrWhiteSpace(sort))
+        {
+            var parts = sort.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            var column = parts[0].Trim();
+            var direction = parts.Length > 1 ? parts[1].Trim().ToLower() : "asc";
+
+            query = (column.ToLower(), direction) switch
+            {
+                ("mayeucau", "asc") => query.OrderBy(k => k.MaYeuCau),
+                ("mayeucau", "desc") => query.OrderByDescending(k => k.MaYeuCau),
+
+                ("tennguoidung", "asc") => query.OrderBy(k => k.TenNguoiDung),
+                ("tennguoidung", "desc") => query.OrderByDescending(k => k.TenNguoiDung),
+
+                ("tenmonhoc", "asc") => query.OrderBy(k => k.TenMonHoc),
+                ("tenmonhoc", "desc") => query.OrderByDescending(k => k.TenMonHoc),
+
+                ("tenkhoa", "asc") => query.OrderBy(k => k.TenKhoa),
+                ("tenkhoa", "desc") => query.OrderByDescending(k => k.TenKhoa),
+
+                ("noidungruttrich", "asc") => query.OrderBy(k => k.NoiDungRutTrich),
+                ("noidungruttrich", "desc") => query.OrderByDescending(k => k.NoiDungRutTrich),
+
+                ("daxuly", "asc") => query.OrderBy(k => k.DaXuLy),
+                ("daxuly", "desc") => query.OrderByDescending(k => k.DaXuLy),
+
+                ("ngayyeucau", "asc") => query.OrderBy(k => k.NgayYeuCau),
+                ("ngayyeucau", "desc") => query.OrderByDescending(k => k.NgayYeuCau),
+
+                _ => query.OrderByDescending(k => k.NgayYeuCau) 
+            };
+        }
+        else
+        {
+            query = query.OrderByDescending(k => k.NgayYeuCau);
+        }
+        
+        var totalCount = query.Count();
+        var items = query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(k => new YeuCauRutTrichDto
+            {
+                MaYeuCau = k.MaYeuCau,
+                MaNguoiDung = k.MaNguoiDung,
+                MaMonHoc = k.MaMonHoc,
+                NoiDungRutTrich = k.NoiDungRutTrich,
+                GhiChu = k.GhiChu,
+                NgayYeuCau = k.NgayYeuCau,
+                NgayXuLy = k.NgayXuLy,
+                DaXuLy = k.DaXuLy,
+                TenNguoiDung = k.TenNguoiDung,
+                TenMonHoc = k.TenMonHoc,
+                TenKhoa = k.TenKhoa,
+                MaTran = k.MaTran
+            })
+            .ToList();
+        
+        var result = new PagedResult<YeuCauRutTrichDto>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
+
+        return Ok(ApiResponseFactory.Success(result, "Lấy danh sách yêu cầu rút trích thành công"));
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Lỗi khi lấy danh sách yêu cầu rút trích phân trang");
+        return StatusCode(StatusCodes.Status500InternalServerError,
+            ApiResponseFactory.ServerError("Đã xảy ra lỗi khi xử lý yêu cầu."));
+    }
+}
 }
 

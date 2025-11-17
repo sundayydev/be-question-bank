@@ -1,6 +1,7 @@
 ﻿using BeQuestionBank.Core.Configurations;
 using BeQuestionBank.Domain.Interfaces.IRepositories;
 using BeQuestionBank.Domain.Models;
+using BeQuestionBank.Shared.DTOs.DeThi;
 using BEQuestionBank.Shared.DTOs.DeThi;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,6 +37,16 @@ public class DeThiRepository : GenericRepository<DeThi>, IDeThiRepository
             .ToListAsync();
         return deThi;
     }
+
+    public async Task<IEnumerable<object>> GetAllBasicAsync()
+    {
+        var deThis = await _context.DeThis
+            .Include(d => d.MonHoc)
+            .AsNoTracking()
+            .ToListAsync();
+        return deThis;
+    }
+
 
     public Task<object> UpdateWithChiTietAsync(DeThiDto deThiDto)
     {

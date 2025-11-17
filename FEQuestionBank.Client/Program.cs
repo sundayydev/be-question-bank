@@ -22,7 +22,7 @@ builder.Services.AddScoped<IMonHocApiClient, MonHocApiClient>();
 builder.Services.AddScoped<IPhanApiClient, PhanApiClient>();
 builder.Services.AddScoped<INguoiDungApiClient, NguoiDungApiClient>();
 builder.Services.AddScoped<IDeThiApiClient,DeThiApiClient>();
-
+builder.Services.AddScoped<IYeuCauRutTrichApiClient,YeuCauRutTrichApiClient>();
 
 // 3. AuthService: Tự thêm Bearer
 builder.Services.AddBlazoredLocalStorage();

@@ -197,18 +197,17 @@ public async Task<IActionResult> GetPagedAsync(
     [FromQuery] int page = 1,
     [FromQuery] int pageSize = 10,
     [FromQuery] string? sort = null,
-    [FromQuery] string? filter = null)
+    [FromQuery] string? search = null)
 {
     try
     {
-        var query = await _service.GetAllMonHocsAsync(); // Trả về List<MonHoc>
-
-        // Filtering
-        if (!string.IsNullOrWhiteSpace(filter))
+        var query = await _service.GetAllMonHocsAsync();
+        
+        if (!string.IsNullOrWhiteSpace(search))
         {
             query = query.Where(m => 
-                m.TenMonHoc.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
-                m.MaSoMonHoc.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                m.TenMonHoc.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                m.MaSoMonHoc.Contains(search, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
 

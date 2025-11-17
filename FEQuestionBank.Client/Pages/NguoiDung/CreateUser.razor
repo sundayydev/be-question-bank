@@ -1,7 +1,8 @@
 ﻿@page "/user/create-user"
 @inherits CreateUserBase
 
-<MudContainer MaxWidth="MaxWidth.Large" Style="padding: 20px">
+<MudContainer MaxWidth="MaxWidth.Large">
+    <MudBreadcrumbs Items="_breadcrumbs" Style="margin-top:2px;" />
     <MudText Typo="Typo.h5"
              Style="@($"color:{Colors.Red.Darken2};")"
              Class="mb-6 text-center text-uppercase fw-bold">
@@ -20,8 +21,8 @@
                       @onclick="@(() => SelectCreateMethod("manual"))">
 
                 <MudIcon Icon="@Icons.Material.Filled.PersonAdd"
-                         Style="@($"color:{Colors.Purple.Darken1};")" 
-                         Size="Size.Large" />
+                         Style="@($"color:{Colors.Purple.Darken1};")"
+                         Size="Size.Large"/>
 
                 <MudText Typo="Typo.h6" Class="mt-3" Style="@($"color:{Colors.Purple.Darken1};")">
                     Thêm thủ công
@@ -43,8 +44,8 @@
                       @onclick="@(() => SelectCreateMethod("excel"))">
 
                 <MudIcon Icon="@Icons.Material.Filled.TableChart"
-                         Style="@($"color:{Colors.Teal.Darken1};")" 
-                         Size="Size.Large" />
+                         Style="@($"color:{Colors.Teal.Darken1};")"
+                         Size="Size.Large"/>
 
                 <MudText Typo="Typo.h6" Class="mt-3" Style="@($"color:{Colors.Teal.Darken1};")">
                     Tải lên từ Excel

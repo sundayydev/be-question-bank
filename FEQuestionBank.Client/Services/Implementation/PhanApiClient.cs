@@ -36,6 +36,23 @@ namespace FEQuestionBank.Client.Services
                    ?? new ApiResponse<UpdatePhanDto>(500, "Error");
         }
 
+        public async Task<ApiResponse<List<PhanDto>>> GetPhanByMonHocAsync(Guid maMonHoc)
+        {
+            try
+            {
+                var res = await _httpClient.GetFromJsonAsync<ApiResponse<List<PhanDto>>>($"api/phan/monhoc/{maMonHoc}");
+                return res ?? new ApiResponse<List<PhanDto>>(200, "Không có môn học", new List<PhanDto>());
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                return new ApiResponse<List<PhanDto>>(200, "Không có môn học", new List<PhanDto>());
+            }
+            catch (Exception)
+            {
+                return new ApiResponse<List<PhanDto>>(500, "Error");
+            }
+        }
+
         public async Task<ApiResponse<string>> DeletePhanAsync(Guid id)
         {
             var res = await _httpClient.DeleteAsync($"api/phan/{id}");
