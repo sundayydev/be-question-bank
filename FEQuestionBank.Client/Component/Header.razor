@@ -1,45 +1,98 @@
-﻿<MudAppBar Style="background-color:#3F51B5; color:white;" Elevation="2">
+﻿@* Header.razor *@
+@using FEQuestionBank.Client.Implementation
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@implements IDisposable
+@inject ISnackbar Snackbar
+
+<MudAppBar Style="background-color:#3F51B5; color:white;" Elevation="2">
     <MudIconButton Icon="@Icons.Material.Filled.Menu"
                    Color="Color.Inherit"
                    Edge="Edge.Start"
-                   OnClick="ToggleDrawer" 
-                   Class="hover-darkblue"/>
+                   OnClick="ToggleDrawer"
+                   Class="hover-darkblue" />
 
-    <MudSpacer /> <!-- đẩy các icon về bên phải -->
-
-    <!-- Group right-hand icons with spacing -->
+    <MudSpacer />
     <div class="d-flex gap-2 align-items-center">
-        <!-- Bóng đèn -->
         <MudIconButton Icon="@Icons.Material.Filled.Lightbulb"
                        Color="Color.Inherit" Class="hover-darkblue" />
-
-        <!-- Chuông thông báo với badge số 3 -->
         <MudBadge Content="3" Overlap="true" Class="mx-6 my-4" Color="Color.Error">
             <MudIcon Icon="@Icons.Material.Filled.Notifications" Color="Color.Inherit" Class="hover-darkblue" />
         </MudBadge>
-
-
-        <!-- Avatar người dùng với menu -->
-        <MudMenu>
-            <ActivatorContent>
-                <MudAvatar Color="Color.Inherit" Variant="Variant.Outlined">H</MudAvatar>
-            </ActivatorContent>
-            <ChildContent>
-                <MudMenuItem>Profile</MudMenuItem>
-                <MudMenuItem>Logout</MudMenuItem>
-            </ChildContent>
-        </MudMenu>
+        @if (isAuthenticated)
+        {
+            <MudMenu>
+                <ActivatorContent>
+                    <MudAvatar Color="Color.Inherit" Variant="Variant.Outlined">@userInitial</MudAvatar>
+                </ActivatorContent>
+                <ChildContent>
+                    <MudMenuItem Href="/profile">Profile</MudMenuItem>
+                    <MudMenuItem OnClick="Logout">Logout</MudMenuItem>
+                </ChildContent>
+            </MudMenu>
+        }
+        else
+        {
+            <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="/login">Đăng nhập</MudButton>
+        }
     </div>
 </MudAppBar>
 
+<style>
+    .hover-darkblue:hover {
+        color: #002366 !important;
+    }
+</style>
 
 @code {
     [Parameter] public EventCallback OnMenuClick { get; set; }
+    [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    private bool isAuthenticated;
+    private string userInitial = "H";
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        await UpdateAuthenticationState();
+    }
+
+    private async void OnAuthenticationStateChanged(Task<AuthenticationState> task)
+    {
+        await UpdateAuthenticationState();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task UpdateAuthenticationState()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        isAuthenticated = user.Identity?.IsAuthenticated ?? false;
+        if (isAuthenticated)
+        {
+            var nameClaim = user.FindFirst(ClaimTypes.Name)?.Value ?? user.FindFirst("sub")?.Value ?? user.FindFirst("name")?.Value;
+            userInitial = !string.IsNullOrEmpty(nameClaim) ? nameClaim[0].ToString().ToUpper() : "U";
+        }
+        else
+        {
+            userInitial = "H";
+        }
+    }
+
+    private async Task Logout()
+    {
+        var custom = (CustomAuthStateProvider)AuthStateProvider;
+        await custom.MarkUserAsLoggedOut();
+        Snackbar.Add("Đăng xuất thành công!", Severity.Success);
+        NavigationManager.NavigateTo("/login");
+    }
 
     private Task ToggleDrawer() => OnMenuClick.InvokeAsync();
-}
-<style>
-    .hover-darkblue:hover {
-        color: #002366 !important; 
+
+    public void Dispose()
+    {
+        AuthStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
     }
-</style>
+}

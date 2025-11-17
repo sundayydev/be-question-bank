@@ -1,18 +1,18 @@
-﻿@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Authorization
+@* MainLayout.razor *@
+@inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
+@attribute [Authorize]   
 
 <MudLayout>
-    @if (!HideLayout)
+    @* CHỈ HIỆN HEADER + SIDEBAR KHI ĐÃ ĐĂNG NHẬP *@
+    @if (!IsPublicPage())
     {
-        <!-- Header -->
         <Header OnMenuClick="ToggleDrawer" />
-
-        <!-- Sidebar -->
         <Sidebar Open="_drawerOpen" />
     }
 
-    <!-- Nội dung chính -->
-    <MudMainContent>
+    <MudMainContent Class="p-0">
         @Body
     </MudMainContent>
 </MudLayout>
@@ -20,22 +20,13 @@
 @code {
     private bool _drawerOpen = true;
 
-    private void ToggleDrawer()
+    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+
+    private bool IsPublicPage()
     {
-        _drawerOpen = !_drawerOpen;
-        StateHasChanged();
-    }
-
-    private bool HideLayout => ShouldHideLayout();
-
-    private bool ShouldHideLayout()
-    {
-        // Lấy đường dẫn hiện tại, loại bỏ domain
-        var relativePath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri).ToLower();
-
-        // Danh sách các route muốn ẩn Header + Sidebar
-        var hiddenPages = new[] { "login", "register", "forgot-password" };
-
-        return hiddenPages.Any(p => relativePath.StartsWith(p));
+        var path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri).ToLower();
+        return path == "login" || 
+               path == "register" || 
+               path.StartsWith("forgot-password");
     }
 }
