@@ -223,25 +223,33 @@ code {
 
 .auth-fullscreen-bg {
     min-height: 100vh;
-    background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.45)), url('/images/hutech-29nam.jpg') center center / cover no-repeat fixed;
+    background: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.45)),
+    url('/images/hutech-29nam.jpg') center center / cover no-repeat fixed;
     background-attachment: fixed;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
-    position: relative;
-    overflow: hidden;
+    padding: 20px;               /* giảm padding */
+    margin: 0 !important;        /* ép đè */
 }
-.auth-fullscreen-bg::before {
-   content: '';
-   position: absolute;
-   top: 0;
-   left: 0;
-   right: 0;
-   bottom: 0;
-   background: rgba(255, 255, 255, 0.12);
-   backdrop-filter: blur(1px);
-   z-index: 1;
+.mud-main-content-auth {
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: 100vh !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+}
+
+/* Đảm bảo auth-fullscreen-bg chiếm toàn màn hình */
+.auth-fullscreen-bg {
+    min-height: 100vh !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .auth-card {
