@@ -152,9 +152,6 @@ code {
     font-size: 0.95rem;
 }
 
-.custom-input-group .mud-input-adornment {
-    display: none !important; /* Ẩn adornment mặc định nếu có */
-}
 
 /* Nút Lưu - hover */
 .btn-save {
@@ -220,4 +217,150 @@ code {
 
 .login-btn:hover {
     background: #1565c0 !important;
+}
+
+/*   AUTH: NỀN TOÀN MÀN HÌNH + CARD KÍNH        */
+
+.auth-fullscreen-bg {
+    min-height: 100vh;
+    background: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.45)),
+    url('/images/hutech-29nam.jpg') center center / cover no-repeat fixed;
+    background-attachment: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;               /* giảm padding */
+    margin: 0 !important;        /* ép đè */
+}
+.mud-main-content-auth {
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: 100vh !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+}
+
+/* Đảm bảo auth-fullscreen-bg chiếm toàn màn hình */
+.auth-fullscreen-bg {
+    min-height: 100vh !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-card {
+    position: relative;
+    z-index: 2;
+    max-width: 420px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(16px);
+    border-radius: 22px !important;
+    box-shadow: 0 28px 56px rgba(0, 0, 0, 0.28) !important;
+    padding: 2.8rem !important;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.auth-title {
+    color: #1a237e;
+    font-weight: 700 !important;
+    text-align: center;
+    margin-bottom: 2rem !important;
+    font-size: 1.8rem !important;
+    letter-spacing: 0.5px;
+}
+
+.auth-btn {
+    background: linear-gradient(135deg, #1a237e, #0d47a1) !important;
+    border-radius: 14px !important;
+    text-transform: none !important;
+    font-weight: 600 !important;
+    font-size: 1.12rem !important;
+    height: 56px !important;
+    transition: all 0.35s ease !important;
+    box-shadow: 0 4px 12px rgba(26, 35, 126, 0.3) !important;
+    color: #ffffff !important;
+}
+
+ .auth-btn:hover {
+    background: linear-gradient(135deg, #0d47a1, #1565c0) !important;
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(26, 35, 126, 0.4) !important;
+ }
+
+.auth-link {
+    color: #1a237e !important;
+    font-weight: 500;
+    text-decoration: none !important;
+    transition: color 0.2s ease;
+}
+
+.auth-link:hover {
+    color: #0d47a1 !important;
+    text-decoration: underline !important;
+}
+
+/* ĐẢM BẢO NÚT HIỆN/ẨN MẬT KHẨU HIỂN THỊ */
+
+
+.show-password-field .mud-input-adornment .mud-icon-button:hover {
+background-color: rgba(25, 118, 210, 0.12) !important;
+color: #0d47a1 !important;
+}
+/* Tùy chọn: Làm icon rõ hơn, hover đẹp */
+.mud-input-adornment-end .mud-icon-button {
+    color: #1976d2 !important;
+}
+
+.mud-input-adornment-end .mud-icon-button:hover {
+    background-color: rgba(25, 118, 210, 0.12) !important;
+    color: #0d47a1 !important;
+}
+
+
+/* Đảm bảo input không bị cắt */
+.auth-card .mud-input-control {
+    margin-bottom: 16px;
+}
+/*   NÚT ĐĂNG NHẬP: LUÔN SÁNG, KHÔNG MỜ KHI DISABLE */
+.auth-btn {
+    opacity: 1 !important;
+    cursor: pointer !important;
+    transition: all 0.35s ease !important;
+}
+
+    /* Khi đang loading → vẫn đẹp, chỉ mờ nhẹ */
+.auth-btn[disabled] {
+   opacity: 0.88 !important;
+   pointer-events: none !important;
+}
+
+/* Icon hiện/ẩn mật khẩu: đẹp hơn */
+.mud-input-adornment-end .mud-icon-button {
+    color: #1976d2 !important;
+}
+
+.mud-input-adornment-end .mud-icon-button:hover {
+     background-color: rgba(25, 118, 210, 0.12) !important;
+     color: #0d47a1 !important;
+}
+
+/* Đảm bảo không bị ẩn */
+.mud-input-adornment {
+    display: flex !important;
+}
+/* RESPONSIVE */
+@media (max-width: 480px) {
+    .auth-card {
+        margin: 10px;
+        padding: 2rem !important;
+    }
+
+    .auth-title {
+        font-size: 1.5rem !important;
+    }
 }

@@ -1,0 +1,146 @@
+﻿@page "/login"
+@using FEQuestionBank.Client.Implementation
+@using FEQuestionBank.Client.Services.Interface
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using MudBlazor
+@inject IAuthApiClient AuthApiClient
+@inject ISnackbar Snackbar
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthProvider
+@attribute [AllowAnonymous]
+
+<div class="auth-fullscreen-bg">
+    <MudPaper Class="auth-card" Elevation="16">
+        <!-- Logo -->
+        <div class="text-center mb-6">
+            <img src="/images/LogoHutechFull.png" alt="HUTECH Logo" style="height: 82px; width: auto;" />
+        </div>
+
+        <!-- Title -->
+        <MudText Typo="Typo.h5" Class="auth-title text-center mb-6">
+            Đăng Nhập Hệ Thống
+        </MudText>
+
+        <!-- Form -->
+        <MudForm @ref="form" @bind-IsValid="@isValid">
+            <!-- Username -->
+            <MudTextField @bind-Value="tenDangNhap"
+                          Label="Tên đăng nhập"
+                          Variant="Variant.Outlined"
+                          Class="mb-4"
+                          Required="true"
+                          RequiredError="Vui lòng nhập tên đăng nhập"
+                          Placeholder="Nhập tên đăng nhập"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Person" />
+
+            <!-- Password + Toggle (HOẠT ĐỘNG 100%) -->
+            <MudTextField @bind-Value="matKhau"
+                          Label="Mật khẩu"
+                          Variant="Variant.Outlined"
+                          InputType="@(showPassword? InputType.Text: InputType.Password)"
+                          Required="true"
+                          RequiredError="Vui lòng nhập mật khẩu"
+                          Placeholder="Nhập mật khẩu"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@(showPassword? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                          OnAdornmentClick="@TogglePassword"
+                          Class="mb-4" />
+
+            <!-- Remember Me -->
+            <MudCheckBox T="bool" @bind-Checked="rememberMe"
+                         Label="Ghi nhớ đăng nhập"
+                         Class="mb-4" />
+
+            <!-- Error Message -->
+            @if (!string.IsNullOrEmpty(error))
+            {
+                <MudAlert Severity="Severity.Error" Class="mb-4" ShowCloseIcon="true" CloseIconClicked="@(() => error = null)">
+                    @error
+                </MudAlert>
+            }
+
+            <!-- NÚT ĐĂNG NHẬP: LUÔN BẬT, CHỈ DISABLE KHI LOADING -->
+            <MudButton FullWidth
+                       Class="auth-btn"
+                       Disabled="@loading"
+                       OnClick="HandleLogin">
+                @if (loading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate />
+                    <span class="ms-2">Đang đăng nhập...</span>
+                }
+                else
+                {
+                    <span>Đăng nhập</span>
+                }
+            </MudButton>
+
+            <!-- Links -->
+            <div class="d-flex justify-space-between mt-4">
+                <MudLink Href="/register" Class="auth-link">Chưa có tài khoản?</MudLink>
+                <MudLink Href="/forgot-password" Class="auth-link">Quên mật khẩu?</MudLink>
+            </div>
+        </MudForm>
+    </MudPaper>
+</div>
+
+@code {
+    private string tenDangNhap = "";
+    private string matKhau = "";
+    private MudForm form = default!;
+    private bool isValid;
+    private bool loading;
+    private string? error;
+    private bool rememberMe;
+    private bool showPassword = false;
+
+    private CustomAuthStateProvider CustomProvider => (CustomAuthStateProvider)AuthProvider;
+
+    private async Task HandleLogin()
+    {
+        // Kiểm tra form trước khi gọi API
+        await form.Validate();
+        if (!form.IsValid)
+        {
+            Snackbar.Add("Vui lòng nhập đầy đủ thông tin!", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            loading = true;
+            error = null;
+
+            var response = await AuthApiClient.LoginAsync(tenDangNhap, matKhau);
+
+            if (response.StatusCode >= 200 && response.StatusCode < 300)
+            {
+                await CustomProvider.MarkUserAsAuthenticated(response.Data);
+                Snackbar.Add("Đăng nhập thành công!", Severity.Success);
+                Nav.NavigateTo("/", true);
+            }
+            else
+            {
+                error = response.Message ?? $"Lỗi server: {response.StatusCode}";
+                Snackbar.Add(error, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            error = "Lỗi kết nối hoặc hệ thống.";
+            Snackbar.Add(error, Severity.Error);
+            Console.WriteLine(ex);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void TogglePassword()
+    {
+        showPassword = !showPassword;
+    }
+}
