@@ -33,25 +33,25 @@ public class NguoiDungApiClient : BaseApiClient, INguoiDungApiClient
                ?? new ApiResponse<NguoiDungDto>(500, "Lỗi khi cập nhật người dùng");
     }
 
-    public async Task<ApiResponse<Guid>> DeleteNguoiDungAsync(Guid id)
+    public async Task<ApiResponse<string>> DeleteNguoiDungAsync(Guid id)
     {
         var res = await _httpClient.DeleteAsync($"api/NguoiDung/{id}");
-        return await res.Content.ReadFromJsonAsync<ApiResponse<Guid>>()
-               ?? new ApiResponse<Guid>(500, "Lỗi khi xóa người dùng");
+        return await res.Content.ReadFromJsonAsync<ApiResponse<string>>()
+               ?? new ApiResponse<string>(500, "Lỗi khi xóa người dùng");
     }
 
-    public async Task<ApiResponse<Guid>> LockNguoiDungAsync(Guid id)
+    public async Task<ApiResponse<string>> LockNguoiDungAsync(Guid id)
     {
         var res = await _httpClient.PatchAsync($"api/NguoiDung/{id}/Khoa", null);
-        return await res.Content.ReadFromJsonAsync<ApiResponse<Guid>>()
-               ?? new ApiResponse<Guid>(500, "Lỗi khi khóa tài khoản");
+        return await res.Content.ReadFromJsonAsync<ApiResponse<string>>()
+               ?? new ApiResponse<string>(500, "Lỗi khi khóa tài khoản");
     }
 
-    public async Task<ApiResponse<Guid>> UnlockNguoiDungAsync(Guid id)
+    public async Task<ApiResponse<string>> UnlockNguoiDungAsync(Guid id)
     {
         var res = await _httpClient.PatchAsync($"api/NguoiDung/{id}/MoKhoa", null);
-        return await res.Content.ReadFromJsonAsync<ApiResponse<Guid>>()
-               ?? new ApiResponse<Guid>(500, "Lỗi khi mở khóa tài khoản");
+        return await res.Content.ReadFromJsonAsync<ApiResponse<string>>()
+               ?? new ApiResponse<string>(500, "Lỗi khi mở khóa tài khoản");
     }
     public async Task<ApiResponse<ImportResultDto>> ImportUsersAsync(MultipartFormDataContent content)
     {

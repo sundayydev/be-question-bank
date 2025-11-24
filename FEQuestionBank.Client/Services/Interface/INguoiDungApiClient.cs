@@ -14,9 +14,9 @@ public interface INguoiDungApiClient
 
     Task<ApiResponse<NguoiDungDto>> CreateNguoiDungAsync(NguoiDungDto model);
     Task<ApiResponse<NguoiDungDto>> UpdateNguoiDungAsync(Guid id, NguoiDungDto model);
-    Task<ApiResponse<Guid>> DeleteNguoiDungAsync(Guid id);
-    Task<ApiResponse<Guid>> LockNguoiDungAsync(Guid id);
-    Task<ApiResponse<Guid>> UnlockNguoiDungAsync(Guid id);
+    Task<ApiResponse<string>> DeleteNguoiDungAsync(Guid id);
+    Task<ApiResponse<string>> LockNguoiDungAsync(Guid id);
+    Task<ApiResponse<string>> UnlockNguoiDungAsync(Guid id);
     Task<ApiResponse<ImportResultDto>> ImportUsersAsync(MultipartFormDataContent content);
 
 }

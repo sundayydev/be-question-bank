@@ -26,6 +26,7 @@ public class AuthController : ControllerBase
             return BadRequest(ModelState);
 
         var result = await _authService.LoginAsync(request);
+        
         if (result == null)
             return Unauthorized(new { Message = "Tên đăng nhập hoặc mật khẩu không đúng, hoặc tài khoản bị khóa." });
 

@@ -15,29 +15,29 @@
 
             <MudItem xs="12" sm="6">
                 <MudTextField @bind-Value="User.TenDangNhap"
-                              Label="Tên đăng nhập *"
+                              Label="Tên đăng nhập "
                               Variant="Variant.Outlined"
                               Required="true" />
             </MudItem>
 
             <MudItem xs="12" sm="6">
                 <MudTextField @bind-Value="User.MatKhau"
-                              Label="Mật khẩu *"
+                              Label="Mật khẩu "
                               InputType="InputType.Password"
                               Variant="Variant.Outlined"
-                              Required="true" />
+                              />
             </MudItem>
 
             <MudItem xs="12">
                 <MudTextField @bind-Value="User.HoTen"
-                              Label="Họ và tên *"
+                              Label="Họ và tên "
                               Variant="Variant.Outlined"
                               Required="true" />
             </MudItem>
 
             <MudItem xs="12" sm="6">
                 <MudTextField @bind-Value="User.Email"
-                              Label="Email *"
+                              Label="Email "
                               InputType="InputType.Email"
                               Variant="Variant.Outlined"
                               Required="true" />
@@ -45,7 +45,7 @@
 
             <MudItem xs="12" sm="6">
                 <MudSelect T="Guid?" @bind-Value="User.MaKhoa"
-                           Label="Khoa *"
+                           Label="Khoa "
                            Variant="Variant.Outlined"
                            Required="true"
                            HelperText="Chọn khoa của người dùng">
@@ -61,7 +61,7 @@
 
             <MudItem xs="12" sm="6">
                 <MudSelect T="EnumRole" @bind-Value="User.VaiTro"
-                           Label="Vai trò *"
+                           Label="Vai trò "
                            Variant="Variant.Outlined"
                            Required="true">
                     <MudSelectItem Value="EnumRole.User">Người dùng thường</MudSelectItem>

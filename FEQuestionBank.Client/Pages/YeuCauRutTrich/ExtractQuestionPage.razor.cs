@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BEQuestionBank.Shared.DTOs.MaTran;
+using BeQuestionBank.Shared.DTOs.Phan;
 
 namespace FEQuestionBank.Client.Pages.DeThi
 {
@@ -20,6 +21,7 @@ namespace FEQuestionBank.Client.Pages.DeThi
         [Inject] IPhanApiClient PhanApi { get; set; } = default!;
         [Inject] ISnackbar Snackbar { get; set; } = default!;
         [Inject] NavigationManager Navigation { get; set; } = default!;
+        protected int? _soCauHoi = null;
 
         protected MudForm _form = default!;
         protected CreateYeuCauRutTrichDto _model = new();
@@ -32,16 +34,30 @@ namespace FEQuestionBank.Client.Pages.DeThi
         };
 
         protected List<MonHocDto> _monHocs = new();
-        protected List<PartDto> _availableParts = new();
+        protected List<PhanDto> _availableParts = new();
         protected HashSet<Guid> _selectedPartIds = new();
 
         protected bool _isChecking = false;
         protected bool _isProcessing = false;
+        protected List<BreadcrumbItem> _breadcrumbs = new()
+        {
+            new("Trang chủ", href: "/"),
+            new("Yêu cầu rút trích", href: "#", disabled: true),
+            new("Tao rut trich", href: "/tools/exam-extract")
+        };
 
         protected override async Task OnInitializedAsync()
         {
             var res = await MonHocApi.GetAllMonHocsAsync();
-            if (res.Success) _monHocs = res.Data ?? new();
+            if (res.Success && res.Data != null && res.Data.Any())
+            {
+                _monHocs = res.Data;
+
+                _model.MaMonHoc = _monHocs.First().MaMonHoc;
+                
+                await OnMonHocChanged(_model.MaMonHoc);
+            }
+
             InitializeDefaultData();
         }
 
@@ -82,30 +98,24 @@ namespace FEQuestionBank.Client.Pages.DeThi
 
         private void UpdateMaTranParts()
         {
-            // Xóa phần không còn được chọn
+            // Xóa các phần không còn được chọn
             var toRemove = _maTran.Parts.Where(p => !_selectedPartIds.Contains(p.MaPhan)).ToList();
-            foreach (var p in toRemove)
-                _maTran.Parts.Remove(p);
+            foreach (var p in toRemove) _maTran.Parts.Remove(p);
 
-            // Thêm phần mới được chọn
+            // Thêm các phần mới được chọn
             foreach (var id in _selectedPartIds)
             {
                 if (!_maTran.Parts.Any(p => p.MaPhan == id))
                 {
-                    var availPart = _availableParts.FirstOrDefault(x => x.MaPhan == id);
-                    var displayName = availPart?.MaPhan.ToString("N").Substring(0, 8) ?? "PHAN";
-
-                    var newPart = new PartDto
+                    _maTran.Parts.Add(new PartDto
                     {
                         MaPhan = id,
                         NumQuestions = 0,
-                        Clos = new List<CloDto> { new() { Clo = 1, Num = 0 } },
-                        QuestionTypes = new List<QuestionTypeDto> { new() { Loai = "Trắc nghiệm", Num = 0 } }
-                    };
-                    _maTran.Parts.Add(newPart);
+                        Clos = new() { new CloDto { Clo = 1, Num = 0 } },
+                        QuestionTypes = new() { new QuestionTypeDto { Loai = "Trắc nghiệm", Num = 0 } }
+                    });
                 }
             }
-
             StateHasChanged();
         }
         protected async Task OnPartSelectionChanged(IEnumerable<Guid> selectedIds)
@@ -119,44 +129,28 @@ namespace FEQuestionBank.Client.Pages.DeThi
             _maTran.CloPerPart = false;
             _maTran.Parts.Clear();
             _selectedPartIds.Clear();
-            _availableParts.Clear(); // Reset
+            _availableParts.Clear();
 
-            if (maMonHoc == Guid.Empty)
+            if (maMonHoc == Guid.Empty) return;
+
+            var res = await PhanApi.GetPhanByMonHocAsync(maMonHoc);
+
+            if (res.Success && res.Data != null && res.Data.Any())
             {
-                StateHasChanged();
-                return;
+                _availableParts = res.Data
+                    .Where(p => p.XoaTam != true) 
+                    .OrderBy(p => p.ThuTu)
+                    .ThenBy(p => p.NgayTao)
+                    .ToList();
+
+                Snackbar.Add($"Tải {_availableParts.Count} phần.", Severity.Info);
+            }
+            else
+            {
+                Snackbar.Add("Chưa có phần nào cho môn này.", Severity.Warning);
             }
 
-            try
-            {
-                var res = await PhanApi.GetPhanByMonHocAsync(maMonHoc);
-
-                if (res.Success && res.Data != null && res.Data.Any())
-                {
-                    _availableParts = res.Data.Select(p => new PartDto
-                    {
-                        MaPhan = p.MaPhan,
-                        NumQuestions = 0,
-                        Clos = new(),
-                        QuestionTypes = new()
-                    }).ToList();
-
-                    Console.WriteLine($"[DEBUG] Tải {_availableParts.Count} phần thành công.");
-                    Snackbar.Add($"Tải {_availableParts.Count} phần.", Severity.Info);
-                }
-                else
-                {
-                    Console.WriteLine("[DEBUG] API trả về rỗng hoặc thất bại.");
-                    Snackbar.Add("Không có phần nào.", Severity.Warning);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[ERROR] {ex.Message}");
-                Snackbar.Add("Lỗi kết nối API!", Severity.Error);
-            }
-
-            StateHasChanged(); // BẮT BUỘC: Cập nhật UI
+            StateHasChanged();
         }
         
 

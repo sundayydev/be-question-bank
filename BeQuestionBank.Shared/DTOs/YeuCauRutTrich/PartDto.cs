@@ -18,4 +18,5 @@ public class PartDto
 
     [Required(ErrorMessage = "Danh sách loại câu hỏi không được để trống.")]
     public List<QuestionTypeDto> QuestionTypes { get; set; }
+    
 }

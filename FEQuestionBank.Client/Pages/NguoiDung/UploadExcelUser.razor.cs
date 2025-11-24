@@ -56,15 +56,19 @@ namespace FEQuestionBank.Client.Pages.User
 
                     if (result.ErrorCount > 0)
                     {
+                        Snackbar.Add(msg, Severity.Warning);
+
                         foreach (var err in result.Errors)
                             Snackbar.Add(err, Severity.Error);
-                    }
 
-                    Navigation.NavigateTo("/user/list", forceLoad: true);
-                }
-                else
-                {
-                    Snackbar.Add(response.Message ?? "Lỗi tải lên", Severity.Error);
+                        // Không navigate ngay, hoặc delay
+                        return; 
+                    }
+                    else
+                    {
+                        Snackbar.Add(msg, Severity.Success);
+                        Navigation.NavigateTo("/user/list");
+                    }
                 }
             }
             catch (Exception ex)

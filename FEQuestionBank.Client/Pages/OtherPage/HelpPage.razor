@@ -1,0 +1,193 @@
+﻿@page "/help"
+@using MudBlazor
+@inject NavigationManager Navigation
+@inherits HelpPageBase
+
+<MudThemeProvider Theme="_theme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+    <MudBreadcrumbs Items="_breadcrumbs" Class="mb-6" />
+    
+    <MudPaper Elevation="6" Class="pa-6 rounded-xl mb-5"  Style="max-width:1000px; margin:auto;">
+        <div class="text-center mb-10">
+            <MudText Typo="Typo.h3" Color="Color.Primary" Class="mb-3">
+                Trung tâm trợ giúp
+            </MudText>
+            <MudText Typo="Typo.body1" Color="Color.Secondary">
+                Chúng tôi luôn sẵn sàng hỗ trợ bạn. Chọn một mục bên dưới để bắt đầu.
+            </MudText>
+        </div>
+
+        <!-- Tabs dọc bên trái -->
+        <MudTabs Elevation="0"
+                 ApplyEffectsToContainer="true"
+                 PanelClass="pa-6"
+                 TabPanelClass="mt-6"
+                 Outlined="false"
+                 Rounded="true"
+                 Border="true"
+                 @bind-ActivePanelIndex="_activeTabIndex">
+
+            <!-- Tab 1: Câu hỏi thường gặp -->
+            <MudTabPanel>
+                <TabContent>
+                    <MudIcon Icon="@Icons.Material.Filled.QuestionAnswer" Class="mr-3"/>
+                    <MudText Typo="Typo.subtitle1">Câu hỏi thường gặp</MudText>
+                </TabContent>
+                <ChildContent>
+                    <MudExpansionPanels Elevation="2">
+                        <MudExpansionPanel>
+                            <TitleContent>
+                                <MudText Typo="Typo.subtitle1">Làm thế nào để đặt lại mật khẩu?</MudText>
+                            </TitleContent>
+                            <ChildContent>
+                                <MudText Class="pa-4">
+                                    Truy cập trang đăng nhập, nhấn vào <strong>"Quên mật khẩu"</strong>,<br/>
+                                    nhập email của bạn và làm theo hướng dẫn trong email được gửi.
+                                </MudText>
+                            </ChildContent>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel>
+                            <TitleContent>
+                                <MudText Typo="Typo.subtitle1">Tôi có thể thay đổi email của mình không?</MudText>
+                            </TitleContent>
+                            <ChildContent>
+                                <MudText Class="pa-4">
+                                    Có. Vào phần <strong>"Tài khoản cá nhân"</strong> → <strong>"Chỉnh sửa thông tin"</strong>,<br/>
+                                    sau đó cập nhật email mới và xác nhận.
+                                </MudText>
+                            </ChildContent>
+                        </MudExpansionPanel>
+
+                        <MudExpansionPanel>
+                            <TitleContent>
+                                <MudText Typo="Typo.subtitle1">Làm thế nào để liên hệ bộ phận hỗ trợ?</MudText>
+                            </TitleContent>
+                            <ChildContent>
+                                <MudText Class="pa-4">
+                                    Bạn có thể gửi email hoặc gọi trực tiếp. Thông tin liên hệ được liệt kê ở mục bên dưới.
+                                </MudText>
+                            </ChildContent>
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
+                </ChildContent>
+            </MudTabPanel>
+
+            <!-- Tab 2: Hướng dẫn soạn câu hỏi -->
+            <MudTabPanel>
+                <TabContent>
+                    <MudIcon Icon="@Icons.Material.Filled.Assignment" Class="mr-3"/>
+                    <MudText Typo="Typo.subtitle1">Hướng dẫn soạn câu hỏi</MudText>
+                </TabContent>
+                <ChildContent>
+                    <MudPaper Elevation="2" Class="pa-6">
+                        <MudText Typo="Typo.h5" Class="mb-6">Hướng dẫn định dạng câu hỏi</MudText>
+
+                        <MudText Typo="Typo.subtitle1" Class="mb-3"><strong>Câu hỏi đơn</strong></MudText>
+                        <MudList T="string">
+                            <MudListItem T="string">Viết nội dung câu hỏi</MudListItem>
+                            <MudListItem T="string">
+                                Liệt kê các phương án trả lời, mỗi phương án một dòng bắt đầu bằng:
+                                <code class="ml-2 mud-chip mud-chip-filled mud-chip-filled-default">A.</code>
+                                <code class="ml-1 mud-chip mud-chip-filled mud-chip-filled-default">B.</code>
+                                <code class="ml-1 mud-chip mud-chip-filled mud-chip-filled-default">C.</code>
+                                <code class="ml-1 mud-chip mud-chip-filled mud-chip-filled-default">D.</code>
+                            </MudListItem>
+                            <MudListItem T="string">Gạch chân đáp án đúng trong Word</MudListItem>
+                        </MudList>
+
+                        <MudDivider Class="my-6"/>
+
+                        <MudText Typo="Typo.subtitle1" Class="mb-3"><strong>Câu hỏi nhóm</strong></MudText>
+                        <MudList T="string">
+                            <MudListItem T="string">Bắt đầu nhóm với: <code>[&lt;sg&gt;]</code></MudListItem>
+                            <MudListItem T="string">Nhập nội dung chung của nhóm</MudListItem>
+                            <MudListItem T="string">Kết thúc nội dung chung: <code>[&lt;egc&gt;]</code></MudListItem>
+                            <MudListItem T="string">Các câu hỏi con: <code>(&lt;1&gt;)</code>, <code>(&lt;2&gt;)</code>, ...</MudListItem>
+                            <MudListItem T="string">Kết thúc nhóm: <code>[&lt;/sg&gt;]</code></MudListItem>
+                        </MudList>
+
+                        <MudDivider Class="my-6"/>
+
+                        <MudText Typo="Typo.subtitle1" Class="mb-3"><strong>CLO và siêu dữ liệu</strong></MudText>
+                        <MudList T="string">
+                            <MudListItem T="string">Thêm CLO: <code>(CLO1)</code>, <code>(CLO2)</code>, ...</MudListItem>
+                            <MudListItem T="string">Ngăn cách câu hỏi: <code>[&lt;br&gt;]</code></MudListItem>
+                        </MudList>
+
+                        <div class="mt-8">
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Size="Size.Large"
+                                       StartIcon="@Icons.Material.Filled.Download"
+                                       Href="/docs/huong-dan-soan-ngan-hang-cau-hoi.pdf"
+                                       Target="_blank">
+                                Tải hướng dẫn chi tiết (PDF)
+                            </MudButton>
+                        </div>
+                    </MudPaper>
+                </ChildContent>
+            </MudTabPanel>
+
+            <!-- Tab 3: Liên hệ hỗ trợ -->
+            <MudTabPanel>
+                <TabContent>
+                    <MudIcon Icon="@Icons.Material.Filled.Phone" Class="mr-3"/>
+                    <MudText Typo="Typo.subtitle1">Liên hệ hỗ trợ</MudText>
+                </TabContent>
+                <ChildContent>
+                    <MudPaper Elevation="3" Class="pa-8 text-center mud-theme-light" Style="background: #e3f2fd;">
+                        <MudText Typo="Typo.h5" Class="mb-6">Liên hệ với chúng tôi</MudText>
+
+                        <div class="d-flex flex-column gap-6 align-center">
+                            <div class="d-flex align-center gap-4">
+                                <MudIcon Icon="@Icons.Material.Filled.Email" Color="Color.Primary" Size="Size.Large"/>
+                                <MudText Typo="Typo.body1">support@questionbank.edu.vn</MudText>
+                            </div>
+
+                            <div class="d-flex align-center gap-4">
+                                <MudIcon Icon="@Icons.Material.Filled.Phone" Color="Color.Primary" Size="Size.Large"/>
+                                <MudText Typo="Typo.body1">+84 28 7300 5588</MudText>
+                            </div>
+                        </div>
+
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   Size="Size.Large"
+                                   Class="mt-8"
+                                   StartIcon="@Icons.Material.Filled.ContactSupport"
+                                   OnClick="OpenSupportDialog">
+                            Gửi yêu cầu hỗ trợ
+                        </MudButton>
+                    </MudPaper>
+                </ChildContent>
+            </MudTabPanel>
+
+            <!-- Tab 4: Chính sách -->
+            <MudTabPanel>
+                <TabContent>
+                    <MudIcon Icon="@Icons.Material.Filled.Policy" Class="mr-3"/>
+                    <MudText Typo="Typo.subtitle1">Chính sách & Điều khoản</MudText>
+                </TabContent>
+                <ChildContent>
+                    <MudPaper Elevation="2" Class="pa-6">
+                        <MudText Typo="Typo.h5" Class="mb-4">Chính sách bảo mật & Điều khoản sử dụng</MudText>
+                        <MudText Typo="Typo.body1" Class="text-medium-emphasis">
+                            Trang web tuân thủ nghiêm ngặt các quy định về bảo mật dữ liệu.<br/>
+                            Tất cả thông tin cá nhân và câu hỏi được mã hóa SSL và lưu trữ an toàn.<br/>
+                            Chúng tôi không chia sẻ dữ liệu với bên thứ ba mà không có sự đồng ý của bạn.
+                        </MudText>
+                        <MudDivider Class="my-6"/>
+                        <MudText Typo="Typo.body2" Color="Color.Tertiary">
+                            Cập nhật lần cuối: 20/11/2025
+                        </MudText>
+                    </MudPaper>
+                </ChildContent>
+            </MudTabPanel>
+        </MudTabs>
+    </MudPaper>
+</MudContainer>
+

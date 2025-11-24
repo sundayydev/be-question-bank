@@ -53,22 +53,22 @@ namespace FEQuestionBank.Client.Services
             return await res.Content.ReadFromJsonAsync<ApiResponse<MonHocDto>>() ?? new(500, "Error");
         }
 
-        public async Task<ApiResponse<Guid>> DeleteMonHocAsync(Guid id)
+        public async Task<ApiResponse<string>> DeleteMonHocAsync(Guid id)
         {
             var res = await _httpClient.DeleteAsync($"api/monhoc/{id}");
-            return await res.Content.ReadFromJsonAsync<ApiResponse<Guid>>() ?? new(500, "Error");
+            return await res.Content.ReadFromJsonAsync<ApiResponse<string>>() ?? new(500, "Error");
         }
 
-        public async Task<ApiResponse<Guid>> SoftDeleteMonHocAsync(Guid id)
+        public async Task<ApiResponse<string>> SoftDeleteMonHocAsync(Guid id)
         {
             var res = await _httpClient.PatchAsync($"api/monhoc/{id}/XoaTam", null);
-            return await res.Content.ReadFromJsonAsync<ApiResponse<Guid>>() ?? new(500, "Error");
+            return await res.Content.ReadFromJsonAsync<ApiResponse<string>>() ?? new(500, "Error");
         }
 
-        public async Task<ApiResponse<Guid>> RestoreMonHocAsync(Guid id)
+        public async Task<ApiResponse<string>> RestoreMonHocAsync(Guid id)
         {
             var res = await _httpClient.PatchAsync($"api/monhoc/{id}/KhoiPhuc", null);
-            return await res.Content.ReadFromJsonAsync<ApiResponse<Guid>>() ?? new(500, "Error");
+            return await res.Content.ReadFromJsonAsync<ApiResponse<string>>() ?? new(500, "Error");
         }
     }
 }

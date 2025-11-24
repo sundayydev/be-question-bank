@@ -164,6 +164,8 @@ namespace FEQuestionBank.Client.Pages
 
                 Snackbar.Add(response.Success ? $"{(user.BiKhoa ? "Mở khóa" : "Khóa")} thành công!" : response.Message,
                              response.Success ? Severity.Success : Severity.Error);
+                if (table != null)
+                    await table.ReloadServerData();
 
                 await table!.ReloadServerData();
             }

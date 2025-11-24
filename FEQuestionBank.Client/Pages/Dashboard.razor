@@ -1,0 +1,187 @@
+﻿@page "/dashboard"
+@using MudBlazor
+@using System.Globalization
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+    <MudBreadcrumbs Items="_breadcrumbs" />
+    <!-- Bộ lọc + nút Làm mới -->
+        <MudGrid Spacing="3" Class="align-center">
+            <MudItem xs="12" md="4">
+                <MudSelect T="string" 
+                           Label="Khoảng thời gian"
+                           Value="@selectedTimeRange"
+                           ValueChanged="@(v => { selectedTimeRange = v; RefreshAsync(); })"
+                           Variant="Variant.Outlined"
+                           Dense="true"
+                           Margin="Margin.Dense"
+                           Adornment="Adornment.Start"
+                           AdornmentIcon="@Icons.Material.Filled.DateRange">
+                    <MudSelectItem Value="@("Tất cả thời gian")">Tất cả thời gian</MudSelectItem>
+                    <MudSelectItem Value="@("Hôm nay")">Hôm nay</MudSelectItem>
+                    <MudSelectItem Value="@("Tuần này")">Tuần này</MudSelectItem>
+                    <MudSelectItem Value="@("Tháng này")">Tháng này</MudSelectItem>
+                    <MudSelectItem Value="@("Năm nay")">Năm nay</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudSelect T="string"
+                           Label="Khoa"
+                           Value="@selectedCourse"
+                           ValueChanged="@(v => { selectedCourse = v; RefreshAsync(); })"
+                           Variant="Variant.Outlined"
+                           Dense="true"
+                           Margin="Margin.Dense"
+                           Clearable="true"
+                           Adornment="Adornment.Start"
+                           AdornmentIcon="@Icons.Material.Filled.School">
+                    <MudSelectItem Value="@("Mọi khoa")">Mọi khoa</MudSelectItem>
+                    <MudSelectItem Value="@("Khoa Công nghệ")">Khoa Công nghệ</MudSelectItem>
+                    <MudSelectItem Value="@("Khoa Kinh tế")">Khoa Kinh tế</MudSelectItem>
+                    <MudSelectItem Value="@("Khoa Ngoại ngữ")">Khoa Ngoại ngữ</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="12" md="4" Class="d-flex justify-md-end justify-center">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Refresh"
+                           OnClick="RefreshAsync"
+                           Size="Size.Large">
+                    Làm mới
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+
+
+    <!-- 4 Info Cards -->
+    <MudGrid Spacing="4" Class="mb-6 ; mt-3">
+        <MudItem xs="12" sm="6" lg="3">
+            <InfoCard Icon="@Icons.Material.Filled.People" IconColor="Color.Primary" Title="Tổng người dùng" Value="8,429" />
+        </MudItem>
+        <MudItem xs="12" sm="6" lg="3">
+            <InfoCard Icon="@Icons.Material.Filled.HowToReg" IconColor="Color.Success" Title="Hoạt động hôm nay" Value="1,284" />
+        </MudItem>
+        <MudItem xs="12" sm="6" lg="3">
+            <InfoCard Icon="@Icons.Material.Filled.LockPerson" IconColor="Color.Warning" Title="Bị khóa" Value="8" BackgroundColor="#fff4e6" />
+        </MudItem>
+        <MudItem xs="12" sm="6" lg="3">
+            <InfoCard Icon="@Icons.Material.Filled.MenuBook" IconColor="Color.Info" Title="Đề thi" Value="342" BackgroundColor="#e6f7ff" />
+        </MudItem>
+    </MudGrid>
+
+    <!-- Cột trái: Hoạt động | Cột phải: Biểu đồ -->
+    <MudGrid Spacing="4" Class="mb-6 ; mt-3">
+        <!-- Cột trái: Hoạt động gần đây -->
+        <MudItem xs="12" lg="4">
+            <MudPaper Elevation="2" Class="pa-6" Style="border-radius: 16px; min-height: 480px;">
+                <MudText Typo="Typo.h6" Class="mb-6">Hoạt động gần đây</MudText>
+
+                <MudStack Spacing="3">
+                    @foreach (var act in RecentActivities)
+                    {
+                        <MudPaper Class="pa-4 d-flex align-center gap-4 hover:shadow-lg transition-all duration-200" 
+                                  Elevation="0" 
+                                  Rounded="true" 
+                                  Style="background: #f8f9fa;">
+                            <MudAvatar Color="@act.Color" Variant="Variant.Filled" Size="Size.Medium">
+                                <MudIcon Icon="@act.Icon" />
+                            </MudAvatar>
+                            <div class="flex-grow-1">
+                                <MudText Typo="Typo.body1" Class="font-weight-medium">@act.Title</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                    @act.Date bởi <strong>@act.User</strong>
+                                </MudText>
+                            </div>
+                            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small" Color="Color.Default" />
+                        </MudPaper>
+                    }
+                </MudStack>
+
+                @if (!RecentActivities.Any())
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="text-center py-8">
+                        Không có hoạt động nào trong khoảng thời gian này.
+                    </MudText>
+                }
+            </MudPaper>
+        </MudItem>
+
+        <!-- Cột phải: Biểu đồ Bar Chart -->
+        <MudItem xs="12" lg="8">
+            <MudPaper Elevation="2" Class="pa-6" Style="border-radius: 16px; min-height: 480px;">
+                <MudText Typo="Typo.h6" Class="mb-6">Thống kê hoạt động (7 tháng gần nhất)</MudText>
+
+                <MudChart ChartType="ChartType.Bar"
+                          ChartSeries="@ChartSeries"
+                          XAxisLabels="@XAxisLabels"
+                          Width="100%"
+                          Height="390px"
+                          Legend="false"
+                          ChartOptions="@_chartOptions">
+                </MudChart>
+                
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+    <MudGrid Spacing="4" Class="mt-5">
+    <MudItem xs="12" sm="6" lg="3">
+        <MudText Typo="Typo.h6">Tổng người dùng</MudText>
+        <MudText Typo="Typo.h5" Class="font-weight-bold">8,429</MudText>
+    </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private string selectedTimeRange = "Tất cả thời gian";
+    private string selectedCourse = "Mọi khoa";
+
+    private ChartOptions _chartOptions = new ChartOptions
+    {
+        YAxisTicks = 20,
+        ChartPalette = new string[] { "#1976d2", "#388e3c", "#f57c00" }
+    };
+
+    private List<BreadcrumbItem> _breadcrumbs = new()
+    {
+        new BreadcrumbItem("Trang chủ", href: "/"),
+        new BreadcrumbItem("Dashboard", href: "/dashboard", disabled: true)
+    };
+
+    // === Dữ liệu hoạt động gần đây ===
+    private List<ActivityItem> RecentActivities = new()
+    {
+        new() { Icon = Icons.Material.Filled.CheckCircle, Color = Color.Success, Title = "Tải lên đề thi mới - Toán 12", Date = "27/09/2025", User = "dwdaa" },
+        new() { Icon = Icons.Material.Filled.NoteAdd, Color = Color.Primary, Title = "Cập nhật đề thi môn Lý", Date = "27/09/2025", User = "teacher01" },
+        new() { Icon = Icons.Material.Filled.PersonAdd, Color = Color.Info, Title = "Thêm 12 người dùng mới", Date = "26/09/2025", User = "admin" },
+        new() { Icon = Icons.Material.Filled.Warning, Color = Color.Warning, Title = "Khóa tài khoản vi phạm", Date = "26/09/2025", User = "moderator" },
+        new() { Icon = Icons.Material.Filled.UploadFile, Color = Color.Tertiary, Title = "Import danh sách sinh viên", Date = "25/09/2025", User = "admin" }
+    };
+
+    // === Dữ liệu biểu đồ ===
+    private List<ChartSeries> ChartSeries = new()
+    {
+        new ChartSeries { Name = "Đề thi mới", Data = new double[] { 15, 22, 18, 30 } },
+        new ChartSeries { Name = "Người đăng ký", Data = new double[] { 80, 95, 110 } },
+        new ChartSeries { Name = "Lượt thi", Data = new double[] { 320, 410, 580} }
+    };
+
+    private string[] XAxisLabels = { "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10" };
+
+    private async Task RefreshAsync()
+    {
+        // Gọi API thật ở đây khi có backend
+        await Task.Delay(300);
+        // Có thể reload dữ liệu mới
+        StateHasChanged();
+    }
+
+    public class ActivityItem
+    {
+        public string Icon { get; set; } = "";
+        public Color Color { get; set; } = Color.Default;
+        public string Title { get; set; } = "";
+        public string Date { get; set; } = "";
+        public string User { get; set; } = "";
+    }
+}
