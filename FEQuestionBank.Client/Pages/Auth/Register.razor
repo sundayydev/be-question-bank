@@ -1,0 +1,169 @@
+﻿@page "/register"
+@using FEQuestionBank.Client.Implementation
+@using FEQuestionBank.Client.Services.Interface
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using MudBlazor
+@inject IAuthApiClient AuthApiClient
+@inject ISnackbar Snackbar
+@inject NavigationManager Nav
+@attribute [AllowAnonymous]
+
+<div class="auth-fullscreen-bg">
+    <MudPaper Class="auth-card" Elevation="16">
+        <!-- Logo -->
+        <div class="text-center mb-6">
+            <img src="/images/LogoHutechFull.png" alt="HUTECH Logo" style="height: 82px; width: auto;" />
+        </div>
+
+        <!-- Title -->
+        <MudText Typo="Typo.h5" Class="auth-title text-center mb-6">
+            Đăng Ký Tài Khoản
+        </MudText>
+
+        <!-- Form -->
+        <MudForm @ref="form" @bind-IsValid="@isValid">
+            <!-- Tên đăng nhập -->
+            <MudTextField @bind-Value="tenDangNhap"
+                          Label="Tên đăng nhập"
+                          Variant="Variant.Outlined"
+                          Class="mb-4"
+                          Required="true"
+                          RequiredError="Tên đăng nhập không được để trống"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Person"
+                          Placeholder="Nhập tên đăng nhập" />
+
+            <!-- Email -->
+            <MudTextField @bind-Value="email"
+                          Label="Email"
+                          Variant="Variant.Outlined"
+                          Class="mb-4"
+                          InputType="InputType.Email"
+                          Required="true"
+                          RequiredError="Email không hợp lệ"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Email"
+                          Placeholder="you@example.com" />
+
+            <!-- Mật khẩu + Toggle -->
+            <MudTextField @bind-Value="matKhau"
+                          Label="Mật khẩu"
+                          Variant="Variant.Outlined"
+                          Class="mb-4"
+                          InputType="@(showPassword? InputType.Text: InputType.Password)"
+                          Required="true"
+                          RequiredError="Mật khẩu không được để trống"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@(showPassword? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                          OnAdornmentClick="@TogglePassword"
+                          Placeholder="Nhập mật khẩu" />
+
+            <!-- Nhập lại mật khẩu + Toggle (cùng nút) -->
+            <MudTextField @bind-Value="nhapLaiMatKhau"
+                          Label="Nhập lại mật khẩu"
+                          Variant="Variant.Outlined"
+                          Class="mb-4"
+                          InputType="@(showPassword? InputType.Text: InputType.Password)"
+                          Required="true"
+                          RequiredError="Vui lòng nhập lại mật khẩu"
+                          Validation="@(new Func<string, IEnumerable<string>>(ValidatePasswordMatch))"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@(showPassword? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                          OnAdornmentClick="@TogglePassword"
+                          Placeholder="Nhập lại mật khẩu" />
+
+            <!-- Error Message -->
+            @if (!string.IsNullOrEmpty(error))
+            {
+                <MudAlert Severity="Severity.Error" Class="mb-4" ShowCloseIcon="true" CloseIconClicked="@(() => error = null)">
+                    @error
+                </MudAlert>
+            }
+
+            <!-- NÚT ĐĂNG KÝ: LUÔN BẬT, CHỈ DISABLE KHI LOADING -->
+            <MudButton FullWidth
+                       Class="auth-btn"
+                       Disabled="@loading"
+                       OnClick="HandleRegister">
+                @if (loading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate />
+                    <span class="ms-2">Đang đăng ký...</span>
+                }
+                else
+                {
+                    <span>Đăng ký</span>
+                }
+            </MudButton>
+
+            <!-- Link Đăng nhập -->
+            <div class="text-center mt-4">
+                <MudLink Href="/login" Class="auth-link">Đã có tài khoản? Đăng nhập</MudLink>
+            </div>
+        </MudForm>
+    </MudPaper>
+</div>
+
+@code {
+    private string tenDangNhap = "";
+    private string email = "";
+    private string matKhau = "";
+    private string nhapLaiMatKhau = "";
+    private MudForm form = default!;
+    private bool isValid;
+    private bool loading;
+    private string? error;
+    private bool showPassword = false;
+
+    private void TogglePassword()
+    {
+        showPassword = !showPassword;
+    }
+
+    private IEnumerable<string> ValidatePasswordMatch(string value)
+    {
+        if (!string.IsNullOrEmpty(matKhau) && value != matKhau)
+            yield return "Mật khẩu nhập lại không khớp";
+    }
+
+    private async Task HandleRegister()
+    {
+        // Kiểm tra form trước khi gọi API
+        await form.Validate();
+        if (!form.IsValid)
+        {
+            Snackbar.Add("Vui lòng nhập đầy đủ và đúng thông tin!", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            loading = true;
+            error = null;
+
+            var response = await AuthApiClient.RegisterAsync(tenDangNhap, matKhau, email);
+
+            if (response.StatusCode >= 200 && response.StatusCode < 300)
+            {
+                Snackbar.Add("Đăng ký thành công! Vui lòng đăng nhập.", Severity.Success);
+                Nav.NavigateTo("/login");
+            }
+            else
+            {
+                error = response.Message ?? "Đăng ký thất bại. Vui lòng thử lại.";
+                Snackbar.Add(error, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            error = "Lỗi kết nối hoặc hệ thống.";
+            Snackbar.Add(error, Severity.Error);
+            Console.WriteLine("Register Exception: " + ex);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}

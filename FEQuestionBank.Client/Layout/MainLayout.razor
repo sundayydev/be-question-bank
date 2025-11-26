@@ -1,5 +1,7 @@
-﻿@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Authorization
+@inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
+@attribute [Authorize]  
 
 <MudLayout>
     @if (!HideLayout)
@@ -12,7 +14,7 @@
     }
 
     <!-- Nội dung chính -->
-    <MudMainContent>
+    <MudMainContent Class="@MainContentCssClass">
         @Body
     </MudMainContent>
 </MudLayout>
@@ -37,5 +39,7 @@
         var hiddenPages = new[] { "login", "register", "forgot-password" };
 
         return hiddenPages.Any(p => relativePath.StartsWith(p));
+        
     }
+    private string MainContentCssClass => HideLayout ? "mud-main-content-auth" : "";
 }

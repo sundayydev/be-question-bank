@@ -118,9 +118,20 @@ namespace BEQuestionBank.Core.Services
             await _userRepository.AddAsync(entity);
         }
 
-        public async Task UpdateAsync(NguoiDung entity)
+        public async Task<NguoiDung> UpdateAsync(NguoiDung entity)
         {
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
+
+            if (entity.MaKhoa.HasValue)
+            {
+                var khoa = await _khoaRepository.GetByIdAsync(entity.MaKhoa.Value);
+                if (khoa == null)
+                    throw new ArgumentException($"Mã khoa {entity.MaKhoa} không tồn tại.");
+            }
+
+            entity.NgayCapNhat = DateTime.UtcNow;
             await _userRepository.UpdateAsync(entity);
+            return entity;
         }
 
         public async Task DeleteAsync(NguoiDung entity)
