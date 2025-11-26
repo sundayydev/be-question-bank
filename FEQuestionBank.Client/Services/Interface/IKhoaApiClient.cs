@@ -11,6 +11,6 @@ namespace FEQuestionBank.Client.Services
             (int page = 1, int pageSize = 10, string? sort = null, string? filter = null);
         Task<ApiResponse<KhoaDto>> CreateKhoaAsync(CreateKhoaDto model);
         Task<ApiResponse<KhoaDto>> UpdateKhoaAsync(Guid id, UpdateKhoaDto model);
-        Task<ApiResponse<Guid>> DeleteKhoaAsync(Guid id);
+        Task<ApiResponse<string>> DeleteKhoaAsync(Guid id);
     }
 }

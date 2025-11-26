@@ -29,14 +29,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Cấu hình CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:5273") //Đúng port React
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials(); //nếu dùng cookie hoặc auth
-        });
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:5273",
+                "http://localhost:5173" 
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
 });
 
 // Đăng ký Redis
@@ -160,13 +162,12 @@ app.UseMiddleware<RequestLoggingMiddleware>();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger(); // ✅ Bắt buộc
-    app.UseSwaggerUI(); // ✅ Bắt buộc
+    app.UseSwagger();
+    app.UseSwaggerUI(); 
 }
 
-app.UseCors("AllowFrontend");
-
 app.UseHttpsRedirection();
+app.UseCors("AllowFrontend");
 app.UseAuthentication();
 
 app.UseAuthorization();

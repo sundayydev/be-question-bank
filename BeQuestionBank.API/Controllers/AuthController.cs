@@ -24,14 +24,10 @@ namespace BE_CIRRO.API.Controllers
             _logger = logger;
         }
 
-        // POST: /api/auth/register - Đăng ký user mới
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto dto)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                    return BadRequest(ApiResponseFactory.ValidationError<object>("Dữ liệu đầu vào không hợp lệ"));
+        var result = await _authService.LoginAsync(request);
+        
+        if (result == null)
+            return Unauthorized(new { Message = "Tên đăng nhập hoặc mật khẩu không đúng, hoặc tài khoản bị khóa." });
 
                 var user = await _authService.RegisterAsync(dto);
                 if (user == null)

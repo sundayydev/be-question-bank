@@ -149,7 +149,8 @@ public class KhoaController(KhoaService service, ILogger<KhoaController> logger)
             {
                 MaKhoa = existingKhoa.MaKhoa,
                 TenKhoa = existingKhoa.TenKhoa,
-                XoaTam = existingKhoa.XoaTam
+                XoaTam = existingKhoa.XoaTam,
+                MoTa = existingKhoa.MoTa
             };
 
             _logger.LogInformation("Cập nhật thành công Khoa: {TenKhoa}", existingKhoa.TenKhoa);

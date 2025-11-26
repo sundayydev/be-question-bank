@@ -13,8 +13,8 @@ namespace FEQuestionBank.Client.Services
         Task<ApiResponse<MonHocDto>> CreateMonHocAsync(CreateMonHocDto model);
         Task<ApiResponse<List<MonHocDto>>> GetMonHocsByMaKhoaAsync(Guid maKhoa);
         Task<ApiResponse<MonHocDto>> UpdateMonHocAsync(Guid id, UpdateMonHocDto model);
-        Task<ApiResponse<Guid>> DeleteMonHocAsync(Guid id);
-        Task<ApiResponse<Guid>> SoftDeleteMonHocAsync(Guid id);
-        Task<ApiResponse<Guid>> RestoreMonHocAsync(Guid id);
+        Task<ApiResponse<string>> DeleteMonHocAsync(Guid id);
+        Task<ApiResponse<string>> SoftDeleteMonHocAsync(Guid id);
+        Task<ApiResponse<string>> RestoreMonHocAsync(Guid id);
     }
 }

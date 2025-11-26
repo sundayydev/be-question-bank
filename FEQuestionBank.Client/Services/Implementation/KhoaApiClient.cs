@@ -28,10 +28,10 @@ namespace FEQuestionBank.Client.Services
             return await res.Content.ReadFromJsonAsync<ApiResponse<KhoaDto>>() ?? new(500, "Error");
         }
 
-        public async Task<ApiResponse<Guid>> DeleteKhoaAsync(Guid id)
+        public async Task<ApiResponse<string>> DeleteKhoaAsync(Guid id)
         {
             var res = await _httpClient.DeleteAsync($"api/khoa/{id}");
-            return await res.Content.ReadFromJsonAsync<ApiResponse<Guid>>() ?? new(500, "Error");
+            return await res.Content.ReadFromJsonAsync<ApiResponse<string>>() ?? new(500, "Error");
         }
     }
 }

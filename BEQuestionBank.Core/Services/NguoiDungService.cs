@@ -43,7 +43,10 @@ namespace BEQuestionBank.Core.Services
             }
 
             user.MaNguoiDung = Guid.NewGuid();
-            user.MatKhau = BCrypt.Net.BCrypt.HashPassword(user.MatKhau);
+            user.MatKhau = string.IsNullOrWhiteSpace(user.MatKhau)
+                ? BCrypt.Net.BCrypt.HashPassword("123456")
+                : BCrypt.Net.BCrypt.HashPassword(user.MatKhau);
+
             await _userRepository.AddAsync(user);
             return user;
         }
