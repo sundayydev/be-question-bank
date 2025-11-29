@@ -24,11 +24,11 @@ namespace BE_CIRRO.API.Controllers
             _logger = logger;
         }
 
-        var result = await _authService.LoginAsync(request);
-        
-        if (result == null)
-            return Unauthorized(new { Message = "Tên đăng nhập hoặc mật khẩu không đúng, hoặc tài khoản bị khóa." });
-
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterDto dto)
+        {
+            try
+            {
                 var user = await _authService.RegisterAsync(dto);
                 if (user == null)
                     return BadRequest(ApiResponseFactory.ValidationError<object>("Tên đăng nhập đã tồn tại"));
