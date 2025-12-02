@@ -25,6 +25,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         builder.Configuration.GetConnectionString("PostgresConnection"),
         x => x.MigrationsAssembly("BEQuestionBank.Core") // Thêm dòng này
     ));
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 // Cấu hình CORS
 builder.Services.AddCors(options =>

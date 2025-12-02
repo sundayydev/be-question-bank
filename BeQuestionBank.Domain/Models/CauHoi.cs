@@ -18,7 +18,7 @@ public class CauHoi : ModelBase
     public bool HoanVi { get; set; } = false;
     public short CapDo { get; set; } = 0;
     public int SoCauHoiCon { get; set; } = 0;
-    public Guid? MaCauHoiCha { get; set; } = Guid.Empty;
+    public Guid? MaCauHoiCha { get; set; }
     public bool? TrangThai { get; set; } = true;
     public int? SoLanDuocThi { get; set; } = 0;
     public int? SoLanDung { get; set; } = 0;

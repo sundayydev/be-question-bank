@@ -23,4 +23,6 @@ public interface ICauHoiRepository : IRepository<CauHoi>
     Task<Object> AddWithAnswersAsync(Object cauHoiDto);
     Task<Object> UpdateWithAnswersAsync(Guid maCauHoi, Object cauHoiDto);
     Task<int> CountAsync(Expression<Func<CauHoi, bool>> predicate);
+    Task AddRangeAsync(IEnumerable<CauHoi> cauHois);
+    Task<int> GetMaxMaSoCauHoiAsync(); // Để tự tăng mã số câu hỏi
 }
