@@ -70,4 +70,16 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
     {
         return await _context.CauHois. Include(c => c.Phan).CountAsync(predicate);
     }
+
+    public async Task AddRangeAsync(IEnumerable<CauHoi> cauHois)
+    {
+        await _context.CauHois.AddRangeAsync(cauHois);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<int> GetMaxMaSoCauHoiAsync()
+    {
+        if (!await _context.CauHois.AnyAsync()) return 0;
+        return await _context.CauHois.MaxAsync(c => c.MaSoCauHoi);
+    }
 }
