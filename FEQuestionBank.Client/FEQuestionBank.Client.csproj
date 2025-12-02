@@ -24,4 +24,8 @@
     <ItemGroup>
       <Folder Include="Auth\" />
     </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Component\Trash\TrashKhoaTable.razor" />
+    </ItemGroup>
 </Project>

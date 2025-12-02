@@ -1,0 +1,116 @@
+﻿@page "/trash"
+
+@using MudBlazor
+@inherits TrashBase
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" >
+    <MudBreadcrumbs Items="_breadcrumbs" Style="margin-top:2px; margin-bottom:2px;" />
+
+    <MudText Typo="Typo.h4" GutterBottom="true" Class="d-flex align-center gap-4 mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Color="Color.Error" Size="Size.Large"/>
+        Thùng rác hệ thống
+        <MudChip T="int" Color="Color.Error" Variant="Variant.Filled" Size="Size.Large">
+            @TotalDeleted
+        </MudChip>
+
+    </MudText>
+
+    <MudTabs Elevation="4" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6 mt-4">
+
+        <!-- TAB KHOA -->
+        <MudTabPanel Text="@($"Khoa ({KhoaCount})")" BadgeColor="Color.Error" BadgeData="@KhoaCount">
+            <ChildContent>
+                <MudTable ServerData="LoadKhoaTrash"
+                          Hover="true" Dense="true" Bordered="true" Striped="true"
+                          Loading="@LoadingKhoa"
+                          RowsPerPage="15"
+                          Class="mt-4">
+                    <HeaderContent>
+                        <MudTh>Tên Khoa</MudTh>
+                        <MudTh>Mô tả</MudTh>
+                        <MudTh>Ngày xóa tạm</MudTh>
+                        <MudTh Style="text-align:center">Thao tác</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Tên Khoa">@context.TenKhoa</MudTd>
+                        <MudTd DataLabel="Mô tả">@context.MoTa</MudTd>
+                        <MudTd DataLabel="Ngày xóa">@context.NgayCapNhat.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                        <MudTd Style="text-align:center">
+                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success"
+                                       StartIcon="@Icons.Material.Filled.RestoreFromTrash"
+                                       OnClick="@(() => RestoreKhoa(context.MaKhoa))">
+                                Khôi phục
+                            </MudButton>
+                        </MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudAlert Severity="Severity.Info" Class="my-6">
+                            Không có khoa nào trong thùng rác
+                        </MudAlert>
+                    </NoRecordsContent>
+                </MudTable>
+            </ChildContent>
+        </MudTabPanel>
+
+        <!-- TAB MÔN HỌC -->
+        <MudTabPanel Text="@($"Môn học ({MonHocCount})")" BadgeColor="Color.Error" BadgeData="@MonHocCount">
+            <ChildContent>
+                <MudTable ServerData="LoadMonHocTrash"
+                          Hover="true" Dense="true" Bordered="true" Striped="true"
+                          Loading="@LoadingMonHoc"
+                          RowsPerPage="15">
+                    <HeaderContent>
+                        <MudTh>Tên môn học</MudTh>
+                        <MudTh>Mã số môn</MudTh>
+                        <MudTh>Tên Khoa</MudTh>
+                        <MudTh>Ngày xóa</MudTh>
+                        <MudTh Style="text-align:center">Thao tác</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.TenMonHoc</MudTd>
+                        <MudTd>@context.MaSoMonHoc</MudTd>
+                        <MudTd>@GetKhoaName(context.MaKhoa)</MudTd>
+                        <MudTd DataLabel="Ngày xóa">@context.NgayCapNhat.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                        <MudTd Style="text-align:center">
+                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success"
+                                       StartIcon="@Icons.Material.Filled.RestoreFromTrash"
+                                       OnClick="@(() => RestoreMonHoc(context.MaMonHoc))">
+                                Khôi phục
+                            </MudButton>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </ChildContent>
+        </MudTabPanel>
+
+        <!-- TAB PHẦN / CHƯƠNG -->
+        <MudTabPanel Text="@($"Phần ({PhanCount})")" BadgeColor="Color.Error" BadgeData="@PhanCount">
+            <ChildContent>
+                <MudTable ServerData="LoadPhanTrash"
+                          Hover="true" Dense="true" Bordered="true" Striped="true"
+                          Loading="@LoadingPhan"
+                          RowsPerPage="15">
+                    <HeaderContent>
+                        <MudTh>Tên phần</MudTh>
+                        <MudTh>Thuộc môn học</MudTh>
+                        <MudTh>Ngày xóa</MudTh>
+                        <MudTh Style="text-align:center">Thao tác</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.TenPhan</MudTd>
+                        <MudTd>@context.TenMonHoc</MudTd>
+                        <MudTd>@context.NgayCapNhat.ToString("dd/MM/yyyy")</MudTd>
+                        <MudTd Style="text-align:center">
+                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success"
+                                       StartIcon="@Icons.Material.Filled.RestoreFromTrash"
+                                       OnClick="@(() => RestorePhan(context.MaPhan))">
+                                Khôi phục
+                            </MudButton>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </ChildContent>
+        </MudTabPanel>
+
+    </MudTabs>
+</MudContainer>

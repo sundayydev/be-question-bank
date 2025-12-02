@@ -297,7 +297,7 @@ public async Task<IActionResult> GetApprovedDeThisAsync()
                 ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
     }
- // GET: api/Khoa/paged
+    // GET: api/Khoa/paged
     [HttpGet("paged")]
     [SwaggerOperation("Lấy danh sách Khoa có phân trang, sort")]
     public async Task<IActionResult> GetPagedAsync(

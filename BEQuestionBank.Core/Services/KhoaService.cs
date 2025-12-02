@@ -7,6 +7,8 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using BeQuestionBank.Shared.DTOs.Khoa;
+using BeQuestionBank.Shared.DTOs.Pagination;
 
 namespace BEQuestionBank.Core.Services;
 
@@ -48,6 +50,11 @@ public class KhoaService(IKhoaRepository khoaRepository)
     {
         return await _khoaRepository.FindAsync(predicate);
     }
-
+    public async Task<PagedResult<KhoaDto>> GetTrashedAsync(int page = 1, int pageSize = 10)
+    {
+        return await _khoaRepository.GetTrashedAsync(page, pageSize);
+    }
 }
+
+
 
