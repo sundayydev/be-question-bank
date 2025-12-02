@@ -53,32 +53,40 @@ public class YeuCauRutTrichApiClient : BaseApiClient, IYeuCauRutTrichApiClient
 
     public async Task<ApiResponse<YeuCauRutTrichDto>> CreateAsync(CreateYeuCauRutTrichDto dto)
     {
+        var res = await _httpClient.PostAsJsonAsync("api/yeucauruttrich/RutTrichDeThi", dto);
+        return await res.Content.ReadFromJsonAsync<ApiResponse<YeuCauRutTrichDto>>() 
+               ?? new ApiResponse<YeuCauRutTrichDto>(500, "Error");
+    }
+
+    public Task<ApiResponse<YeuCauRutTrichResultDto>> CreateAndRutTrichDeThiAsync(CreateYeuCauRutTrichDto dto)
+    {
         throw new NotImplementedException();
     }
 
-    public async Task<ApiResponse<YeuCauRutTrichResultDto>> CreateAndRutTrichDeThiAsync(CreateYeuCauRutTrichDto dto)
-    {
-        
-        var response = await _httpClient.PostAsJsonAsync("api/yeucau/RutTrichDeThi", dto);
-        var content = await response.Content.ReadAsStringAsync();
 
-        if (!response.IsSuccessStatusCode)
-        {
-            return new ApiResponse<YeuCauRutTrichResultDto>
-            {
-                StatusCode = (int)response.StatusCode,
-                Message = content
-            };
-        }
-
-        var data = await response.Content.ReadFromJsonAsync<YeuCauRutTrichResultDto>();
-        return new ApiResponse<YeuCauRutTrichResultDto>
-        {
-            StatusCode = 201,
-            Message = "Tạo thành công",
-            Data = data
-        };
-    }
+    // public async Task<ApiResponse<YeuCauRutTrichResultDto>> CreateAndRutTrichDeThiAsync(CreateYeuCauRutTrichDto dto)
+    // {
+    //     
+    //     var response = await _httpClient.PostAsJsonAsync("api/yeucauruttrich/RutTrichDeThi", dto);
+    //     var content = await response.Content.ReadAsStringAsync();
+    //
+    //     if (!response.IsSuccessStatusCode)
+    //     {
+    //         return new ApiResponse<YeuCauRutTrichResultDto>
+    //         {
+    //             StatusCode = (int)response.StatusCode,
+    //             Message = content
+    //         };
+    //     }
+    //
+    //     var data = await response.Content.ReadFromJsonAsync<YeuCauRutTrichResultDto>();
+    //     return new ApiResponse<YeuCauRutTrichResultDto>
+    //     {
+    //         StatusCode = 201,
+    //         Message = "Tạo thành công",
+    //         Data = data
+    //     };
+    // }
 
     public Task<ApiResponse<object>> UpdateAsync(Guid id, YeuCauRutTrichDto dto)
     {

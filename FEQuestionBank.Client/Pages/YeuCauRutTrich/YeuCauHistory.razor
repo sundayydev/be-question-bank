@@ -86,7 +86,6 @@
               Class="mud-width-full">
 
         <HeaderContent>
-            <MudTh Style="width:10%;"><MudTableSortLabel SortLabel="MaYeuCau" T="YeuCauRutTrichDto">Mã YC</MudTableSortLabel></MudTh>
             <MudTh Style="width:15%;"><MudTableSortLabel SortLabel="TenNguoiDung" T="YeuCauRutTrichDto">Người YC</MudTableSortLabel></MudTh>
             <MudTh Style="width:15%;"><MudTableSortLabel SortLabel="TenMonHoc" T="YeuCauRutTrichDto">Môn học</MudTableSortLabel></MudTh>
             <MudTh Style="width:25%;"><MudTableSortLabel SortLabel="NoiDungRutTrich" T="YeuCauRutTrichDto">Nội dung</MudTableSortLabel></MudTh>
@@ -96,7 +95,6 @@
         </HeaderContent>
 
         <RowTemplate>
-            <MudTd DataLabel="Mã YC">@context.MaYeuCau.ToString("N").Substring(0,8)</MudTd>
             <MudTd DataLabel="Người YC">@context.TenNguoiDung</MudTd>
             <MudTd DataLabel="Môn học">
                 <MudText Typo="Typo.body2">@context.TenMonHoc</MudText>

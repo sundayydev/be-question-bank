@@ -7,15 +7,18 @@ using MudBlazor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using BEQuestionBank.Shared.DTOs.MaTran;
 using BeQuestionBank.Shared.DTOs.Phan;
+using FEQuestionBank.Client.Implementation;
 
 namespace FEQuestionBank.Client.Pages.DeThi
 {
     public partial class ExtractQuestionPage : ComponentBase
     {
         [Inject] IYeuCauRutTrichApiClient YeuCauApi { get; set; } = default!;
+        [Inject] CustomAuthStateProvider AuthStateProvider { get; set; } = default!;
         [Inject] IDeThiApiClient DeThiApi { get; set; } = default!;
         [Inject] IMonHocApiClient MonHocApi { get; set; } = default!;
         [Inject] IPhanApiClient PhanApi { get; set; } = default!;
@@ -54,7 +57,30 @@ namespace FEQuestionBank.Client.Pages.DeThi
 
         protected override async Task OnInitializedAsync()
         {
-            // Bước 1: Load môn học
+            // Lấy authentication state
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated ?? false)
+            {
+                // Lấy claim
+                var userIdClaim = user.FindFirst("UserId") ?? user.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out var userId))
+                {
+                    _model.MaNguoiDung = userId;
+                    Console.WriteLine($"Current user id: {_model.MaNguoiDung}");
+                }
+                else
+                {
+                    Console.WriteLine("WARNING: No valid user id claim found.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("User is not authenticated.");
+            }
+
+            // Load môn học, etc.
             var res = await MonHocApi.GetAllMonHocsAsync();
             if (res.Success && res.Data != null && res.Data.Any())
             {
@@ -140,39 +166,8 @@ namespace FEQuestionBank.Client.Pages.DeThi
             _selectedPartIds = selectedIds?.ToHashSet() ?? new HashSet<Guid>();
             UpdateMaTranParts();
         }
-
-        // protected async Task OnMonHocChanged(Guid maMonHoc)
-        // {
-        //     _maTran.CloPerPart = false;
-        //     _maTran.Parts.Clear();
-        //     _selectedPartIds.Clear();
-        //     _availableParts.Clear();
-        //     _isValidated = false;
-        //
-        //     if (maMonHoc == Guid.Empty) return;
-        //
-        //     var res = await PhanApi.GetPhanByMonHocAsync(maMonHoc);
-        //
-        //     if (res.Success && res.Data != null && res.Data.Any())
-        //     {
-        //         _availableParts = res.Data
-        //             .Where(p => p.XoaTam != true)
-        //             .OrderBy(p => p.ThuTu)
-        //             .ThenBy(p => p.NgayTao)
-        //             .ToList();
-        //
-        //         Snackbar.Add($"Đã tải {_availableParts.Count} phần.", Severity.Info);
-        //     }
-        //     else
-        //     {
-        //         Snackbar.Add("Chưa có phần nào cho môn này.", Severity.Warning);
-        //     }
-        //
-        //     StateHasChanged();
-        // }
         protected async Task OnMonHocChanged(Guid maMonHoc)
         {
-            if (_model.MaMonHoc == maMonHoc) return;
 
             _model.MaMonHoc = maMonHoc;
 
@@ -208,6 +203,7 @@ namespace FEQuestionBank.Client.Pages.DeThi
                     .ToList();
 
                 Snackbar.Add($"Đã tải {_availableParts.Count} phần.", Severity.Info);
+                
             }
             else
             {
@@ -276,18 +272,32 @@ namespace FEQuestionBank.Client.Pages.DeThi
             try
             {
                 var res = await DeThiApi.CheckQuestionsAsync(_maTran, _model.MaMonHoc);
-                
+    
                 _isValidated = res.Success;
-                _validationMessage = res.Message;
 
-                // Bước 5: Hiển thị kết quả kiểm tra
+                // Trích thông điệp nếu res.Message chứa JSON
+                string messageToShow;
+                try
+                {
+                    var jsonDoc = System.Text.Json.JsonDocument.Parse(res.Message ?? "");
+                    messageToShow = jsonDoc.RootElement.GetProperty("message").GetString() ?? "Ma trận không hợp lệ!";
+                }
+                catch
+                {
+                    // Nếu không phải JSON thì dùng thẳng
+                    messageToShow = res.Message ?? "Ma trận không hợp lệ!";
+                }
+
+                _validationMessage = messageToShow;
+
+                // Hiển thị kết quả kiểm tra
                 if (res.Success)
                 {
-                    Snackbar.Add("✓ Ma trận hợp lệ! Bạn có thể tiến hành rút trích.", Severity.Success);
+                    Snackbar.Add($" {messageToShow}", Severity.Success);
                 }
                 else
                 {
-                    Snackbar.Add($"✗ {res.Message ?? "Không đủ câu hỏi hoặc ma trận không hợp lệ!"}", Severity.Error);
+                    Snackbar.Add($"{messageToShow}", Severity.Error);
                 }
             }
             catch (Exception ex)
@@ -394,16 +404,16 @@ namespace FEQuestionBank.Client.Pages.DeThi
             try
             {
                 _model.MaTran = _maTran;
-                var res = await YeuCauApi.CreateAndRutTrichDeThiAsync(_model);
+                var res = await YeuCauApi.CreateAsync(_model);
 
                 if (res.Success && res.Data?.MaDeThi != Guid.Empty)
                 {
-                    Snackbar.Add($"✓ Rút trích thành công! Đề: {res.Data.TenDeThi}", Severity.Success);
+                    Snackbar.Add($" Rút trích thành công! Đề: {res.Data.TenDeThi}", Severity.Success);
                     Navigation.NavigateTo($"/dethi/{res.Data.MaDeThi}");
                 }
                 else
                 {
-                    Snackbar.Add($"✗ {res.Message ?? "Lỗi khi rút trích!"}", Severity.Error);
+                    Snackbar.Add($" {res.Message ?? "Lỗi khi rút trích!"}", Severity.Error);
                 }
             }
             catch (Exception ex)
@@ -430,7 +440,7 @@ namespace FEQuestionBank.Client.Pages.DeThi
             if (newValue && (!_availableParts?.Any() ?? true))
             {
                 Snackbar.Add("Môn này chưa có phần nào → Tự động chuyển về chế độ rút trích toàn đề.", Severity.Info);
-                _maTran.CloPerPart = false; // ép về false
+                _maTran.CloPerPart = false;
                 InitializeDefaultData();
             }
             else
@@ -467,5 +477,29 @@ namespace FEQuestionBank.Client.Pages.DeThi
             OnMaTranChanged();
             StateHasChanged();
         }
+        protected void ResetPage()
+        {
+            // Xóa phần chọn
+            _selectedPartIds.Clear();
+
+            // Xóa ma trận theo phần
+            _maTran.Parts.Clear();
+
+            // Nếu đang theo phần, chuyển về toàn đề
+            _maTran.CloPerPart = false;
+
+            // Reset CLO và QuestionTypes mặc định
+            _maTran.Clos.Clear();
+            _maTran.QuestionTypes.Clear();
+            AddClo();
+            AddQuestionType();
+
+            // Reset validation và message
+            _isValidated = false;
+            _validationMessage = null;
+
+            StateHasChanged();
+        }
+
     }
 }

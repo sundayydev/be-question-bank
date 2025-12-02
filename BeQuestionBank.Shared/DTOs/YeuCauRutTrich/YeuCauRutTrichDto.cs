@@ -10,6 +10,8 @@ public class YeuCauRutTrichDto
     public DateTime? NgayYeuCau { get; set; }
     public DateTime? NgayXuLy { get; set; }
     public bool? DaXuLy { get; set; }
+    public Guid MaDeThi { get; set; }  // Thêm để lấy ID đề thi
+    public string? TenDeThi { get; set; }  // Thêm để hiển thị tên đề thi
     public string? TenNguoiDung { get; set; }
     public string? TenMonHoc { get; set; }
     public string? TenKhoa { get; set; }

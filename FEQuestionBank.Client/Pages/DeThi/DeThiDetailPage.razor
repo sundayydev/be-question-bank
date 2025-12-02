@@ -83,7 +83,7 @@
                 <MudTabs Elevation="2" Rounded="true" PanelClass="pa-4">
                     <MudTabPanel Text="Danh sách câu hỏi">
                         <ChildContent>
-                            <MudPaper Style="max-height: 465px; overflow-y: auto;" Class="pa-3">
+                            <MudPaper Style="max-height: 425px; overflow-y: auto;" Class="pa-3">
                                 @if (!DeThi.ChiTietDeThis?.Any() ?? true)
                                 {
                                     <MudText Typo="Typo.body1" Class="text-center">Chưa có câu hỏi nào.</MudText>
@@ -139,7 +139,7 @@
 
                     <MudTabPanel Text="Tóm tắt đề">
                         <ChildContent>
-                            <MudPaper Class="pa-4" Style="height: 400px; overflow-y: auto;">
+                            <MudPaper Class="pa-4" Style="height: 425px; overflow-y: auto;">
                                 <MudGrid Class="mb-4">
                                     <!-- Tổng số câu hỏi -->
                                     <MudItem xs="12" sm="4">

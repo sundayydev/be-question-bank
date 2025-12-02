@@ -16,5 +16,8 @@ namespace FEQuestionBank.Client.Services
         Task<ApiResponse<string>> DeleteMonHocAsync(Guid id);
         Task<ApiResponse<string>> SoftDeleteMonHocAsync(Guid id);
         Task<ApiResponse<string>> RestoreMonHocAsync(Guid id);
+        Task<ApiResponse<PagedResult<MonHocDto>>> GetTrashedMonHocsAsync(
+            int page = 1,
+            int pageSize = 20);
     }
 }
