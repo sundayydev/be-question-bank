@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -40,5 +41,10 @@ namespace BeQuestionBank.Shared.DTOs.Common
 
         public static ApiResponse<T> BadRequest<T>(T data, string message = "Yêu cầu không hợp lệ", object? errors = null)
             => new ApiResponse<T>(HttpStatusCodes.BadRequest, message, data, errors);
+
+        public static ApiResponse<T> Error<T>(int statusCode, string message)
+        {
+            return new ApiResponse<T>(statusCode, message, default, null);
+        }
     }
 }

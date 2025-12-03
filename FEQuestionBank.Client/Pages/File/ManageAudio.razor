@@ -1,0 +1,126 @@
+﻿@page "/manage-audio"
+@using BeQuestionBank.Shared.DTOs.File
+@using BeQuestionBank.Shared.Enums
+@inherits ManageAudioBase
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Style="min-height:600px; width: 100%">
+    <MudBreadcrumbs Items="_breadcrumbs" Style="margin-top:2px; margin-bottom:2px;" />
+
+    <div class="row mb-3 g-2 align-items-center">
+        <div class="col">
+            <div class="input-group align-items-center custom-input-group">
+                <span class="input-group-text bg-light"
+                      style="border-radius: 10px 0 0 10px; border: 1px solid #ced4da; border-right: none;">
+                    <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Medium"
+                             Style="@($"color:{Colors.Blue.Darken3};")" />
+                </span>
+
+                <div class="flex-grow-1">
+                    <MudTextField @bind-Value="_searchTerm"
+                                  Placeholder="Tìm kiếm audio..."
+                                  Variant="Variant.Text"
+                                  Immediate="true"
+                                  OnKeyDown="@(e => { if (e.Key == "Enter") table?.ReloadServerData(); })"
+                                  Class="shadow-none"
+                                  Style="border-radius: 0 10px 10px 0; height:42px; padding-left:10px;" />
+                </div>
+            </div>
+        </div>
+
+        <div class="col-auto">
+            <MudButton Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.CloudUpload"
+                       Style="@($"background-color:{Colors.Blue.Darken2}; color:white; border-radius:10px; padding:6px 16px;")"
+                       OnClick="OnUploadAudio">
+                Tải lên Audio
+            </MudButton>
+        </div>
+    </div>
+
+    <MudTable ServerData="LoadServerData"
+              Bordered="true"
+              Hover="true"
+              Striped="true"
+              Dense="false"
+              RowsPerPage="10"
+              PageSizeOptions="new int[] {10, 20, 50}"
+              Class="w-full text-base"
+              @ref="table">
+
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortLabel="TenFile" T="FileDto">Tên File</MudTableSortLabel></MudTh>
+            <MudTh Style="text-align:center;">Nghe thử</MudTh>
+            <MudTh><MudTableSortLabel SortLabel="MaCauHoi" T="FileDto">Liên kết</MudTableSortLabel></MudTh>
+            <MudTh Style="text-align:center;">Thao Tác</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd DataLabel="Tên File">
+                <div class="d-flex align-items-center">
+                    <MudIcon Icon="@Icons.Material.Filled.AudioFile" Color="Color.Primary" Class="mr-2"/>
+                    <MudText Typo="Typo.body2">@context.TenFile</MudText>
+                </div>
+            </MudTd>
+            
+            <MudTd DataLabel="Nghe thử" Style="text-align:center;">
+                @if (!string.IsNullOrEmpty(context.Url))
+                {
+                    <audio controls style="height: 30px; width: 200px;">
+                        <source src="@context.Url" type="audio/mpeg">
+                        Trình duyệt của bạn không hỗ trợ thẻ audio.
+                    </audio>
+                }
+                else
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Error">Chưa có file</MudText>
+                }
+            </MudTd>
+
+            <MudTd DataLabel="Liên kết">
+                @if (context.MaCauHoi != null)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">Câu hỏi</MudChip>
+                }
+                else if (context.MaCauTraLoi != null)
+                {
+                    <MudChip T="int" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">Câu trả lời</MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Text">Chưa liên kết</MudChip>
+                }
+            </MudTd>
+
+            <MudTd Style="text-align:center;">
+                <MudIconButton Icon="@Icons.Material.Filled.PlayCircle" 
+                               Style="@($"color:{Colors.Green.Darken3};")" 
+                               Size="Size.Small" 
+                               Class="mx-1" 
+                               OnClick="() => OnPlayPreview(context)" 
+                               Tooltip="Nghe chi tiết"/>
+
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                               Style="@($"color:{Colors.Red.Darken3};")" 
+                               Size="Size.Small" 
+                               Class="mx-1" 
+                               OnClick="() => OnConfirmDelete(context)" 
+                               Tooltip="Xóa file"/>
+            </MudTd>
+        </RowTemplate>
+
+        <NoRecordsContent>
+            <MudText>Không tìm thấy file audio nào.</MudText>
+        </NoRecordsContent>
+
+        <LoadingContent>
+            <MudText>Đang tải dữ liệu...</MudText>
+        </LoadingContent>
+
+        <PagerContent>
+            <MudTablePager RowsPerPageString="Hàng mỗi trang"
+                           InfoFormat="Hiển thị {first_item}-{last_item} của {all_items} mục" />
+        </PagerContent>
+
+    </MudTable>
+</MudContainer>

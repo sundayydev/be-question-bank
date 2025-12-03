@@ -12,17 +12,29 @@ namespace BeQuestionBank.Domain.Interfaces.IRepositories;
 
 public interface ICauHoiRepository : IRepository<CauHoi>
 {
-    Task<IEnumerable<Object>> GetAllWithAnswersAsync();
-    Task<Object> GetByIdWithAnswersAsync(Guid maCauHoi);
+    // Đổi Object -> CauHoi
+    Task<IEnumerable<CauHoi>> GetAllWithAnswersAsync();
+
+    // Đổi Object -> CauHoi? (cho phép null)
+    Task<CauHoi?> GetByIdWithAnswersAsync(Guid maCauHoi);
+
     Task<IEnumerable<CauHoi>> GetByCLoAsync(EnumCLO maCLo);
     Task<IEnumerable<CauHoi>> GetByMaPhanAsync(Guid maPhan);
-    Task<IEnumerable<Object>> GetByMaMonHocAsync(Guid maMonHoc);
+
+    // Đổi Object -> CauHoi
+    Task<IEnumerable<CauHoi>> GetByMaMonHocAsync(Guid maMonHoc);
+
     Task<IEnumerable<CauHoi>> GetByMaDeThiAsync(Guid maDeThi);
     Task<IEnumerable<CauHoi>> GetByMaCauHoiChasync(Guid maCHCha);
-    Task<IEnumerable<Object>> GetAllGroupsAsync();
-    Task<Object> AddWithAnswersAsync(Object cauHoiDto);
-    Task<Object> UpdateWithAnswersAsync(Guid maCauHoi, Object cauHoiDto);
+
+    // Đổi Object -> CauHoi
+    Task<IEnumerable<CauHoi>> GetAllGroupsAsync();
+
+    // Đổi tham số input và return type từ Object -> CauHoi
+    Task<CauHoi> AddWithAnswersAsync(CauHoi cauHoi);
+    Task<CauHoi> UpdateWithAnswersAsync(Guid maCauHoi, CauHoi cauHoi);
+
     Task<int> CountAsync(Expression<Func<CauHoi, bool>> predicate);
     Task AddRangeAsync(IEnumerable<CauHoi> cauHois);
-    Task<int> GetMaxMaSoCauHoiAsync(); // Để tự tăng mã số câu hỏi
-}
+    Task<int> GetMaxMaSoCauHoiAsync();
+}   
