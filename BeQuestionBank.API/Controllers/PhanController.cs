@@ -70,13 +70,13 @@ public class PhanController(PhanService service) : ControllerBase
             // Kiểm tra dữ liệu đầu vào
             if (phanCreateDto.MaPhanCha != null && phanCreateDto.MaPhanCha != Guid.Empty)
             {
-                (success, message) = await _service.AddPhanWithChildrenAsync(phanCreateDto);
+                (success,  message) = await _service.AddPhanWithChildrenAsync(phanCreateDto);
             }
             else
             {
                 (success, message) = await _service.AddPhanAsync(phanCreateDto);
             }
-
+           
             if (!success)
             {
                 return StatusCode(StatusCodes.Status400BadRequest, ApiResponseFactory.ValidationError<object>(message));
@@ -210,20 +210,12 @@ public class PhanController(PhanService service) : ControllerBase
     [HttpGet("monhoc/{maMonHoc}")]
     public async Task<IActionResult> GetByMonHoc(Guid maMonHoc)
     {
-        if (maMonHoc == Guid.Empty)
+        var result = await _service.GetPhansByMaMonHocAsync(maMonHoc);
+        return Ok(new
         {
-            return BadRequest(ApiResponseFactory.ValidationError<object>("Mã môn học không hợp lệ."));
-        }
-
-    
-        var result = await _service.GetTreeByMonHocAsync(maMonHoc);
-
-        return Ok(new ApiResponse<List<PhanDto>>
-        {
-            StatusCode = 200,
-            Message = "Lấy danh sách phần theo môn học thành công",
-            Data = result,
+            statusCode = 200,
+            message = "Lấy danh sách phần theo môn học thành công",
+            data = result
         });
     }
-    
 }

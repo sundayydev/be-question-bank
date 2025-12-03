@@ -14,8 +14,6 @@ namespace FEQuestionBank.Client.Pages
 {
    public partial class PhanBase : ComponentBase
 {
-
-    [Parameter] public Guid MaMonHoc { get; set; } = Guid.Empty;
     [Inject] protected IPhanApiClient PhanApiClient { get; set; } = default!;
     [Inject] protected ISnackbar Snackbar { get; set; } = default!;
     [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
@@ -29,84 +27,36 @@ namespace FEQuestionBank.Client.Pages
     {
         await LoadPhanList();
     }
-    
-    // private async Task LoadPhanList()
-    // {
-    //     loading = true;
-    //     StateHasChanged();
 
-    //     try
-    //     {
-    //         var response = await PhanApiClient.GetPhanByMonHocAsync(MaMonHoc); // Backend trả cây
-    //         if (response.Success && response.Data != null)
-    //         {
-    //             phanList = FlattenTree(response.Data); // Làm phẳng
-    //             phanList = ApplySearch(phanList);
-    //         }
-    //         else
-    //         {
-    //             Snackbar.Add("Không có dữ liệu.", Severity.Info);
-    //         }
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
-    //     }
-    //     finally
-    //     {
-    //         loading = false;
-    //         StateHasChanged();
-    //     }
-    // }
     private async Task LoadPhanList()
+    {
+        loading = true;
+        StateHasChanged();
+
+        try
         {
-            loading = true;
-            StateHasChanged();
-
-            try
+            var response = await PhanApiClient.GetTreeAsync(); // Backend trả cây
+            if (response.Success && response.Data != null)
             {
-                var response = await PhanApiClient.GetPhanByMonHocAsync(MaMonHoc);
-
-                if (response.Success && response.Data != null)
-                {
-                    // ⭐ Chỉ lấy phần cha (root)
-                    phanList = response.Data
-                        .Select(x => new PhanDto
-                        {
-                            MaPhan = x.MaPhan,
-                            MaMonHoc = x.MaMonHoc,
-                            TenPhan = x.TenPhan,
-                            NoiDung = x.NoiDung,
-                            ThuTu = x.ThuTu,
-                            SoLuongCauHoi = x.SoLuongCauHoi,
-                            XoaTam = x.XoaTam,
-                            LaCauHoiNhom = x.LaCauHoiNhom,
-                            NgayTao = x.NgayTao,
-                            NgayCapNhat = x.NgayCapNhat,
-
-                            // ⭐ KHÔNG lấy phần con
-                            PhanCons = null,
-                            MaPhanCha = x.MaPhanCha
-                        })
-                        .ToList();
-
-                    phanList = ApplySearch(phanList);
-                }
-                else
-                {
-                    Snackbar.Add("Không có dữ liệu.", Severity.Info);
-                }
+                phanList = FlattenTree(response.Data); // Làm phẳng
+                phanList = ApplySearch(phanList);
             }
-            catch (Exception ex)
+            else
             {
-                Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
-            }
-            finally
-            {
-                loading = false;
-                StateHasChanged();
+                Snackbar.Add("Không có dữ liệu.", Severity.Info);
             }
         }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
     // Làm phẳng cây → danh sách
     private List<PhanDto> FlattenTree(List<PhanDto> tree)
     {
@@ -192,10 +142,6 @@ namespace FEQuestionBank.Client.Pages
     {
         if (phan.MaMonHoc != Guid.Empty)
             NavigationManager.NavigateTo($"/monhoc/{phan.MaMonHoc}/cauhoi?phan={phan.MaPhan}");
-    }
-     protected void ViewTree(PhanDto phan)
-    {
-            NavigationManager.NavigateTo($"/phancon/{phan.MaPhan}");
     }
 
     private async Task SavePhanAsync(PhanDto phan)

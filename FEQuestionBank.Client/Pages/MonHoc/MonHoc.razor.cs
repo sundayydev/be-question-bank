@@ -136,10 +136,7 @@ namespace FEQuestionBank.Client.Pages.MonHoc
             if (table != null)
                 await table.ReloadServerData();
         }
-        protected async Task OnPartNav(MonHocDto monHoc)
-        {
-             NavigationManager.NavigateTo($"/phan/{monHoc.MaMonHoc}");
-        }
+
         protected async Task OnCreateNew()
         {
             var parameters = new DialogParameters
