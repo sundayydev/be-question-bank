@@ -1,0 +1,103 @@
+﻿@using BeQuestionBank.Shared.DTOs.CauHoi
+@using BeQuestionBank.Shared.DTOs.CauTraLoi
+@using FEQuestionBank.Client.Pages.CauHoi
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudContainer Style="max-height: 600px; overflow-y: auto; padding: 0;">
+            <MudPaper Elevation="0" Class="mb-3 p-3 bg-grey-lighten-4 rounded-lg border-1 border-grey-lighten-2">
+                <MudText Typo="Typo.subtitle2" Class="mb-2 font-bold text-uppercase text-secondary">Thông tin phân loại</MudText>
+                <MudStack Row="true" Spacing="1" Style="flex-wrap: wrap; gap: 8px;">
+                    @if (!string.IsNullOrEmpty(TenKhoa))
+                    {
+                        <MudChip T="string" Icon="@Icons.Material.Filled.Business" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@TenKhoa</MudChip>
+                    }
+                    @if (!string.IsNullOrEmpty(TenMon))
+                    {
+                        <MudChip T="string" Icon="@Icons.Material.Filled.MenuBook" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">@TenMon</MudChip>
+                    }
+                    @if (!string.IsNullOrEmpty(TenPhan))
+                    {
+                        <MudChip T="string" Icon="@Icons.Material.Filled.Bookmark" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">@TenPhan</MudChip>
+                    }
+                    <MudChip T="string" Icon="@Icons.Material.Filled.Flag" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">CLO: @CloName</MudChip>
+                    <MudChip T="string" Icon="@Icons.Material.Filled.SignalCellularAlt" Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined">Cấp độ: @CapDo</MudChip>
+                </MudStack>
+            </MudPaper>
+
+            <MudPaper Elevation="0" Class="p-4 mb-4 bg-blue-lighten-5 rounded-lg border-l-4 border-primary">
+                <MudText Typo="Typo.subtitle1" Color="Color.Primary" Class="mb-1 d-flex align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.Help" Size="Size.Small" Class="mr-2" />
+                    <b>Nội dung câu hỏi:</b>
+                </MudText>
+                <MudDivider Class="mb-2" />
+                <MudText Typo="Typo.body1" Style="white-space: pre-wrap; font-size: 1.1rem;">@QuestionContent</MudText>
+            </MudPaper>
+
+            <MudText Typo="Typo.subtitle2" Class="mb-2 ml-1"><b>Các lựa chọn trả lời:</b></MudText>
+            <MudGrid Spacing="2">
+                @for (int i = 0; i < Answers.Count; i++)
+                {
+                    var ans = Answers[i];
+                    var alpha = (char)('A' + i);
+                    <MudItem xs="12">
+                        <MudPaper Class="@($"p-3 d-flex align-center transition-all {(ans.IsCorrect ? "answer-correct" : "answer-normal")}")"
+                                  Elevation="0" Outlined="true">
+
+                            <MudAvatar Color="@(ans.IsCorrect? Color.Success: Color.Default)"
+                                       Variant="@(ans.IsCorrect ? Variant.Filled : Variant.Outlined)"
+                                       Size="Size.Medium" Class="mr-3 font-bold">
+                                @alpha
+                            </MudAvatar>
+
+                            <MudText Class="flex-grow-1" Style="@(ans.IsCorrect ? "font-weight: 500;" : "")">@ans.Text</MudText>
+
+                            @if (ans.IsCorrect)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Class="ml-2">ĐÚNG</MudChip>
+                            }
+                        </MudPaper>
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel" Color="Color.Secondary">Đóng</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="Submit" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save">Lưu ngay</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<style>
+    .answer-correct {
+        background-color: var(--mud-palette-success-lighten-5);
+        border: 1px solid var(--mud-palette-success);
+    }
+
+    .answer-normal {
+        border: 1px solid var(--mud-palette-grey-lighten-2);
+    }
+
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+</style>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    // Parameters nhận dữ liệu
+    [Parameter] public string QuestionContent { get; set; } = string.Empty;
+    [Parameter] public List<CreateSingleQuestionBase.AnswerModel> Answers { get; set; } = new();
+
+    // Parameters bổ sung cho Metadata
+    [Parameter] public string TenKhoa { get; set; } = string.Empty;
+    [Parameter] public string TenMon { get; set; } = string.Empty;
+    [Parameter] public string TenPhan { get; set; } = string.Empty;
+    [Parameter] public string CloName { get; set; } = string.Empty;
+    [Parameter] public int CapDo { get; set; } = 1;
+
+    void Cancel() => MudDialog.Cancel();
+    void Submit() => MudDialog.Close(DialogResult.Ok(true));
+}
