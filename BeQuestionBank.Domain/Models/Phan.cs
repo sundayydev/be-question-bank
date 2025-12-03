@@ -16,6 +16,9 @@ namespace BeQuestionBank.Domain.Models
         public Guid MaPhan { get; set; } = Guid.NewGuid();
         [ForeignKey("MonHoc")]
         public Guid MaMonHoc { get; set; }
+        [ForeignKey("MaMonHoc")]
+        public MonHoc MonHoc { get; set; }
+
         [Required]
         public string TenPhan { get; set; } = string.Empty;
         public string? NoiDung { get; set; } = string.Empty;

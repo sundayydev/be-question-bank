@@ -1,42 +1,99 @@
 ﻿@page "/trash"
-
 @using MudBlazor
 @inherits TrashBase
 
+
+
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" >
-    <MudBreadcrumbs Items="_breadcrumbs" Style="margin-top:2px; margin-bottom:2px;" />
+    <!-- Breadcrumbs -->
+    <MudBreadcrumbs Items="_breadcrumbs" />
 
-    <MudText Typo="Typo.h4" GutterBottom="true" Class="d-flex align-center gap-4 mb-6">
-        <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Color="Color.Error" Size="Size.Large"/>
-        Thùng rác hệ thống
-        <MudChip T="int" Color="Color.Error" Variant="Variant.Filled" Size="Size.Large">
-            @TotalDeleted
-        </MudChip>
+    <!-- Header Section -->
+    <div class="trash-header">
+        <MudGrid>
+            <MudItem xs="12" sm="6">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Size="Size.Large" Color="Color.Error" />
 
-    </MudText>
+                    <div>
+                        <h1 style="margin: 0; font-size: 2rem; font-weight: 700;">Thùng rác hệ thống</h1>
+                        <p style="margin: 0; opacity: 0.9;">Quản lý tất cả các mục đã xóa</p>
+                    </div>
+                </div>
+            </MudItem>
+            <MudItem xs="12" sm="6" style="display: flex; justify-content: flex-end; align-items: center;">
+                <MudChip  T="int" Color="Color.Error" Variant="Variant.Filled" Size="Size.Large" Class="px-6" Style="font-size: 1.1rem;">
+                    Tổng: @TotalDeleted mục
+                </MudChip>
+            </MudItem>
+        </MudGrid>
+    </div>
 
-    <MudTabs Elevation="4" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6 mt-4">
+    <!-- Statistics Cards -->
+    <MudGrid Class="mb-4">
 
-        <!-- TAB KHOA -->
+        <!-- Khoa -->
+        <MudItem xs="12" sm="6" md="4">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Khoa đã xóa</span>
+                    <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Medium" Color="Color.Primary" />
+                </div>
+                <div class="stat-number">@KhoaCount</div>
+            </div>
+        </MudItem>
+
+        <!-- Môn học -->
+        <MudItem xs="12" sm="6" md="4">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Môn học đã xóa</span>
+                    <MudIcon Icon="@Icons.Material.Filled.MenuBook" Size="Size.Medium" Color="Color.Warning" />
+                </div>
+                <div class="stat-number">@MonHocCount</div>
+            </div>
+        </MudItem>
+
+        <!-- Phần -->
+        <MudItem xs="12" sm="6" md="4">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Phần đã xóa</span>
+                    <MudIcon Icon="@Icons.Material.Filled.ListAlt" Size="Size.Medium" Color="Color.Secondary" />
+                </div>
+                <div class="stat-number">@PhanCount</div>
+            </div>
+        </MudItem>
+
+    </MudGrid>
+
+
+    <!-- Tabs with Tables -->
+    <MudTabs Elevation="0" Class="tab-section">
+
+        <!-- KHOA Tab -->
         <MudTabPanel Text="@($"Khoa ({KhoaCount})")" BadgeColor="Color.Error" BadgeData="@KhoaCount">
-            <ChildContent>
+            <div class="pa-6">
                 <MudTable ServerData="LoadKhoaTrash"
-                          Hover="true" Dense="true" Bordered="true" Striped="true"
+                          Hover="true" 
+                          Striped="true"
                           Loading="@LoadingKhoa"
-                          RowsPerPage="15"
-                          Class="mt-4">
+                          RowsPerPage="10"
+                          Dense="false">
                     <HeaderContent>
-                        <MudTh>Tên Khoa</MudTh>
-                        <MudTh>Mô tả</MudTh>
-                        <MudTh>Ngày xóa tạm</MudTh>
-                        <MudTh Style="text-align:center">Thao tác</MudTh>
+                        <MudTh Class="table-header">Tên Khoa</MudTh>
+                        <MudTh Class="table-header">Mô tả</MudTh>
+                        <MudTh Class="table-header">Ngày xóa</MudTh>
+                        <MudTh Class="table-header" Style="text-align: center;">Thao tác</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd DataLabel="Tên Khoa">@context.TenKhoa</MudTd>
-                        <MudTd DataLabel="Mô tả">@context.MoTa</MudTd>
-                        <MudTd DataLabel="Ngày xóa">@context.NgayCapNhat.ToString("dd/MM/yyyy HH:mm")</MudTd>
-                        <MudTd Style="text-align:center">
-                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success"
+                        <MudTd DataLabel="Tên Khoa" Class="py-4">@context.TenKhoa</MudTd>
+                        <MudTd DataLabel="Mô tả" Class="py-4">@context.MoTa</MudTd>
+                        <MudTd DataLabel="Ngày xóa" Class="py-4">@context.NgayCapNhat.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                        <MudTd Style="text-align: center;" Class="py-4">
+                            <MudButton Size="Size.Small" 
+                                       Variant="Variant.Filled" 
+                                       Color="Color.Success"
                                        StartIcon="@Icons.Material.Filled.RestoreFromTrash"
                                        OnClick="@(() => RestoreKhoa(context.MaKhoa))">
                                 Khôi phục
@@ -44,73 +101,172 @@
                         </MudTd>
                     </RowTemplate>
                     <NoRecordsContent>
-                        <MudAlert Severity="Severity.Info" Class="my-6">
-                            Không có khoa nào trong thùng rác
-                        </MudAlert>
+                        <div class="empty-state">
+                            <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Large" Color="Color.Primary" />
+                            <MudText Typo="Typo.h6">Không có khoa nào trong thùng rác</MudText>
+                        </div>
                     </NoRecordsContent>
                 </MudTable>
-            </ChildContent>
+            </div>
         </MudTabPanel>
 
-        <!-- TAB MÔN HỌC -->
+        <!-- MÔN HỌC Tab -->
         <MudTabPanel Text="@($"Môn học ({MonHocCount})")" BadgeColor="Color.Error" BadgeData="@MonHocCount">
-            <ChildContent>
+            <div class="pa-6">
                 <MudTable ServerData="LoadMonHocTrash"
-                          Hover="true" Dense="true" Bordered="true" Striped="true"
+                          Hover="true"
+                          Striped="true"
                           Loading="@LoadingMonHoc"
-                          RowsPerPage="15">
+                          RowsPerPage="10"
+                          Dense="false">
                     <HeaderContent>
-                        <MudTh>Tên môn học</MudTh>
-                        <MudTh>Mã số môn</MudTh>
-                        <MudTh>Tên Khoa</MudTh>
-                        <MudTh>Ngày xóa</MudTh>
-                        <MudTh Style="text-align:center">Thao tác</MudTh>
+                        <MudTh Class="table-header">Tên môn học</MudTh>
+                        <MudTh Class="table-header">Mã số</MudTh>
+                        <MudTh Class="table-header">Khoa</MudTh>
+                        <MudTh Class="table-header">Ngày xóa</MudTh>
+                        <MudTh Class="table-header" Style="text-align: center;">Thao tác</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd>@context.TenMonHoc</MudTd>
-                        <MudTd>@context.MaSoMonHoc</MudTd>
-                        <MudTd>@GetKhoaName(context.MaKhoa)</MudTd>
-                        <MudTd DataLabel="Ngày xóa">@context.NgayCapNhat.ToString("dd/MM/yyyy HH:mm")</MudTd>
-                        <MudTd Style="text-align:center">
-                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success"
+                        <MudTd DataLabel="Tên môn học" Class="py-4">@context.TenMonHoc</MudTd>
+                        <MudTd DataLabel="Mã số" Class="py-4">@context.MaSoMonHoc</MudTd>
+                        <MudTd DataLabel="Khoa" Class="py-4">@GetKhoaName(context.MaKhoa)</MudTd>
+                        <MudTd DataLabel="Ngày xóa" Class="py-4">@context.NgayCapNhat.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                        <MudTd Style="text-align: center;" Class="py-4">
+                            <MudButton Size="Size.Small" 
+                                       Variant="Variant.Filled" 
+                                       Color="Color.Success"
                                        StartIcon="@Icons.Material.Filled.RestoreFromTrash"
                                        OnClick="@(() => RestoreMonHoc(context.MaMonHoc))">
                                 Khôi phục
                             </MudButton>
                         </MudTd>
                     </RowTemplate>
+                    <NoRecordsContent>
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📖</div>
+                            <MudText Typo="Typo.h6">Không có môn học nào trong thùng rác</MudText>
+                        </div>
+                    </NoRecordsContent>
                 </MudTable>
-            </ChildContent>
+            </div>
         </MudTabPanel>
 
-        <!-- TAB PHẦN / CHƯƠNG -->
+        <!-- PHẦN Tab -->
         <MudTabPanel Text="@($"Phần ({PhanCount})")" BadgeColor="Color.Error" BadgeData="@PhanCount">
-            <ChildContent>
+            <div class="pa-6">
                 <MudTable ServerData="LoadPhanTrash"
-                          Hover="true" Dense="true" Bordered="true" Striped="true"
+                          Hover="true"
+                          Striped="true"
                           Loading="@LoadingPhan"
-                          RowsPerPage="15">
+                          RowsPerPage="10"
+                          Dense="false">
                     <HeaderContent>
-                        <MudTh>Tên phần</MudTh>
-                        <MudTh>Thuộc môn học</MudTh>
-                        <MudTh>Ngày xóa</MudTh>
-                        <MudTh Style="text-align:center">Thao tác</MudTh>
+                        <MudTh Class="table-header">Tên phần</MudTh>
+                        <MudTh Class="table-header">Môn học</MudTh>
+                        <MudTh Class="table-header">Ngày xóa</MudTh>
+                        <MudTh Class="table-header" Style="text-align: center;">Thao tác</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd>@context.TenPhan</MudTd>
-                        <MudTd>@context.TenMonHoc</MudTd>
-                        <MudTd>@context.NgayCapNhat.ToString("dd/MM/yyyy")</MudTd>
-                        <MudTd Style="text-align:center">
-                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success"
+                        <MudTd DataLabel="Tên phần" Class="py-4">@context.TenPhan</MudTd>
+                        <MudTd DataLabel="Môn học" Class="py-4">@context.TenMonHoc</MudTd>
+                        <MudTd DataLabel="Ngày xóa" Class="py-4">@context.NgayCapNhat.ToString("dd/MM/yyyy")</MudTd>
+                        <MudTd Style="text-align: center;" Class="py-4">
+                            <MudButton Size="Size.Small" 
+                                       Variant="Variant.Filled" 
+                                       Color="Color.Success"
                                        StartIcon="@Icons.Material.Filled.RestoreFromTrash"
                                        OnClick="@(() => RestorePhan(context.MaPhan))">
                                 Khôi phục
                             </MudButton>
                         </MudTd>
                     </RowTemplate>
+                    <NoRecordsContent>
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <MudText Typo="Typo.h6">Không có phần nào trong thùng rác</MudText>
+                        </div>
+                    </NoRecordsContent>
                 </MudTable>
-            </ChildContent>
+            </div>
         </MudTabPanel>
 
     </MudTabs>
 </MudContainer>
+<style>
+    .trash-header {
+        background: #ffffff;       
+        color: #333;              
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        border: 1px solid #e5e7eb; 
+    }
+
+    .stat-card {
+        background: white;
+        padding: 0.9rem 1rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        text-align: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #667eea;
+        margin: 0.5rem 0;
+    }
+
+    .stat-label {
+        color: #666;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .tab-section {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    .table-header {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #333;
+        border-bottom: 2px solid #667eea;
+    }
+
+    .action-button {
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .action-button:hover {
+        background: #059669;
+        transform: scale(1.05);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #999;
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+</style>

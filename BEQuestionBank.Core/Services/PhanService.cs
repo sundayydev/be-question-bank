@@ -8,6 +8,8 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using BeQuestionBank.Shared.DTOs.MonHoc;
+using BeQuestionBank.Shared.DTOs.Pagination;
 
 namespace BEQuestionBank.Core.Services;
 
@@ -253,5 +255,9 @@ public class PhanService
     public async Task<Phan?> FirstOrDefaultPhanAsync(Expression<Func<Phan, bool>> predicate)
     {
         return await _phanRepository.FirstOrDefaultAsync(predicate);
+    }
+    public async Task<PagedResult<PhanDto>> GetTrashedAsync(int page = 1, int pageSize = 10)
+    {
+        return await _phanRepository.GetTrashedAsync(page, pageSize);
     }
 }

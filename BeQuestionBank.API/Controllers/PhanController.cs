@@ -12,9 +12,10 @@ namespace BeQuestionBank.API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class PhanController(PhanService service) : ControllerBase
+public class PhanController(PhanService service, ILogger<PhanController> logger) : ControllerBase
 {
     private readonly PhanService _service = service;
+    private readonly ILogger<PhanController> _logger = logger;
 
     // GET: api/Phan/{id}
     [HttpGet("{id}")]
@@ -217,5 +218,23 @@ public class PhanController(PhanService service) : ControllerBase
             message = "Lấy danh sách phần theo môn học thành công",
             data = result
         });
+    }
+    
+    [HttpGet("trashed")]
+    [SwaggerOperation("Lấy danh sách Khoa đã xóa tạm (dùng cho thùng rác)")]
+    public async Task<IActionResult> GetTrashedAsync(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        try
+        {
+            var result = await _service.GetTrashedAsync(page, pageSize);
+            return Ok(ApiResponseFactory.Success(result, "Lấy danh sách khoa trong thùng rác thành công"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi lấy danh sách khoa đã xóa tạm");
+            return StatusCode(500, ApiResponseFactory.ServerError("Lỗi hệ thống"));
+        }
     }
 }
