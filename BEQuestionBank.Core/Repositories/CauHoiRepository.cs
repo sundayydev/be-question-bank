@@ -16,59 +16,141 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
         _context = context;
     }
 
-    public Task<IEnumerable<object>> GetAllWithAnswersAsync()
+    public async Task<IEnumerable<CauHoi>> GetAllWithAnswersAsync()
     {
-        throw new NotImplementedException();
+        return await _context.CauHois
+            .AsNoTracking()
+            .Include(c => c.CauTraLois)
+            .Include(c => c.Phan)
+            .Where(c => c.XoaTam != true)
+            .OrderByDescending(c => c.NgayTao) // Sửa CreatedDate -> NgayTao
+            .ToListAsync();
     }
 
-    public Task<object> GetByIdWithAnswersAsync(Guid maCauHoi)
+    public async Task<CauHoi?> GetByIdWithAnswersAsync(Guid maCauHoi)
     {
-        throw new NotImplementedException();
+        return await _context.CauHois
+            .Include(c => c.CauTraLois)
+            .Include(c => c.Phan)
+            .Include(c => c.CauHoiCons).ThenInclude(chc => chc.CauTraLois)
+            .FirstOrDefaultAsync(c => c.MaCauHoi == maCauHoi && c.XoaTam != true);
     }
 
-    public Task<IEnumerable<CauHoi>> GetByCLoAsync(EnumCLO maCLo)
+    public async Task<IEnumerable<CauHoi>> GetByCLoAsync(EnumCLO maCLo)
     {
-        throw new NotImplementedException();
+        return await _context.CauHois
+            .AsNoTracking()
+            .Where(c => c.CLO == maCLo && c.XoaTam != true)
+            .Include(c => c.CauTraLois)
+            .ToListAsync();
     }
 
-    public Task<IEnumerable<CauHoi>> GetByMaPhanAsync(Guid maPhan)
+    public async Task<IEnumerable<CauHoi>> GetByMaPhanAsync(Guid maPhan)
     {
-        throw new NotImplementedException();
+        return await _context.CauHois
+            .AsNoTracking()
+            .Where(c => c.MaPhan == maPhan && c.XoaTam != true)
+            .Include(c => c.CauTraLois)
+            .OrderBy(c => c.MaSoCauHoi)
+            .ToListAsync();
     }
 
-    public Task<IEnumerable<object>> GetByMaMonHocAsync(Guid maMonHoc)
+    public async Task<IEnumerable<CauHoi>> GetByMaMonHocAsync(Guid maMonHoc)
     {
-        throw new NotImplementedException();
+        return await _context.CauHois
+            .AsNoTracking()
+            .Include(c => c.Phan)
+            .Include(c => c.CauTraLois)
+            .Where(c => c.Phan != null && c.Phan.MaMonHoc == maMonHoc && c.XoaTam != true)
+            .OrderByDescending(c => c.NgayTao) // Sửa CreatedDate -> NgayTao
+            .ToListAsync();
     }
 
-    public Task<IEnumerable<CauHoi>> GetByMaDeThiAsync(Guid maDeThi)
+    public async Task<IEnumerable<CauHoi>> GetByMaDeThiAsync(Guid maDeThi)
     {
-        throw new NotImplementedException();
+        var query = from ctdt in _context.ChiTietDeThis
+                    join ch in _context.CauHois on ctdt.MaCauHoi equals ch.MaCauHoi
+                    where ctdt.MaDeThi == maDeThi && ch.XoaTam != true
+                    select ch;
+
+        return await query
+            .AsNoTracking()
+            .Include(c => c.CauTraLois)
+            .ToListAsync();
     }
 
-    public Task<IEnumerable<CauHoi>> GetByMaCauHoiChasync(Guid maCHCha)
+    public async Task<IEnumerable<CauHoi>> GetByMaCauHoiChasync(Guid maCHCha)
     {
-        throw new NotImplementedException();
+        return await _context.CauHois
+            .AsNoTracking()
+            .Where(c => c.MaCauHoiCha == maCHCha && c.XoaTam != true)
+            .Include(c => c.CauTraLois)
+            .OrderBy(c => c.MaSoCauHoi)
+            .ToListAsync();
     }
 
-    public Task<IEnumerable<object>> GetAllGroupsAsync()
+    public async Task<IEnumerable<CauHoi>> GetAllGroupsAsync()
     {
-        throw new NotImplementedException();
+        return await _context.CauHois
+            .AsNoTracking()
+            .Where(c => c.MaCauHoiCha == null &&
+                       (c.LoaiCauHoi == "Group" || c.CauHoiCons.Any()) &&
+                       c.XoaTam != true)
+            .Include(c => c.CauHoiCons)
+            .ToListAsync();
     }
 
-    public Task<object> AddWithAnswersAsync(object cauHoiDto)
+    public async Task<CauHoi> AddWithAnswersAsync(CauHoi cauHoi)
     {
-        throw new NotImplementedException();
+        await _context.CauHois.AddAsync(cauHoi);
+        await _context.SaveChangesAsync();
+        return cauHoi;
     }
 
-    public Task<object> UpdateWithAnswersAsync(Guid maCauHoi, object cauHoiDto)
+    public async Task<CauHoi> UpdateWithAnswersAsync(Guid maCauHoi, CauHoi cauHoi)
     {
-        throw new NotImplementedException();
+        var existing = await _context.CauHois
+                                     .Include(c => c.CauTraLois)
+                                     .FirstOrDefaultAsync(c => c.MaCauHoi == maCauHoi);
+
+        if (existing == null) return null!;
+
+        _context.Entry(existing).CurrentValues.SetValues(cauHoi);
+
+        if (cauHoi.CauTraLois != null)
+        {
+            foreach (var existingAnswer in existing.CauTraLois.ToList())
+            {
+                if (!cauHoi.CauTraLois.Any(c => c.MaCauTraLoi == existingAnswer.MaCauTraLoi))
+                {
+                    _context.CauTraLois.Remove(existingAnswer);
+                }
+            }
+
+            foreach (var newAnswer in cauHoi.CauTraLois)
+            {
+                var existingAnswer = existing.CauTraLois
+                    .FirstOrDefault(c => c.MaCauTraLoi == newAnswer.MaCauTraLoi && newAnswer.MaCauTraLoi != Guid.Empty);
+
+                if (existingAnswer != null)
+                {
+                    _context.Entry(existingAnswer).CurrentValues.SetValues(newAnswer);
+                }
+                else
+                {
+                    newAnswer.MaCauHoi = maCauHoi;
+                    existing.CauTraLois.Add(newAnswer);
+                }
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        return existing;
     }
 
     public async Task<int> CountAsync(Expression<Func<CauHoi, bool>> predicate)
     {
-        return await _context.CauHois. Include(c => c.Phan).CountAsync(predicate);
+        return await _context.CauHois.CountAsync(predicate);
     }
 
     public async Task AddRangeAsync(IEnumerable<CauHoi> cauHois)
