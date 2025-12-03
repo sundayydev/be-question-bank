@@ -1,0 +1,83 @@
+@page "/monhoc/{MaMonHoc:guid}/phan-tree"
+@page "/phancon/{MaPhanCha:guid}"  
+@using BeQuestionBank.Shared.DTOs.Phan
+@inherits PhanTreeBase
+
+<MudPaper Class="pa-8" Elevation="2">
+    <MudText Typo="Typo.h4" Class="mb-6">
+        Cây Phần - Môn học
+        <MudChip T="string" Color="Color.Primary" Size="Size.Small">@MaMonHoc.ToString()</MudChip>
+    </MudText>
+
+    <div class="d-flex gap-4 mb-6 align-center">
+        <MudTextField @bind-Value="_searchTerm"
+                      Placeholder="Tìm kiếm phần..."
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      Variant="Variant.Outlined"
+                      DebounceInterval="600"
+                      Immediate="true"
+                      Style="max-width: 450px;" />
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.List"
+                   OnClick="NavigateToCardView">
+            Xem dạng thẻ
+        </MudButton>
+    </div>
+
+    @if (loading)
+    {
+        <div class="d-flex justify-center my-12">
+            <MudProgressCircular Indeterminate="true" Size="Size.Large" />
+        </div>
+    }
+    else if (!TreeItems.Any())
+    {
+        <MudAlert Severity="Severity.Info">
+            Không có phần nào trong môn học này.
+        </MudAlert>
+    }
+    else
+    {
+        <MudPaper Elevation="1" Class="pa-4" Style="max-height: 80vh; overflow: auto;">
+            <MudTreeView T="PhanDto" 
+                         Items="TreeItems"
+                         Hover="true"
+                         Dense="true">
+                <ItemTemplate>
+                    <div @onclick="() => OnNodeSelected(context.Value)" style="cursor: pointer;">
+                        <MudText>
+                            @context.Text
+                            @if (context.Value?.LaCauHoiNhom == true)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning">Nhóm</MudChip>
+                            }
+                            @if (context.Value?.SoLuongCauHoi > 0)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success">@context.Value.SoLuongCauHoi câu</MudChip>
+                            }
+                        </MudText>
+                        <div class="d-flex gap-1 mt-1">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                           Size="Size.Small"
+                                           Color="Color.Primary"
+                                           OnClick="() => OnEdit(context.Value!)" />
+
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Size="Size.Small"
+                                           Color="Color.Error"
+                                           OnClick="() => OnConfirmDelete(context.Value!)" />
+
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                           Size="Size.Small"
+                                           Color="Color.Info"
+                                           OnClick="() => OnViewDetail(context.Value!)" />
+                        </div>
+                    </div>
+                </ItemTemplate>
+            </MudTreeView>
+        </MudPaper>
+    }
+</MudPaper>

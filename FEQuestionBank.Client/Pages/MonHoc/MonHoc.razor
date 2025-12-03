@@ -83,6 +83,7 @@
             <MudTd Style="text-align:center;">
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Style="@($"color:{Colors.Blue.Darken3};")" Size="Size.Small" Class="mx-1" OnClick="() => OnEdit(context)"/>
                 <MudIconButton Icon="@Icons.Material.Filled.Visibility" Style="@($"color:{Colors.Yellow.Darken3};")" Size="Size.Small" Class="mx-1" OnClick="() => OnViewDetail(context)"/>
+                <MudIconButton Icon="@Icons.Material.Filled.QuestionAnswer" Style="@($"color:{Colors.Green.Darken3};")" Size="Size.Small" Class="mx-1" OnClick="() => OnPartNav(context)"/>
                 @if (context.XoaTam == true)
                 {
                     <MudIconButton Icon="@Icons.Material.Filled.Restore" Style="@($"color:{Colors.Gray.Darken3};")" Size="Size.Small" Class="mx-1" OnClick="() => OnRestore(context)"/>

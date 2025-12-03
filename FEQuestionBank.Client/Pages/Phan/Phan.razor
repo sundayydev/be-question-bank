@@ -1,4 +1,4 @@
-﻿@page "/phan"
+﻿@page "/phan/{MaMonHoc:guid}"
 @inherits PhanBase
 @inject ISnackbar Snackbar
 
@@ -7,29 +7,20 @@
 
     <!-- Tìm kiếm + Tạo mới -->
     <div class="d-flex gap-3 mb-5 flex-wrap align-center">
-        <MudTextField @bind-Value="_searchTerm"
-                      Placeholder="Tìm theo tên phần..."
-                      Adornment="Adornment.Start"
-                      AdornmentIcon="@Icons.Material.Filled.Search"
-                      Variant="Variant.Outlined"
-                      Class="flex-grow-1"
-                      Style="max-width: 400px;"
-                      Immediate="true"
-                      DebounceInterval="500"
-                      OnKeyDown="@(e =>
-                                 {
-                                     if (e.Key == "Enter") ;
-                                 })" />
+        <MudTextField @bind-Value="_searchTerm" Placeholder="Tìm theo tên phần..." Adornment="Adornment.Start"
+            AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined" Class="flex-grow-1"
+            Style="max-width: 400px;" Immediate="true" DebounceInterval="500" OnKeyDown="@(e =>
+                                                                                                               {
+                                                                                                                   if (e.Key == "Enter") ;
+                                                                                                               })" />
 
-        <MudButton Variant="Variant.Filled"
-                   StartIcon="@Icons.Material.Filled.Add"
-                   Color="Color.Primary"
-                   OnClick="OnCreateNew">
+        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary"
+            OnClick="OnCreateNew">
             Tạo mới
         </MudButton>
     </div>
 
-    <!-- Loading -->
+                                     <!-- Loading -->
     @if (loading)
     {
         <div class="d-flex justify-center my-8">
@@ -73,22 +64,16 @@
                         </MudCardContent>
 
                         <MudCardActions Class="justify-end">
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                           Color="Color.Primary"
-                                           Size="Size.Small"
-                                           OnClick="() => OnEdit(phan)" />
-                            <MudIconButton Icon="@Icons.Material.Filled.Visibility"
-                                           Color="Color.Info"
-                                           Size="Size.Small"
-                                           OnClick="() => OnViewDetail(phan)" />
-                            <MudIconButton Icon="@Icons.Material.Filled.List"
-                                           Color="Color.Tertiary"
-                                           Size="Size.Small"
-                                           OnClick="() => OnViewSubjects(phan)" />
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                           Color="Color.Error"
-                                           Size="Size.Small"
-                                           OnClick="() => OnConfirmDelete(phan)" />
+                            <!-- Nút mới: Xem cây phần con -->
+
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
+                                OnClick="() => OnEdit(phan)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Info" Size="Size.Small"
+                                OnClick="() => OnViewDetail(phan)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.List" Color="Color.Tertiary" Size="Size.Small"
+                                OnClick="() => ViewTree(phan)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                OnClick="() => OnConfirmDelete(phan)" />
                         </MudCardActions>
                     </MudCard>
                 </MudItem>
