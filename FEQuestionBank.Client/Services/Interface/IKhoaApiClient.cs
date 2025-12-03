@@ -12,5 +12,11 @@ namespace FEQuestionBank.Client.Services
         Task<ApiResponse<KhoaDto>> CreateKhoaAsync(CreateKhoaDto model);
         Task<ApiResponse<KhoaDto>> UpdateKhoaAsync(Guid id, UpdateKhoaDto model);
         Task<ApiResponse<string>> DeleteKhoaAsync(Guid id);
+        Task<ApiResponse<string>> SoftDeleteKhoaAsync(Guid id);
+        Task<ApiResponse<string>> RestoreKhoaAsync(Guid id);
+        Task<ApiResponse<PagedResult<KhoaDto>>> GetTrashedKhoasAsync(
+            int page = 1,
+            int pageSize = 20);
+        
     }
 }

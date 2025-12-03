@@ -70,5 +70,9 @@ namespace FEQuestionBank.Client.Services
             var res = await _httpClient.PatchAsync($"api/monhoc/{id}/KhoiPhuc", null);
             return await res.Content.ReadFromJsonAsync<ApiResponse<string>>() ?? new(500, "Error");
         }
+        public async Task<ApiResponse<PagedResult<MonHocDto>>> GetTrashedMonHocsAsync(int page = 1, int pageSize = 20)
+        {
+            return await GetPagedAsync<MonHocDto>("api/monhoc/trashed", page, pageSize);
+        }
     }
 }

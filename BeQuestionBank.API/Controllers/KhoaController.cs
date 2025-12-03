@@ -52,7 +52,7 @@ public class KhoaController(KhoaService service, ILogger<KhoaController> logger)
     [SwaggerOperation("Lấy danh sách tất cả Khoa")]
     public async Task<ActionResult<KhoaDto>> GetAllAsync()
     {
-        var list = await _service.GetAllKhoasAsync(); // Khoa có Include DanhSachMonHoc
+        var list = await _service.GetAllKhoasAsync(); 
 
         var result = list.Select(k => new KhoaDto
         {
@@ -235,7 +235,8 @@ public class KhoaController(KhoaService service, ILogger<KhoaController> logger)
         {
             var query = await _service.GetAllKhoasAsync(); // Trả về IQueryable hoặc List<Khoa>
 
-           
+            query = query.Where(k => k.XoaTam == false);
+            
             if (!string.IsNullOrWhiteSpace(search))
             {
                 query = query.Where(k => k.TenKhoa.Contains(search, StringComparison.OrdinalIgnoreCase));
@@ -294,4 +295,22 @@ public class KhoaController(KhoaService service, ILogger<KhoaController> logger)
                 ApiResponseFactory.ServerError("Đã xảy ra lỗi khi xử lý."));
         }
     }
+    [HttpGet("trashed")]
+    [SwaggerOperation("Lấy danh sách Khoa đã xóa tạm (dùng cho thùng rác)")]
+    public async Task<IActionResult> GetTrashedAsync(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        try
+        {
+            var result = await _service.GetTrashedAsync(page, pageSize);
+            return Ok(ApiResponseFactory.Success(result, "Lấy danh sách khoa trong thùng rác thành công"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi lấy danh sách khoa đã xóa tạm");
+            return StatusCode(500, ApiResponseFactory.ServerError("Lỗi hệ thống"));
+        }
+    }
+    
 }

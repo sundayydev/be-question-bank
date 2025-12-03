@@ -111,6 +111,7 @@
 
                         @if (_availableParts.Any())
                         {
+                          
                             <MudSelect T="Guid"
                                        MultiSelection="true"
                                        Dense="false"
@@ -119,6 +120,7 @@
                                        TransformOrigin="Origin.TopCenter"
                                        SelectedValues="@_selectedPartIds"
                                        SelectedValuesChanged="@OnPartSelectionChanged"
+                                       ToStringFunc="@(id => _availableParts.FirstOrDefault(p => p.MaPhan == id)?.TenPhan ?? id.ToString())"
                                        Placeholder="Nhấp để chọn các phần..."
                                        Adornment="Adornment.Start"
                                        AdornmentIcon="@Icons.Material.Filled.FolderOpen"
@@ -164,10 +166,16 @@
 
                 <!-- BƯỚC 2: Cấu hình ma trận -->
                 <MudPaper Elevation="1" Class="pa-4 mb-6">
-                    <MudText Typo="Typo.h6" Class="mb-4">
-                        <MudIcon Icon="@Icons.Material.Filled.LooksTwo" Class="mr-2" />
-                        Cấu hình ma trận đề thi
-                    </MudText>
+                    <div class="d-flex align-center justify-space-between mb-4">
+                        <MudText Typo="Typo.h6">
+                            <MudIcon Icon="@Icons.Material.Filled.LooksTwo" Class="mr-2" />
+                            Cấu hình ma trận đề thi
+                        </MudText>
+
+                        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="@ResetPage">
+                            Xóa tất cả
+                        </MudButton>
+                    </div>
                 <div class="d-flex align-center gap-4">
                     <MudNumericField @bind-Value="_maTran.TotalQuestions"
                                                Label="Tổng số câu hỏi (bắt buộc nhập)"
@@ -276,12 +284,12 @@
                                                                Margin="Margin.Dense"
                                                                
                                                                Style="width: 150px;">
-                                                        <MudSelectItem Value="@("TN")">Trắc nghiệm</MudSelectItem>
+                                                        <MudSelectItem Value="@("TN")">Trắc nghiệm (1 đáp án)</MudSelectItem>
+                                                        <MudSelectItem Value="@("TN2")">Trắc nghiệm nhiều đáp án</MudSelectItem>
                                                         <MudSelectItem Value="@("TL")">Tự luận</MudSelectItem>
                                                         <MudSelectItem Value="@("GN")">Ghép nối</MudSelectItem>
-                                                        <MudSelectItem Value="@("TN2")">MuitiChoi</MudSelectItem>
                                                         <MudSelectItem Value="@("DT")">Điền từ</MudSelectItem>
-                                                        <MudSelectItem Value="@("NH2")">Câu hỏi nhóm</MudSelectItem>
+                                                        <MudSelectItem Value="@("NH2")">Câu hỏi nhóm (có câu con)</MudSelectItem>
                                                     </MudSelect>
                                                     <MudNumericField @bind-Value="@qt.Num"
                                                                      Label="Số câu"
@@ -406,12 +414,12 @@
                                                                                    Margin="Margin.Dense"
                                                                                    
                                                                                    Style="width: 130px;">
-                                                                            <MudSelectItem Value="@("TN")">Trắc nghiệm</MudSelectItem>
+                                                                            <MudSelectItem Value="@("TN")">Trắc nghiệm (1 đáp án)</MudSelectItem>
+                                                                            <MudSelectItem Value="@("TN2")">Trắc nghiệm nhiều đáp án</MudSelectItem>
                                                                             <MudSelectItem Value="@("TL")">Tự luận</MudSelectItem>
                                                                             <MudSelectItem Value="@("GN")">Ghép nối</MudSelectItem>
-                                                                            <MudSelectItem Value="@("TN2")">MuitiChoi</MudSelectItem>
                                                                             <MudSelectItem Value="@("DT")">Điền từ</MudSelectItem>
-                                                                            <MudSelectItem Value="@("NH2")">Câu hỏi nhóm</MudSelectItem>
+                                                                            <MudSelectItem Value="@("NH2")">Câu hỏi nhóm (có câu con)</MudSelectItem>
                                                                         </MudSelect>
                                                                         <MudNumericField @bind-Value="@qt.Num"
                                                                                          Min="0"
@@ -459,7 +467,7 @@
                 else if (!string.IsNullOrEmpty(_validationMessage))
                 {
                     <MudAlert Severity="Severity.Error" Class="mb-4" Icon="@Icons.Material.Filled.Error">
-                        <strong>✗ Ma trận chưa hợp lệ</strong><br/>
+                        <strong> Ma trận chưa hợp lệ</strong><br/>
                         @_validationMessage
                     </MudAlert>
                 }

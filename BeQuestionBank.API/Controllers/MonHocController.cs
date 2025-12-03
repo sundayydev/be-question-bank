@@ -39,13 +39,31 @@ public class MonHocController(MonHocService service, ILogger<MonHocController> l
     // GET: api/MonHoc
     [HttpGet]
     [SwaggerOperation("Lấy danh sách tất cả môn học")]
-    public async Task<ActionResult<MonHoc>> GetAllAsync()
+    public async Task<ActionResult> GetAllAsync()
     {
-        var list = await _service.GetAllMonHocsAsync();
+        var list = await _service.GetAllMonHocsAsync(); 
+
         if (list == null || !list.Any())
-            return StatusCode(StatusCodes.Status404NotFound, ApiResponseFactory.NotFound<Object>("Không có môn học nào trong hệ thống"));
-        return StatusCode(StatusCodes.Status200OK, ApiResponseFactory.Success<Object>(list, "Lấy danh sách môn học thành công"));
+            return StatusCode(StatusCodes.Status404NotFound,
+                ApiResponseFactory.NotFound<object>("Không có môn học nào trong hệ thống"));
+
+        // Map sang DTO
+        var res = list.Select(x => new MonHocDto
+        {
+            MaMonHoc = x.MaMonHoc,
+            MaSoMonHoc = x.MaSoMonHoc,
+            TenMonHoc = x.TenMonHoc,
+            SoTinChi = x.SoTinChi,
+            MaKhoa = x.MaKhoa,
+            TenKhoa = x.Khoa?.TenKhoa, 
+            XoaTam = x.XoaTam,
+            NgayTao = x.NgayTao,
+            NgayCapNhat = x.NgayCapNhat
+        }).ToList();
+
+        return Ok(ApiResponseFactory.Success(res, "Lấy danh sách môn học thành công"));
     }
+
 
     // POST: api/MonHoc
     [HttpGet("khoa/{maKhoa}")]
@@ -68,7 +86,7 @@ public class MonHocController(MonHocService service, ILogger<MonHocController> l
             }
 
             var monHocDtos = list
-                .Where(m => m.XoaTam == false) // Chỉ lấy các môn chưa bị xóa tạm
+                .Where(m => m.XoaTam == false) 
                 .Select(m => new MonHocDto
                 {
                     MaMonHoc = m.MaMonHoc,
@@ -203,6 +221,8 @@ public async Task<IActionResult> GetPagedAsync(
     {
         var query = await _service.GetAllMonHocsAsync();
         
+        query = query.Where(k => k.XoaTam == false);
+        
         if (!string.IsNullOrWhiteSpace(search))
         {
             query = query.Where(m => 
@@ -257,6 +277,25 @@ public async Task<IActionResult> GetPagedAsync(
         return StatusCode(StatusCodes.Status500InternalServerError,
             ApiResponseFactory.ServerError("Đã xảy ra lỗi khi xử lý."));
     }
+    
 }
+
+    [HttpGet("trashed")]
+    [SwaggerOperation("Lấy danh sách Khoa đã xóa tạm (dùng cho thùng rác)")]
+    public async Task<IActionResult> GetTrashedAsync(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        try
+        {
+            var result = await _service.GetTrashedAsync(page, pageSize);
+            return Ok(ApiResponseFactory.Success(result, "Lấy danh sách khoa trong thùng rác thành công"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi lấy danh sách khoa đã xóa tạm");
+            return StatusCode(500, ApiResponseFactory.ServerError("Lỗi hệ thống"));
+        }
+    }
 }
 

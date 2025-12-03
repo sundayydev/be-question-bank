@@ -31,6 +31,9 @@ builder.Services.AddScoped<IAuthApiClient, AuthApiClient>();
 
 // Auth State: Sử dụng CustomAuthStateProvider (như cũ)
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
+builder.Services.AddScoped<CustomAuthStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<CustomAuthStateProvider>());
+
 builder.Services.AddAuthorizationCore();
 
 // MudBlazor

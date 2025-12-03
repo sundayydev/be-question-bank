@@ -13,6 +13,7 @@ public class CauHoiDto
 {
     public Guid MaCauHoi { get; set; }
     public Guid MaPhan { get; set; }
+    public string? TenPhan { get; set; }
     public int MaSoCauHoi { get; set; }
     public string? NoiDung { get; set; }
     public bool HoanVi { get; set; }

@@ -40,7 +40,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<JwtHelper>();
         services.AddScoped<RedisService>();
         services.AddScoped<AuthService>();
-       
+
+        services.AddScoped<ImportService>();
+
         return services;
     }
 }

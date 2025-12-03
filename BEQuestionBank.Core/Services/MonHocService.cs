@@ -6,6 +6,8 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using BeQuestionBank.Shared.DTOs.MonHoc;
+using BeQuestionBank.Shared.DTOs.Pagination;
 
 namespace BEQuestionBank.Core.Services;
 
@@ -51,5 +53,9 @@ public class MonHocService(IMonHocRepository repository)
     public async Task<MonHoc?> FirstOrDefaultMonHocAsync(Expression<Func<MonHoc, bool>> predicate)
     {
         return await _repository.FirstOrDefaultAsync(predicate);
+    }
+    public async Task<PagedResult<MonHocDto>> GetTrashedAsync(int page = 1, int pageSize = 10)
+    {
+        return await _repository.GetTrashedAsync(page, pageSize);
     }
 }
