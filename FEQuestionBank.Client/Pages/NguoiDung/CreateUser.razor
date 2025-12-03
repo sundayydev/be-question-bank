@@ -1,65 +1,140 @@
 ﻿@page "/user/create-user"
 @inherits CreateUserBase
 
-<MudContainer MaxWidth="MaxWidth.Large">
-    <MudBreadcrumbs Items="_breadcrumbs" Style="margin-top:2px;" />
-    <MudText Typo="Typo.h5"
-             Style="@($"color:{Colors.Red.Darken2};")"
-             Class="mb-6 text-center text-uppercase fw-bold">
-        Chọn cách tạo người dùng
-    </MudText>
+
+
+<MudContainer MaxWidth="MaxWidth.Large" >
+    <MudBreadcrumbs Items="_breadcrumbs" />
+
+    <div class="create-user-header">
+        <h1 class="create-user-title">Chọn cách tạo người dùng</h1>
+        <p style="color: rgba(255,255,255,0.85); margin-top: 8px; margin-bottom: 0; font-size: 16px;">
+            Chọn phương thức phù hợp để thêm người dùng vào hệ thống
+        </p>
+    </div>
 
     <MudGrid Justify="Justify.Center" Spacing="4">
-
         <!-- Card: Thêm thủ công -->
         <MudItem xs="12" sm="6" md="5">
-            <MudPaper Elevation="3"
-                      Class="p-6 text-center hover-card-question"
-                      Style="height:220px; display:flex; flex-direction:column; 
-                             justify-content:center; align-items:center;
-                             border-radius:12px; cursor:pointer; transition: all 0.3s;"
-                      @onclick="@(() => SelectCreateMethod("manual"))">
-
-                <MudIcon Icon="@Icons.Material.Filled.PersonAdd"
-                         Style="@($"color:{Colors.Purple.Darken1};")"
-                         Size="Size.Large"/>
-
-                <MudText Typo="Typo.h6" Class="mt-3" Style="@($"color:{Colors.Purple.Darken1};")">
-                    Thêm thủ công
-                </MudText>
-
-                <MudText Typo="Typo.body2" Class="mt-2 text-secondary">
-                    Nhập thông tin từng người dùng một
-                </MudText>
-            </MudPaper>
+            <div class="method-card" @onclick="@(() => SelectCreateMethod("manual"))">
+                <div class="method-icon">
+                    <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Size="Size.Large" />
+                </div>
+                <h2 class="method-title">Thêm thủ công</h2>
+                <p class="method-description">
+                    Nhập thông tin từng người dùng một cách chi tiết và chính xác
+                </p>
+            </div>
         </MudItem>
 
         <!-- Card: Tải lên từ Excel -->
         <MudItem xs="12" sm="6" md="5">
-            <MudPaper Elevation="3"
-                      Class="p-6 text-center hover-card-question"
-                      Style="height:220px; display:flex; flex-direction:column; 
-                             justify-content:center; align-items:center;
-                             border-radius:12px; cursor:pointer; transition: all 0.3s;"
-                      @onclick="@(() => SelectCreateMethod("excel"))">
-
-                <MudIcon Icon="@Icons.Material.Filled.TableChart"
-                         Style="@($"color:{Colors.Teal.Darken1};")"
-                         Size="Size.Large"/>
-
-                <MudText Typo="Typo.h6" Class="mt-3" Style="@($"color:{Colors.Teal.Darken1};")">
-                    Tải lên từ Excel
-                </MudText>
-
-                <MudText Typo="Typo.body2" Class="mt-2 text-secondary">
-                    Nhập nhiều người dùng từ file .xlsx
-                </MudText>
-            </MudPaper>
+            <div class="method-card" @onclick="@(() => SelectCreateMethod("excel"))">
+                <div class="method-icon">
+                    <MudIcon Icon="@Icons.Material.Filled.UploadFile" Size="Size.Large" />
+                </div>
+                <h2 class="method-title">Tải lên từ Excel</h2>
+                <p class="method-description">
+                    Nhập nhiều người dùng cùng lúc từ file Excel một cách nhanh chóng
+                </p>
+            </div>
         </MudItem>
-
     </MudGrid>
 </MudContainer>
+<style>
+    /* Header */
+    .create-user-header {
+        background: #6C5CE7; /* màu trơn */
+        padding: 40px 20px;
+        border-radius: 16px;
+        margin-bottom: 40px;
+        box-shadow: 0 8px 24px rgba(108, 92, 231, 0.15);
+        color: white;
+    }
 
-@code {
-    // Code-behind sẽ nằm trong CreateUserBase (file .razor.cs)
-}
+    .create-user-title {
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        margin: 0;
+        font-size: 28px;
+    }
+
+    /* Cards */
+    .method-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 32px 24px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 2px solid transparent;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .method-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: #6C5CE7;
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.35s ease;
+    }
+
+    .method-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+        border-color: #E8E1FF;
+    }
+
+    .method-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    /* Icon */
+    .method-icon {
+        width: 64px;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        font-size: 36px;
+        background: #f1f2f6;      /* nền xám nhạt */
+        color: #2d3436;           /* icon màu tối */
+        border: 1px solid #dfe6e9;
+        transition: all 0.3s ease;
+    }
+
+    .method-card:hover .method-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    /* Titles & Description */
+    .method-title {
+        font-size: 20px;
+        font-weight: 700;
+        margin: 16px 0 12px 0;
+        color: #2D3436;
+        text-align: center;
+    }
+
+    .method-description {
+        font-size: 14px;
+        color: #636E72;
+        text-align: center;
+        line-height: 1.5;
+        margin: 0;
+    }
+    
+</style>

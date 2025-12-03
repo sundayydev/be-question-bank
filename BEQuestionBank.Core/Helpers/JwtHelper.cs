@@ -89,7 +89,7 @@ public class JwtHelper
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey)),
             ValidIssuer = _issuer,
             ValidAudience = _audience,
-            ValidateLifetime = false // Bỏ qua hạn khi đọc refresh token
+            ValidateLifetime = false 
         };
 
         var handler = new JwtSecurityTokenHandler();

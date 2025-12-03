@@ -1,47 +1,119 @@
-﻿@* Header.razor *@
-@using FEQuestionBank.Client.Implementation
+﻿@using FEQuestionBank.Client.Implementation
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @implements IDisposable
 @inject ISnackbar Snackbar
 
-<MudAppBar Style="background-color:#3F51B5; color:white;" Elevation="2">
-    <MudIconButton Icon="@Icons.Material.Filled.Menu"
-                   Color="Color.Inherit"
-                   Edge="Edge.Start"
-                   OnClick="ToggleDrawer"
-                   Class="hover-darkblue" />
+<MudAppBar Style="background: #0d47a1; color:white; box-shadow: 0 8px 24px rgba(0,0,0,0.1);" Elevation="0">
+    <div class="header-container">
+        <div class="header-left">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                           Color="Color.Inherit"
+                           Edge="Edge.Start"
+                           OnClick="ToggleDrawer"
+                           Class="menu-button" />
+        </div>
 
-    <MudSpacer />
-    <div class="d-flex gap-2 align-items-center">
-        <MudIconButton Icon="@Icons.Material.Filled.Lightbulb"
-                       Color="Color.Inherit" Class="hover-darkblue" />
-        <MudBadge Content="3" Overlap="true" Class="mx-6 my-4" Color="Color.Error">
-            <MudIcon Icon="@Icons.Material.Filled.Notifications" Color="Color.Inherit" Class="hover-darkblue" />
-        </MudBadge>
-        @if (isAuthenticated)
-        {
-            <MudMenu>
-                <ActivatorContent>
-                    <MudAvatar Color="Color.Inherit" Variant="Variant.Outlined">@userInitial</MudAvatar>
-                </ActivatorContent>
-                <ChildContent>
-                    <MudMenuItem Href="/profile">Profile</MudMenuItem>
-                    <MudMenuItem OnClick="Logout">Logout</MudMenuItem>
-                </ChildContent>
-            </MudMenu>
-        }
-        else
-        {
-            <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="/login">Đăng nhập</MudButton>
-        }
+        <MudSpacer />
+
+        <div class="header-actions">
+            <MudIconButton Icon="@Icons.Material.Filled.Lightbulb"
+                           Color="Color.Inherit"
+                           Class="action-button"
+                           Title="Lightbulb" />
+
+            @if (isAuthenticated)
+            {
+                <MudMenu>
+                    <ActivatorContent>
+                        <MudAvatar Color="Color.Primary"
+                                   Variant="Variant.Filled"
+                                   Style="background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3);">
+                            @userInitial
+                        </MudAvatar>
+                    </ActivatorContent>
+                    <ChildContent>
+                        <MudMenuItem Href="/profile" Icon="@Icons.Material.Outlined.Person">Profile</MudMenuItem>
+                        <MudMenuItem OnClick="Logout" Icon="@Icons.Material.Outlined.Logout">Logout</MudMenuItem>
+                    </ChildContent>
+                </MudMenu>
+            }
+            else
+            {
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Secondary"
+                           Href="/login"
+                           Style="background-color: rgba(255,255,255,0.2); color: white; border-radius: 8px; padding: 6px 16px; text-transform: none; font-weight: 500;"
+                           Class="login-button">
+                    Đăng nhập
+                </MudButton>
+            }
+        </div>
     </div>
 </MudAppBar>
 
-
 <style>
-    .hover-darkblue:hover {
-        color: #002366 !important;
+    .header-container {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        padding: 0.5rem 0;
+        gap: 0.5rem;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding-right: 0.5rem;
+    }
+
+    .menu-button {
+        transition: all 0.3s ease;
+    }
+
+    .menu-button:hover {
+        background-color: rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+    }
+
+    .action-button {
+        transition: all 0.3s ease;
+    }
+
+    .action-button:hover {
+        background-color: rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        transform: scale(1.05);
+    }
+
+    .notification-wrapper {
+        display: flex;
+        align-items: center;
+    }
+
+    .login-button {
+        transition: all 0.3s ease;
+    }
+
+    .login-button:hover {
+        background-color: rgba(255, 255, 255, 0.3) !important;
+        transform: translateY(-2px);
+    }
+
+    .mud-avatar {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .mud-avatar:hover{
+        transform: scale(1.1);
+        background-color: rgba(255, 255, 255, 0.3) !important;
     }
 </style>
 
