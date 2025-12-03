@@ -1,10 +1,10 @@
-﻿// File: PhanBase.cs
-using BeQuestionBank.Shared.DTOs.Common;
+﻿using BeQuestionBank.Shared.DTOs.Common;
 using BeQuestionBank.Shared.DTOs.Phan;
 using FEQuestionBank.Client.Services;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FEQuestionBank.Client.Pages.OtherPage;
@@ -14,6 +14,8 @@ namespace FEQuestionBank.Client.Pages
 {
    public partial class PhanBase : ComponentBase
 {
+
+    [Parameter] public Guid MaMonHoc { get; set; } = Guid.Empty;
     [Inject] protected IPhanApiClient PhanApiClient { get; set; } = default!;
     [Inject] protected ISnackbar Snackbar { get; set; } = default!;
     [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
@@ -22,40 +24,90 @@ namespace FEQuestionBank.Client.Pages
     protected List<PhanDto> phanList = new();
     protected string? _searchTerm;
     protected bool loading = true;
+        
 
     protected override async Task OnInitializedAsync()
     {
         await LoadPhanList();
     }
 
-    private async Task LoadPhanList()
-    {
-        loading = true;
-        StateHasChanged();
+        //private async Task LoadPhanList()
+        //{
+        //    loading = true;
+        //    StateHasChanged();
 
-        try
+        //    try
+        //    {
+        //        var response = await PhanApiClient.GetTreeAsync(); // Backend trả cây
+        //        if (response.Success && response.Data != null)
+        //        {
+        //            phanList = FlattenTree(response.Data); // Làm phẳng
+        //            phanList = ApplySearch(phanList);
+        //        }
+        //        else
+        //        {
+        //            Snackbar.Add("Không có dữ liệu.", Severity.Info);
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
+        //    }
+        //    finally
+        //    {
+        //        loading = false;
+        //        StateHasChanged();
+        //    }
+        //}
+
+
+        private async Task LoadPhanList()
         {
-            var response = await PhanApiClient.GetTreeAsync(); // Backend trả cây
-            if (response.Success && response.Data != null)
+            loading = true;
+            try
             {
-                phanList = FlattenTree(response.Data); // Làm phẳng
-                phanList = ApplySearch(phanList);
+                var response = await PhanApiClient.GetPhanByMonHocAsync(MaMonHoc);
+                var filteredData = response.Data.Where(x => x.XoaTam == false).ToList();
+
+
+                if (response.Success && response.Data != null)
+                {
+                    // ⭐ Chỉ lấy phần cha (root)
+                    phanList = filteredData
+                        .Select(x => new PhanDto
+                        {
+                            MaPhan = x.MaPhan,
+                            MaMonHoc = x.MaMonHoc,
+                            TenPhan = x.TenPhan,
+                            NoiDung = x.NoiDung,
+                            ThuTu = x.ThuTu,
+                            SoLuongCauHoi = x.SoLuongCauHoi,
+                            XoaTam = x.XoaTam,
+                            LaCauHoiNhom = x.LaCauHoiNhom,
+                            NgayTao = x.NgayTao,
+                            NgayCapNhat = x.NgayCapNhat,
+                            // ⭐ KHÔNG lấy phần con
+                            PhanCons = null,
+                            MaPhanCha = x.MaPhanCha
+                        })
+                        .ToList();
+                    phanList = ApplySearch(phanList);
+                }
+                else
+                    StateHasChanged();
             }
-            else
+            catch (Exception ex)
             {
-                Snackbar.Add("Không có dữ liệu.", Severity.Info);
+                Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
+            }
+            finally
+            {
+                loading = false;
+                StateHasChanged();
             }
         }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
-            loading = false;
-            StateHasChanged();
-        }
-    }
+        
+
 
     // Làm phẳng cây → danh sách
     private List<PhanDto> FlattenTree(List<PhanDto> tree)
@@ -71,9 +123,12 @@ namespace FEQuestionBank.Client.Pages
         }
         return result;
     }
-
-    // Tìm kiếm
-    private List<PhanDto> ApplySearch(List<PhanDto> list)
+        protected void ViewTree(PhanDto phan)
+        {
+            NavigationManager.NavigateTo($"/phancon/{phan.MaPhan}");
+        }
+        // Tìm kiếm
+        private List<PhanDto> ApplySearch(List<PhanDto> list)
     {
         if (string.IsNullOrWhiteSpace(_searchTerm))
             return list;

@@ -129,7 +129,10 @@ namespace FEQuestionBank.Client.Pages.MonHoc
             }
         }
 
-
+        protected async Task OnPartNav(MonHocDto monHoc)
+        {
+            NavigationManager.NavigateTo($"/phan/{monHoc.MaMonHoc}");
+        }
         protected async Task OnSearch(string? text)
         {
             _searchTerm = string.IsNullOrWhiteSpace(text) ? null : text.Trim();

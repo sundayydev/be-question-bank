@@ -211,12 +211,20 @@ public class PhanController(PhanService service, ILogger<PhanController> logger)
     [HttpGet("monhoc/{maMonHoc}")]
     public async Task<IActionResult> GetByMonHoc(Guid maMonHoc)
     {
-        var result = await _service.GetPhansByMaMonHocAsync(maMonHoc);
-        return Ok(new
+        if (maMonHoc == Guid.Empty)
+
         {
-            statusCode = 200,
-            message = "Lấy danh sách phần theo môn học thành công",
-            data = result
+            return BadRequest(ApiResponseFactory.ValidationError<object>("Mã môn học không hợp lệ."));
+        }
+
+
+        var result = await _service.GetTreeByMonHocAsync(maMonHoc);
+
+        return Ok(new ApiResponse<List<PhanDto>>
+        {
+            StatusCode = 200,
+            Message = "Lấy danh sách phần theo môn học thành công",
+            Data = result,
         });
     }
     

@@ -26,44 +26,31 @@ public class PhanService
     {
         var phans = await _phanRepository.GetByMaMonHocAsync(maMonHoc);
 
-        // Tạo dictionary để build cây nhanh
-        var lookup = phans.ToDictionary(p => p.MaPhan, p => MapToDto(p));
+        return BuildTree(phans);
 
-        // Gắn con vào cha
-        foreach (var phan in lookup.Values)
-        {
-            if (phan.MaPhanCha.HasValue && lookup.ContainsKey(phan.MaPhanCha.Value))
-            {
-                lookup[phan.MaPhanCha.Value].PhanCons.Add(phan);
-            }
-        }
-
-        // Trả về root nodes
-        return lookup.Values
-            .Where(p => p.MaPhanCha == null || p.MaPhanCha == Guid.Empty)
-            .OrderBy(p => p.ThuTu)
-            .ToList();
     }
 
     public async Task<List<PhanDto>> GetTreeAsync()
     {
         var phans = await _phanRepository.GetAllAsync();
 
-        // Dictionary để build nhanh
+        return BuildTree(phans);
+    }
+    private List<PhanDto> BuildTree(IEnumerable<Phan> phans)
+    {
+        if (!phans.Any()) return new List<PhanDto>();
         var lookup = phans.ToDictionary(p => p.MaPhan, p => MapToDto(p));
 
-        // Build cây
+
         foreach (var phan in lookup.Values)
         {
-            if (phan.MaPhanCha.HasValue && lookup.ContainsKey(phan.MaPhanCha.Value))
+            if (phan.MaPhanCha.HasValue && lookup.TryGetValue(phan.MaPhanCha.Value, out var parent))
             {
-                lookup[phan.MaPhanCha.Value].PhanCons.Add(phan);
+                parent.PhanCons.Add(phan);
             }
         }
-
-        // Trả về các root nodes
         return lookup.Values
-            .Where(p => p.MaPhanCha == null || p.MaPhanCha == Guid.Empty)
+            .Where(p => !p.MaPhanCha.HasValue || p.MaPhanCha == Guid.Empty)
             .OrderBy(p => p.ThuTu)
             .ToList();
     }
