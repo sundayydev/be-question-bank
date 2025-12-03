@@ -111,21 +111,17 @@ public partial class TrashBase : ComponentBase
         LoadingPhan = true;
         StateHasChanged();
 
-        var resp = await PhanClient.GetAllPhansAsync();
+         // var resp = await PhanClient.GetAllPhansAsync();
+        var resp = await PhanClient.GetTrashedPhansAsync(state.Page + 1, state.PageSize);
 
         LoadingPhan = false;
 
         if (resp?.Success == true && resp.Data != null)
         {
-            var deleted = resp.Data.Where(x => x.XoaTam==false)
-                                    .Skip(state.Page * state.PageSize)
-                                    .Take(state.PageSize)
-                                    .ToList();
-
             return new TableData<PhanDto>
             {
-                Items = deleted,
-                TotalItems = resp.Data.Count(x => x.XoaTam==false)
+                Items = resp.Data.Items,        
+                TotalItems = resp.Data.TotalCount
             };
         }
         return new TableData<PhanDto> { Items = new List<PhanDto>(), TotalItems = 0 };

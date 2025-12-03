@@ -72,6 +72,10 @@ namespace FEQuestionBank.Client.Services
             var res = await _httpClient.PatchAsync($"api/phan/{id}/KhoiPhuc", null);
             return await res.Content.ReadFromJsonAsync<ApiResponse<string>>() 
                    ?? new ApiResponse<string>(500, "Error");
+        } 
+        public async Task<ApiResponse<PagedResult<PhanDto>>> GetTrashedPhansAsync(int page = 1, int pageSize = 20)
+        {
+            return await GetPagedAsync<PhanDto>("api/phan/trashed", page, pageSize);
         }
     }
 }
