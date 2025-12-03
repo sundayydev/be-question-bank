@@ -8,15 +8,17 @@
     </TitleContent>
 
     <DialogContent>
+
         <MudTextField Label="Tên Đăng Nhập"
                       @bind-Value="NguoiDung.TenDangNhap"
                       Required="true"
                       Variant="Variant.Outlined" />
 
+        @* Mật khẩu không nằm trong DTO nên tách riêng *@
         @if (NguoiDung.MaNguoiDung == Guid.Empty)
         {
             <MudTextField Label="Mật Khẩu"
-                          @bind-Value="NguoiDung.MatKhau"
+                          @bind-Value="Password"
                           Required="true"
                           InputType="InputType.Password"
                           Variant="Variant.Outlined" />
@@ -24,7 +26,7 @@
         else
         {
             <MudTextField Label="Mật Khẩu Mới (để trống nếu không đổi)"
-                          @bind-Value="NguoiDung.MatKhau"
+                          @bind-Value="Password"
                           InputType="InputType.Password"
                           Variant="Variant.Outlined" />
         }
@@ -39,7 +41,6 @@
                       Required="true"
                       Variant="Variant.Outlined" />
 
-        <!-- ✅ Phải thêm T="EnumRole" và dùng @EnumRole.Admin -->
         <MudSelect T="EnumRole"
                    Label="Vai Trò"
                    @bind-Value="NguoiDung.VaiTro"
@@ -48,11 +49,11 @@
             <MudSelectItem Value="@EnumRole.User">User</MudSelectItem>
         </MudSelect>
 
-        <!-- ✅ MudSwitch cần chỉ rõ T="bool" -->
         <MudSwitch T="bool"
                    @bind-Checked="NguoiDung.BiKhoa"
                    Label="Khóa tài khoản"
                    Color="Color.Error" />
+
     </DialogContent>
 
     <DialogActions>
@@ -62,7 +63,6 @@
             Hủy
         </MudButton>
 
-        <!-- ✅ Disabled cần bọc điều kiện trong @() -->
         <MudButton OnClick="Submit"
                    Color="Color.Primary"
                    Variant="Variant.Filled"
@@ -79,12 +79,17 @@
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
     [Parameter] public NguoiDungDto NguoiDung { get; set; } = new();
     [Parameter] public string DialogTitle { get; set; } = "Chỉnh sửa";
-    [Parameter] public EventCallback<NguoiDungDto> OnSave { get; set; }
 
-    private async Task Submit()
+    // 🔥 Password được tách riêng (KHÔNG nằm trong DTO)
+    private string? Password { get; set; }
+
+    private void Submit()
     {
-        await OnSave.InvokeAsync(NguoiDung);
-        MudDialog.Close(DialogResult.Ok(NguoiDung));
+        MudDialog.Close(DialogResult.Ok(new Dictionary<string, object>
+        {
+            { "User", NguoiDung },
+            { "Password", Password }
+        }));
     }
 
     private void Cancel() => MudDialog.Cancel();

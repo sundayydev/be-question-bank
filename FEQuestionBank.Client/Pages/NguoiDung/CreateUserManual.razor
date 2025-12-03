@@ -2,26 +2,24 @@
 @using BeQuestionBank.Shared.Enums
 @inherits FEQuestionBank.Client.Pages.User.CreateUserManualBase
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge">
-    <MudBreadcrumbs Items="_breadcrumbs" Style="margin-top:2px;" />
-    <MudText Typo="Typo.h5"
-             Style="@($"color:{Colors.Red.Darken2};")"
-             Class="mb-6 text-center text-uppercase fw-bold">
-        Tạo thủ công
-    </MudText>
+<MudContainer MaxWidth="MaxWidth.Large">
+    <MudBreadcrumbs Items="_breadcrumbs" />
+    <div class="header-section">
+        <h1>Tạo tài khoản người dùng</h1>
+        <p>Điền thông tin đầy đủ để tạo một tài khoản mới trong hệ thống</p>
+    </div>
     <!-- KHỐI 1: FORM -->
-    <MudPaper Elevation="2" Rounded="true" Class="pa-6 mb-6">
+    <MudPaper Elevation="2" Rounded="true" Class="pa-6 mb-2">
         <MudGrid Spacing="3">
-
             <MudItem xs="12" sm="6">
-                <MudTextField @bind-Value="User.TenDangNhap"
+                <MudTextField @bind-Value="Model.TenDangNhap"
                               Label="Tên đăng nhập "
                               Variant="Variant.Outlined"
                               Required="true" />
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudTextField @bind-Value="User.MatKhau"
+                <MudTextField @bind-Value="Model.MatKhau"
                               Label="Mật khẩu "
                               InputType="InputType.Password"
                               Variant="Variant.Outlined"
@@ -29,14 +27,14 @@
             </MudItem>
 
             <MudItem xs="12">
-                <MudTextField @bind-Value="User.HoTen"
+                <MudTextField @bind-Value="Model.HoTen"
                               Label="Họ và tên "
                               Variant="Variant.Outlined"
                               Required="true" />
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudTextField @bind-Value="User.Email"
+                <MudTextField @bind-Value="Model.Email"
                               Label="Email "
                               InputType="InputType.Email"
                               Variant="Variant.Outlined"
@@ -44,7 +42,7 @@
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudSelect T="Guid?" @bind-Value="User.MaKhoa"
+                <MudSelect T="Guid?" @bind-Value="Model.MaKhoa"
                            Label="Khoa "
                            Variant="Variant.Outlined"
                            Required="true"
@@ -60,7 +58,7 @@
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudSelect T="EnumRole" @bind-Value="User.VaiTro"
+                <MudSelect T="EnumRole" @bind-Value="Model.VaiTro"
                            Label="Vai trò "
                            Variant="Variant.Outlined"
                            Required="true">
@@ -71,7 +69,7 @@
 
             <MudItem xs="12" sm="6">
                 <MudSwitch T="bool"
-                           @bind-Checked="User.BiKhoa"
+                           @bind-Checked="Model.BiKhoa"
                            Label="Khóa tài khoản"
                            Color="Color.Error"
                            Class="mt-4" />
@@ -81,7 +79,7 @@
     </MudPaper>
 
     <!-- KHỐI 2: HÀNH ĐỘNG -->
-    <MudPaper Elevation="2" Rounded="true" Class="pa-6">
+    <MudPaper Elevation="2" Rounded="true" Class="pa-6 mb-2">
 
         <div class="d-flex justify-content-between align-items-center gap-3">
             <MudButton Variant="Variant.Filled"
@@ -108,3 +106,27 @@
         </div>
     </MudPaper>
 </MudContainer>
+<style>
+    .header-section {
+        background: #0f766e;
+        padding: 40px 20px;
+        border-radius: 16px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 24px rgba(108, 92, 231, 0.15);
+        color: white;
+    }
+    .header-section h1 {
+        color: white;
+        margin: 0;
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+
+    .header-section p {
+        color: rgba(255, 255, 255, 0.9);
+        margin: 8px 0 0 0;
+        font-size: 14px;
+        font-weight: 500;
+    }
+</style>

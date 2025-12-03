@@ -1,10 +1,10 @@
-﻿using BeQuestionBank.Shared.DTOs.Khoa;
+﻿// CreateUserManual.razor.cs
+using BeQuestionBank.Shared.DTOs.Khoa;
 using BEQuestionBank.Shared.DTOs.user;
+using BeQuestionBank.Shared.Enums;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using FEQuestionBank.Client.Services;
-using System.Linq;
-
 
 namespace FEQuestionBank.Client.Pages.User
 {
@@ -14,38 +14,37 @@ namespace FEQuestionBank.Client.Pages.User
         [Inject] private IKhoaApiClient KhoaApi { get; set; } = default!;
         [Inject] private NavigationManager Navigation { get; set; } = default!;
         [Inject] private ISnackbar Snackbar { get; set; } = default!;
+        
+        protected CreateNguoiDungDto Model { get; set; } = new();
 
-        protected NguoiDungDto User { get; set; } = new();
         protected List<KhoaDto> DanhSachKhoa { get; set; } = new();
-        protected bool IsSubmitting { get; set; }
+        protected bool IsSubmitting { get; set; } = false;
+
         protected List<BreadcrumbItem> _breadcrumbs = new()
         {
             new BreadcrumbItem("Trang chủ", href: "/"),
             new BreadcrumbItem("Quản lý", href: "#", disabled: true),
-            new BreadcrumbItem("Tạo mới người dùng", href: "/user/create-user"),
-            new BreadcrumbItem("Tạo mới thủ công", href: "/user/create-manual"),
+            new BreadcrumbItem("Người dùng", href: "/user/list"),
+            new BreadcrumbItem("Tạo thủ công", href: "/user/create-manual")
         };
 
+        // Validation chính xác
         protected bool IsValid =>
-            !string.IsNullOrWhiteSpace(User.TenDangNhap) &&
-            !string.IsNullOrWhiteSpace(User.MatKhau) &&
-            !string.IsNullOrWhiteSpace(User.HoTen) &&
-            !string.IsNullOrWhiteSpace(User.Email);
+            !string.IsNullOrWhiteSpace(Model.TenDangNhap) &&
+            !string.IsNullOrWhiteSpace(Model.MatKhau) &&
+            !string.IsNullOrWhiteSpace(Model.HoTen) &&
+            !string.IsNullOrWhiteSpace(Model.Email);
 
         protected override async Task OnInitializedAsync()
         {
-            try
+            var response = await KhoaApi.GetAllKhoasAsync();
+            if (response.Success && response.Data != null)
             {
-                // Lấy danh sách khoa từ API
-                var response = await KhoaApi.GetAllKhoasAsync();
-
-                if (response.Success && response.Data != null)
-                    DanhSachKhoa = response.Data.ToList();
-                User.NgayTao = DateTime.UtcNow;
+                DanhSachKhoa = response.Data.ToList();
             }
-            catch (Exception ex)
+            else
             {
-                Snackbar.Add($"Không thể tải danh sách khoa: {ex.Message}", Severity.Error);
+                Snackbar.Add("Không tải được danh sách khoa", Severity.Error);
             }
         }
 
@@ -53,14 +52,15 @@ namespace FEQuestionBank.Client.Pages.User
         {
             if (!IsValid)
             {
-                Snackbar.Add("Vui lòng điền đầy đủ thông tin hợp lệ.", Severity.Warning);
+                Snackbar.Add("Vui lòng điền đầy đủ và đúng thông tin.", Severity.Warning);
                 return;
             }
 
             IsSubmitting = true;
             try
             {
-                var response = await UserApi.CreateNguoiDungAsync(User);
+                // Gọi đúng DTO
+                var response = await UserApi.CreateNguoiDungAsync(Model);
 
                 if (response.Success)
                 {
@@ -69,7 +69,7 @@ namespace FEQuestionBank.Client.Pages.User
                 }
                 else
                 {
-                    Snackbar.Add(response.Message ?? "Lỗi khi tạo người dùng", Severity.Error);
+                    Snackbar.Add(response.Message ?? "Tạo người dùng thất bại", Severity.Error);
                 }
             }
             catch (Exception ex)

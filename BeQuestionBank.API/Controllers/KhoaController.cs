@@ -233,7 +233,7 @@ public class KhoaController(KhoaService service, ILogger<KhoaController> logger)
     {
         try
         {
-            var query = await _service.GetAllKhoasAsync(); // Trả về IQueryable hoặc List<Khoa>
+            var query = await _service.GetAllKhoasAsync(); 
 
             query = query.Where(k => k.XoaTam == false);
             

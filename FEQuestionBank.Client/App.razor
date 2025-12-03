@@ -1,4 +1,4 @@
-@* App.razor *@
+@using FEQuestionBank.Client.Pages.OtherPage
 @using Microsoft.AspNetCore.Components.Authorization
 @using MudBlazor
 
@@ -27,14 +27,9 @@
 
         <NotFound>
             <LayoutView Layout="@typeof(MainLayout)">
-                <MudContainer Class="mt-8 text-center">
-                    <MudIcon Icon="@Icons.Material.Filled.Error" Size="Size.Large" Class="mb-3" Style="color: #d32f2f;" />
-                    <MudText Typo="Typo.h5" Class="mb-2">Không tìm thấy trang.</MudText>
-                    <MudButton Variant="Variant.Outlined" Href="/" Color="Color.Primary">
-                        Quay về trang chủ
-                    </MudButton>
-                </MudContainer>
+                <NotFound></NotFound>
             </LayoutView>
         </NotFound>
+
     </Router>
 </CascadingAuthenticationState>

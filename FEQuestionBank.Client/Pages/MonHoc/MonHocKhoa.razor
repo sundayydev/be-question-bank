@@ -1,36 +1,10 @@
-﻿@page "/monhoc"
+﻿@page "/monhoc/khoa/{MaKhoa:guid}"
 @using BeQuestionBank.Shared.DTOs.MonHoc
-@inherits MonHocBase
+@inherits MonHocKhoaBase
 @inject ISnackbar Snackbar
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Style="min-height:600px; width: 100%">
     <MudBreadcrumbs Items="_breadcrumbs"  Style="margin-top:2px; margin-bottom:2px;"  />
-    <MudGrid Spacing="3" Style=" margin-bottom: 10px">
-        <MudItem xs="12" sm="6" md="4">
-            <InfoCard
-                Icon="@Icons.Material.Filled.MenuBook"
-                IconColor="Color.Primary"
-                Title="Tổng số môn học "
-                Value="@TotalMon.ToString()"/>
-        </MudItem>
-
-        <MudItem xs="12" sm="6" md="4">
-            <InfoCard
-                Icon="@Icons.Material.Filled.Done"
-                IconColor="Color.Success"
-                Title="Sô môn học còn hoạt động"
-                Value="@ActiveMon.ToString()"/>
-        </MudItem>
-
-        <MudItem xs="12" sm="6" md="4">
-            <InfoCard
-                Icon="@Icons.Material.Filled.CloudUpload"
-                IconColor="Color.Info"
-                Title="Số môn học ngưng hoạt động"
-                Value="@LockedMon.ToString()"
-                BackgroundColor="#f5f9ff"/>
-        </MudItem>
-    </MudGrid>
     <!-- Ô tìm kiếm + nút tạo mới -->
     <div class="row mb-3 g-2 align-items-center">
         <!-- Ô tìm kiếm -->

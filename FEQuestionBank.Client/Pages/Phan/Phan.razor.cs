@@ -72,7 +72,7 @@ namespace FEQuestionBank.Client.Pages
 
                 if (response.Success && response.Data != null)
                 {
-                    // ⭐ Chỉ lấy phần cha (root)
+                    // Chỉ lấy phần cha (root)
                     phanList = filteredData
                         .Select(x => new PhanDto
                         {
