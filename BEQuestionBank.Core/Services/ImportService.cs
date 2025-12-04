@@ -2,7 +2,7 @@
 using BeQuestionBank.Domain.Models;
 using BeQuestionBank.Shared.DTOs.File;
 using BeQuestionBank.Shared.Enums;
-using BEQuestionBank.Domain.Interfaces; // Hoặc namespace repository của bạn
+using BEQuestionBank.Domain.Interfaces;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.AspNetCore.Http;
@@ -16,7 +16,7 @@ namespace BEQuestionBank.Core.Services
 {
     public class ImportService
     {
-        private const bool USE_IMAGE_AS_BASE64 = true; // Set true để lưu ảnh dạng Base64 vào DB
+        private const bool USE_IMAGE_AS_BASE64 = true; 
         private readonly ICauHoiRepository _cauHoiRepository;
         private readonly ILogger<ImportService> _logger;
         private const int BatchSize = 50;

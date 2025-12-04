@@ -12,21 +12,42 @@
             background-color: #f5f5f5 !important;
             border-color: #e0e0e0;
         }
-
-    .active-answer {
-        background-color: var(--mud-palette-success-lighten-5) !important;
-        border: 1px solid var(--mud-palette-success-lighten-3) !important;
+    .question-header {
+        background: #0d47a1;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 5px;
+        box-shadow: 0 4px 20px rgba(30, 64, 175, 0.15);
     }
+
+    .question-header h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+        color: white;
+    }
+
+    .question-header p {
+        margin: 0.5rem 0 0 0;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 14px;
+    }
+
+    
+    
 </style>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-3">
-    <MudBreadcrumbs Items="_breadcrumbs" Class="mb-2 pl-0" />
+    <MudBreadcrumbs Items="_breadcrumbs"  />
 
-    <div class="d-flex align-center mb-4">
-        <MudIcon Icon="@Icons.Material.Filled.Create" Color="Color.Primary" Size="Size.Large" Class="mr-2" />
-        <MudText Typo="Typo.h5" Class="font-bold" Color="Color.Primary">
-            Tạo câu hỏi đơn
-        </MudText>
+    <div class="question-header">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <MudIcon Icon="@Icons.Material.Filled.Create" Size="Size.Large" Style="color: white;" />
+            <div>
+                <h1>Tạo câu hỏi đơn</h1>
+                <p>Nhập nội dung câu hỏi, chọn phân loại, và xác định đáp án đúng</p>
+            </div>
+        </div>
     </div>
 
     <MudGrid>

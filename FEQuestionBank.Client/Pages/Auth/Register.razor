@@ -58,20 +58,7 @@
                           AdornmentIcon="@(showPassword? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
                           OnAdornmentClick="@TogglePassword"
                           Placeholder="Nhập mật khẩu" />
-
-            <!-- Nhập lại mật khẩu + Toggle (cùng nút) -->
-            <MudTextField @bind-Value="nhapLaiMatKhau"
-                          Label="Nhập lại mật khẩu"
-                          Variant="Variant.Outlined"
-                          Class="mb-4"
-                          InputType="@(showPassword? InputType.Text: InputType.Password)"
-                          Required="true"
-                          RequiredError="Vui lòng nhập lại mật khẩu"
-                          Validation="@(new Func<string, IEnumerable<string>>(ValidatePasswordMatch))"
-                          Adornment="Adornment.End"
-                          AdornmentIcon="@(showPassword? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
-                          OnAdornmentClick="@TogglePassword"
-                          Placeholder="Nhập lại mật khẩu" />
+            
 
             <!-- Error Message -->
             @if (!string.IsNullOrEmpty(error))
@@ -109,7 +96,6 @@
     private string tenDangNhap = "";
     private string email = "";
     private string matKhau = "";
-    private string nhapLaiMatKhau = "";
     private MudForm form = default!;
     private bool isValid;
     private bool loading;
@@ -120,13 +106,7 @@
     {
         showPassword = !showPassword;
     }
-
-    private IEnumerable<string> ValidatePasswordMatch(string value)
-    {
-        if (!string.IsNullOrEmpty(matKhau) && value != matKhau)
-            yield return "Mật khẩu nhập lại không khớp";
-    }
-
+    
     private async Task HandleRegister()
     {
         // Kiểm tra form trước khi gọi API
