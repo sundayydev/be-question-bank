@@ -2,8 +2,9 @@
 using Microsoft.AspNetCore.Components.Forms;
 using MudBlazor;
 using System.Net.Http.Headers;
-
 using FEQuestionBank.Client.Services;
+using BeQuestionBank.Shared.DTOs.user;
+using FEQuestionBank.Client.Pages.NguoiDung;
 
 namespace FEQuestionBank.Client.Pages.User
 {
@@ -12,9 +13,13 @@ namespace FEQuestionBank.Client.Pages.User
         [Inject] private INguoiDungApiClient UserApi { get; set; } = default!;
         [Inject] private NavigationManager Navigation { get; set; } = default!;
         [Inject] private ISnackbar Snackbar { get; set; } = default!;
+        [Inject] private IDialogService DialogService { get; set; } = default!;
 
         protected IBrowserFile? SelectedFile;
         protected bool IsUploading;
+        protected bool ShowResultDialog;
+        protected ImportResultDto? ResultData;
+
         protected List<BreadcrumbItem> _breadcrumbs = new()
         {
             new BreadcrumbItem("Trang chủ", href: "/"),
@@ -34,39 +39,40 @@ namespace FEQuestionBank.Client.Pages.User
             if (SelectedFile == null) return;
 
             IsUploading = true;
+            ShowResultDialog = false;
+            ResultData = null;
+
             try
             {
                 using var content = new MultipartFormDataContent();
-                var fileStream = SelectedFile.OpenReadStream(10 * 1024 * 1024);
+                var fileStream = SelectedFile.OpenReadStream(15 * 1024 * 1024); // max 15MB
                 var fileContent = new StreamContent(fileStream);
                 fileContent.Headers.ContentType = 
                     new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+                
                 content.Add(fileContent, "File", SelectedFile.Name);
 
                 var response = await UserApi.ImportUsersAsync(content);
+                // var result = response.Data;
+                // var msg = result.ErrorCount == 0
+                //     ? $"Nhập thành công {result.SuccessCount} người dùng!"
+                //     : $"Thành công: {result.SuccessCount} | Lỗi: {result.ErrorCount}";
+                //
+                // Snackbar.Add(msg, result.ErrorCount == 0 ? Severity.Success : Severity.Warning);
 
                 if (response.Success && response.Data != null)
                 {
-                    var result = response.Data;
-                    var msg = result.ErrorCount == 0
-                        ? $"Nhập thành công {result.SuccessCount} người dùng!"
-                        : $"Thành công: {result.SuccessCount} | Lỗi: {result.ErrorCount}";
-
-                    Snackbar.Add(msg, result.ErrorCount == 0 ? Severity.Success : Severity.Warning);
-
-                    if (result.ErrorCount > 0)
+                    var parameters = new DialogParameters
                     {
-                        Snackbar.Add(msg, Severity.Warning);
+                        ["Result"] = response.Data
+                    };
 
-                        foreach (var err in result.Errors)
-                            Snackbar.Add(err, Severity.Error);
+                    var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+                    var dialog = DialogService.Show<ImportResultDialog>("Kết quả import", parameters, options);
 
-                        // Không navigate ngay, hoặc delay
-                        return; 
-                    }
-                    else
+                    var result = await dialog.Result;
+                    if (!result.Canceled && result.Data?.ToString() == "view-list")
                     {
-                        Snackbar.Add(msg, Severity.Success);
                         Navigation.NavigateTo("/user/list");
                     }
                 }
@@ -78,10 +84,23 @@ namespace FEQuestionBank.Client.Pages.User
             finally
             {
                 IsUploading = false;
+                StateHasChanged();
             }
         }
 
+        protected void CloseDialogAndGoToList()
+        {
+            ShowResultDialog = false;
+            Navigation.NavigateTo("/user/list");
+        }
+
+        protected void CloseDialog()
+        {
+            ShowResultDialog = false;
+        }
+
         protected void GoBack() => Navigation.NavigateTo("/user/list");
+
         protected void CancelFile()
         {
             SelectedFile = null;
@@ -89,3 +108,4 @@ namespace FEQuestionBank.Client.Pages.User
         }
     }
 }
+
