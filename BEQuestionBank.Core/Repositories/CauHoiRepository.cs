@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using BeQuestionBank.Core.Configurations;
 using BeQuestionBank.Domain.Interfaces.IRepositories;
 using BeQuestionBank.Domain.Models;
@@ -33,6 +33,18 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
             .Include(c => c.CauTraLois)
             .Include(c => c.Phan)
             .Include(c => c.CauHoiCons).ThenInclude(chc => chc.CauTraLois)
+            .FirstOrDefaultAsync(c => c.MaCauHoi == maCauHoi && c.XoaTam != true);
+    }
+
+    public async Task<CauHoi?> GetByIdWithChildrenAsync(Guid maCauHoi)
+    {
+        return await _context.CauHois
+            .AsNoTracking()
+            .Include(c => c.Phan)
+                .ThenInclude(p => p.MonHoc)
+                .ThenInclude(m => m.Khoa)
+            .Include(c => c.CauHoiCons.Where(child => child.XoaTam != true))
+                .ThenInclude(child => child.CauTraLois)
             .FirstOrDefaultAsync(c => c.MaCauHoi == maCauHoi && c.XoaTam != true);
     }
 
@@ -96,7 +108,10 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
             .Where(c => c.MaCauHoiCha == null &&
                        (c.LoaiCauHoi == "Group" || c.CauHoiCons.Any()) &&
                        c.XoaTam != true)
-            .Include(c => c.CauHoiCons)
+            .Include(c => c.Phan)
+            .Include(c => c.CauHoiCons.Where(child => child.XoaTam != true))
+                .ThenInclude(child => child.CauTraLois)
+            .OrderByDescending(c => c.NgayTao)
             .ToListAsync();
     }
 

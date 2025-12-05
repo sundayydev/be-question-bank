@@ -1,4 +1,4 @@
-﻿using BeQuestionBank.Domain.Interfaces.IRepositories;
+using BeQuestionBank.Domain.Interfaces.IRepositories;
 using BeQuestionBank.Domain.Models;
 using BeQuestionBank.Shared.DTOs.CauHoi;
 using BeQuestionBank.Shared.Enums;
@@ -137,7 +137,200 @@ namespace BEQuestionBank.Core.Services
         // ... (Các hàm Create đã có ở trên)
 
         /// <summary>
-        /// Lấy danh sách tất cả câu hỏi (Dùng cho bảng dữ liệu)
+        /// Lấy danh sách tất cả câu hỏi với phân trang và lọc nâng cao
+        /// </summary>
+        public async Task<object> GetAllWithFilterAsync(
+            int pageIndex = 1,
+            int pageSize = 20,
+            string? keyword = null,
+            string? loaiCauHoi = null,
+            Guid? khoaId = null,
+            Guid? monHocId = null,
+            Guid? phanId = null,
+            string? sortBy = "NgayTao",
+            string? sortOrder = "desc")
+        {
+            var entities = await _cauHoiRepository.GetAllWithAnswersAsync();
+
+            // Lọc chỉ lấy câu hỏi gốc (không phải câu con)
+            var query = entities
+                .Where(e => e.MaCauHoiCha == null && !e.XoaTam.GetValueOrDefault())
+                .AsQueryable();
+
+            // Lọc theo từ khóa
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                keyword = keyword.ToLower();
+                query = query.Where(q => 
+                    (q.NoiDung != null && q.NoiDung.ToLower().Contains(keyword)) ||
+                    (q.LoaiCauHoi != null && q.LoaiCauHoi.ToLower().Contains(keyword)));
+            }
+
+            // Lọc theo loại câu hỏi
+            if (!string.IsNullOrWhiteSpace(loaiCauHoi))
+            {
+                query = query.Where(q => q.LoaiCauHoi == loaiCauHoi);
+            }
+
+            // Lọc theo Phần
+            if (phanId.HasValue)
+            {
+                query = query.Where(q => q.MaPhan == phanId.Value);
+            }
+
+            // Lọc theo Môn học (cần có navigation property Phan)
+            if (monHocId.HasValue)
+            {
+                query = query.Where(q => q.Phan != null && q.Phan.MaMonHoc == monHocId.Value);
+            }
+
+            // Lọc theo Khoa (cần có navigation property Phan -> MonHoc -> Khoa)
+            if (khoaId.HasValue)
+            {
+                query = query.Where(q => 
+                    q.Phan != null && 
+                    q.Phan.MonHoc != null && 
+                    q.Phan.MonHoc.MaKhoa == khoaId.Value);
+            }
+
+            // Sắp xếp
+            query = sortBy?.ToLower() switch
+            {
+                "masocauhoi" => sortOrder?.ToLower() == "asc" 
+                    ? query.OrderBy(q => q.MaSoCauHoi)
+                    : query.OrderByDescending(q => q.MaSoCauHoi),
+                "noidung" => sortOrder?.ToLower() == "asc"
+                    ? query.OrderBy(q => q.NoiDung)
+                    : query.OrderByDescending(q => q.NoiDung),
+                "loaicauhoi" => sortOrder?.ToLower() == "asc"
+                    ? query.OrderBy(q => q.LoaiCauHoi)
+                    : query.OrderByDescending(q => q.LoaiCauHoi),
+                _ => sortOrder?.ToLower() == "asc"
+                    ? query.OrderBy(q => q.NgayTao)
+                    : query.OrderByDescending(q => q.NgayTao)
+            };
+
+            // Đếm tổng
+            var totalCount = query.Count();
+
+            // Phân trang và map sang DTO
+            var pagedData = query
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
+                .ToList() // Convert to list first to avoid expression tree issues
+                .Select(e => new CauHoiDto
+                {
+                    MaCauHoi = e.MaCauHoi,
+                    MaPhan = e.MaPhan,
+                    TenPhan = e.Phan != null ? e.Phan.TenPhan : null,
+                    MaSoCauHoi = e.MaSoCauHoi,
+                    NoiDung = e.NoiDung,
+                    HoanVi = e.HoanVi,
+                    CapDo = e.CapDo,
+                    SoCauHoiCon = e.LoaiCauHoi == "Group" ? e.CauHoiCons.Count : 0,
+                    NgayTao = e.NgayTao,
+                    XoaTam = e.XoaTam ?? false,
+                    CLO = e.CLO,
+                    LoaiCauHoi = e.LoaiCauHoi,
+                    
+                    // Chỉ include câu trả lời cho câu hỏi đơn
+                    CauTraLois = e.LoaiCauHoi != "Group" 
+                        ? e.CauTraLois.Select(a => new CauTraLoiDto
+                        {
+                            MaCauTraLoi = a.MaCauTraLoi,
+                            NoiDung = a.NoiDung,
+                            LaDapAn = a.LaDapAn,
+                            HoanVi = a.HoanVi
+                        }).ToList()
+                        : new List<CauTraLoiDto>()
+                })
+                .ToList();
+
+            return new
+            {
+                Items = pagedData,
+                TotalCount = totalCount,
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
+        }
+
+        /// <summary>
+        /// Lấy danh sách câu hỏi đơn (Single questions only)
+        /// </summary>
+        public async Task<object> GetSingleQuestionsAsync(
+            int pageIndex = 1,
+            int pageSize = 20,
+            string? keyword = null,
+            Guid? phanId = null)
+        {
+            var entities = await _cauHoiRepository.GetAllWithAnswersAsync();
+
+            // Lọc chỉ câu hỏi đơn (Single/Multiple Choice)
+            var query = entities
+                .Where(e => e.MaCauHoiCha == null && 
+                           e.LoaiCauHoi == "Single" && 
+                           !e.XoaTam.GetValueOrDefault())
+                .AsQueryable();
+
+            // Lọc theo từ khóa
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                keyword = keyword.ToLower();
+                query = query.Where(q => q.NoiDung != null && q.NoiDung.ToLower().Contains(keyword));
+            }
+
+            // Lọc theo Phần
+            if (phanId.HasValue)
+            {
+                query = query.Where(q => q.MaPhan == phanId.Value);
+            }
+
+            // Đếm tổng
+            var totalCount = query.Count();
+
+            // Phân trang
+            var pagedData = query
+                .OrderByDescending(q => q.NgayTao)
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
+                .ToList() // Convert to list first to avoid expression tree issues
+                .Select(e => new CauHoiDto
+                {
+                    MaCauHoi = e.MaCauHoi,
+                    MaPhan = e.MaPhan,
+                    TenPhan = e.Phan != null ? e.Phan.TenPhan : null,
+                    MaSoCauHoi = e.MaSoCauHoi,
+                    NoiDung = e.NoiDung,
+                    HoanVi = e.HoanVi,
+                    CapDo = e.CapDo,
+                    NgayTao = e.NgayTao,
+                    CLO = e.CLO,
+                    LoaiCauHoi = e.LoaiCauHoi,
+                    XoaTam = e.XoaTam ?? false,
+                    CauTraLois = e.CauTraLois.Select(a => new CauTraLoiDto
+                    {
+                        MaCauTraLoi = a.MaCauTraLoi,
+                        NoiDung = a.NoiDung,
+                        LaDapAn = a.LaDapAn,
+                        HoanVi = a.HoanVi
+                    }).ToList()
+                })
+                .ToList();
+
+            return new
+            {
+                Items = pagedData,
+                TotalCount = totalCount,
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
+        }
+
+        /// <summary>
+        /// Lấy danh sách tất cả câu hỏi (Legacy - Không phân trang)
         /// </summary>
         public async Task<IEnumerable<CauHoiDto>> GetAllAsync()
         {
@@ -258,26 +451,50 @@ namespace BEQuestionBank.Core.Services
         }
 
         /// <summary>
-        /// Lấy tất cả câu hỏi nhóm → tự động hiển thị NH2, NH3, NH10...
+        /// Lấy danh sách câu hỏi nhóm với phân trang và lọc
         /// </summary>
-        public async Task<List<CauHoiDto>> GetCauHoiNhomAsync()
+        public async Task<object> GetCauHoiNhomAsync(
+            int pageIndex = 1,
+            int pageSize = 10,
+            string? keyword = null,
+            Guid? khoaId = null,
+            Guid? monHocId = null,
+            Guid? phanId = null)
         {
             var groups = await _cauHoiRepository.GetAllGroupsAsync();
 
-            var result = new List<CauHoiDto>();
+            // Lọc câu hỏi nhóm (LoaiCauHoi = "Group" và có câu hỏi con)
+            var query = groups
+                .Where(g => g.MaCauHoiCha == null
+                            && g.LoaiCauHoi == "Group"
+                            && g.CauHoiCons.Any()
+                            && !g.XoaTam.GetValueOrDefault())
+                .AsQueryable();
 
-            // Regex để kiểm tra loại câu hỏi NH + số (VD: NH1, NH2, NH10)
-            Regex regexNH = new Regex(@"^NH\d+$", RegexOptions.IgnoreCase);
-
-            foreach (var parent in groups
-                         .Where(g => g.MaCauHoiCha == null
-                                     && g.CauHoiCons.Any() // phải có câu hỏi con
-                                     && !string.IsNullOrEmpty(g.LoaiCauHoi)
-                                     && regexNH.IsMatch(g.LoaiCauHoi))) // đúng loại NHx
+            // Lọc theo từ khóa (tìm trong nội dung đoạn văn)
+            if (!string.IsNullOrWhiteSpace(keyword))
             {
-                int soCon = parent.CauHoiCons.Count;
+                keyword = keyword.ToLower();
+                query = query.Where(q => q.NoiDung != null && q.NoiDung.ToLower().Contains(keyword));
+            }
 
-                var parentDto = new CauHoiDto
+            // Lọc theo Phần
+            if (phanId.HasValue)
+            {
+                query = query.Where(q => q.MaPhan == phanId.Value);
+            }
+            // Nếu muốn lọc theo MonHoc hoặc Khoa, cần join với Phan -> MonHoc -> Khoa
+            // (Giả định đã có navigation property hoặc sử dụng Include)
+
+            // Đếm tổng số
+            var totalCount = query.Count();
+
+            // Phân trang
+            var pagedData = query
+                .OrderByDescending(x => x.NgayTao)
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
+                .Select(parent => new CauHoiDto
                 {
                     MaCauHoi = parent.MaCauHoi,
                     MaPhan = parent.MaPhan,
@@ -285,34 +502,116 @@ namespace BEQuestionBank.Core.Services
                     NoiDung = parent.NoiDung,
                     HoanVi = parent.HoanVi,
                     CapDo = parent.CapDo,
-                    SoCauHoiCon = soCon,
+                    SoCauHoiCon = parent.CauHoiCons.Count,
                     NgayTao = parent.NgayTao,
                     CLO = parent.CLO,
                     LoaiCauHoi = parent.LoaiCauHoi,
+                    XoaTam = parent.XoaTam ?? false,
 
-                    CauHoiCons = parent.CauHoiCons.Select(child => new CauHoiDto
+                    // Không include CauHoiCons ở đây để giảm payload
+                    // Client có thể gọi API detail để lấy đầy đủ
+                })
+                .ToList();
+
+            return new
+            {
+                Items = pagedData,
+                TotalCount = totalCount,
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
+        }
+
+        /// <summary>
+        /// Lấy chi tiết câu hỏi nhóm kèm tất cả câu hỏi con và câu trả lời
+        /// </summary>
+        public async Task<CauHoiNhomDetailDto?> GetGroupQuestionDetailAsync(Guid parentId)
+        {
+            var parent = await _cauHoiRepository.GetByIdWithChildrenAsync(parentId);
+
+            if (parent == null || parent.LoaiCauHoi != "Group")
+                return null;
+
+            var dto = new CauHoiNhomDetailDto
+            {
+                MaCauHoi = parent.MaCauHoi,
+                MaPhan = parent.MaPhan,
+                MaSoCauHoi = parent.MaSoCauHoi,
+                NoiDung = parent.NoiDung,
+                HoanVi = parent.HoanVi,
+                CapDo = parent.CapDo,
+                CLO = parent.CLO,
+                LoaiCauHoi = parent.LoaiCauHoi,
+                SoCauHoiCon = parent.CauHoiCons.Count,
+                NgayTao = parent.NgayTao,
+                XoaTam = parent.XoaTam ?? false,
+
+                // Map các câu hỏi con
+                CauHoiCons = parent.CauHoiCons
+                    .OrderBy(c => c.NgayTao)
+                    .Select(child => new CauHoiWithCauTraLoiDto
                     {
                         MaCauHoi = child.MaCauHoi,
+                        MaCauHoiCha = child.MaCauHoiCha,
+                        MaPhan = child.MaPhan,
                         MaSoCauHoi = child.MaSoCauHoi,
                         NoiDung = child.NoiDung,
                         HoanVi = child.HoanVi,
                         CapDo = child.CapDo,
                         CLO = child.CLO,
                         LoaiCauHoi = child.LoaiCauHoi,
-                        CauTraLois = child.CauTraLois.Select(a => new CauTraLoiDto
+
+                        // Map các câu trả lời của câu hỏi con
+                        CauTraLois = child.CauTraLois.Select(ans => new CauTraLoiDto
                         {
-                            MaCauTraLoi = a.MaCauTraLoi,
-                            NoiDung = a.NoiDung,
-                            LaDapAn = a.LaDapAn,
-                            HoanVi = a.HoanVi
+                            MaCauTraLoi = ans.MaCauTraLoi,
+                            NoiDung = ans.NoiDung,
+                            LaDapAn = ans.LaDapAn,
+                            HoanVi = ans.HoanVi
                         }).ToList()
                     }).ToList()
-                };
+            };
 
-                result.Add(parentDto);
-            }
+            return dto;
+        }
 
-            return result.OrderByDescending(x => x.MaSoCauHoi).ToList();
+        /// <summary>
+        /// Lấy danh sách câu hỏi con của một câu hỏi nhóm
+        /// </summary>
+        public async Task<List<CauHoiWithCauTraLoiDto>> GetChildQuestionsByParentIdAsync(Guid parentId)
+        {
+            var parent = await _cauHoiRepository.GetByIdWithChildrenAsync(parentId);
+
+            if (parent == null || parent.LoaiCauHoi != "Group")
+                return new List<CauHoiWithCauTraLoiDto>();
+
+            var childQuestions = parent.CauHoiCons
+                .OrderBy(c => c.NgayTao)
+                .Select(child => new CauHoiWithCauTraLoiDto
+                {
+                    MaCauHoi = child.MaCauHoi,
+                    MaCauHoiCha = child.MaCauHoiCha,
+                    MaPhan = child.MaPhan,
+                    MaSoCauHoi = child.MaSoCauHoi,
+                    NoiDung = child.NoiDung,
+                    HoanVi = child.HoanVi,
+                    CapDo = child.CapDo,
+                    CLO = child.CLO,
+                    LoaiCauHoi = child.LoaiCauHoi,
+                    SoCauHoiCon = 0,
+
+                    CauTraLois = child.CauTraLois.Select(ans => new CauTraLoiDto
+                    {
+                        MaCauTraLoi = ans.MaCauTraLoi,
+                        NoiDung = ans.NoiDung,
+                        LaDapAn = ans.LaDapAn,
+                        HoanVi = ans.HoanVi
+                    }).ToList()
+                })
+                .ToList();
+
+            return childQuestions;
         }
 
         /// <summary>
@@ -510,6 +809,100 @@ namespace BEQuestionBank.Core.Services
 
             return dienTuQuestions;
         }
+        /// <summary>
+        /// Thống kê số lượng câu hỏi theo loại
+        /// </summary>
+        public async Task<object> GetStatisticsAsync(Guid? khoaId = null, Guid? monHocId = null, Guid? phanId = null)
+        {
+            var entities = await _cauHoiRepository.GetAllWithAnswersAsync();
+
+            // Lọc câu hỏi gốc (không phải câu con)
+            var query = entities.Where(e => e.MaCauHoiCha == null && !e.XoaTam.GetValueOrDefault());
+
+            // Áp dụng filter
+            if (phanId.HasValue)
+                query = query.Where(q => q.MaPhan == phanId.Value);
+            else if (monHocId.HasValue)
+                query = query.Where(q => q.Phan != null && q.Phan.MaMonHoc == monHocId.Value);
+            else if (khoaId.HasValue)
+                query = query.Where(q => q.Phan != null && q.Phan.MonHoc != null && q.Phan.MonHoc.MaKhoa == khoaId.Value);
+
+            var questionsList = query.ToList();
+
+            // Thống kê theo loại
+            var byType = questionsList
+                .GroupBy(q => q.LoaiCauHoi ?? "Unknown")
+                .Select(g => new
+                {
+                    LoaiCauHoi = g.Key,
+                    SoLuong = g.Count()
+                })
+                .ToList();
+
+            // Thống kê theo CLO
+            var byCLO = questionsList
+                .Where(q => q.CLO.HasValue)
+                .GroupBy(q => q.CLO!.Value)
+                .Select(g => new
+                {
+                    CLO = g.Key.ToString(),
+                    SoLuong = g.Count()
+                })
+                .ToList();
+
+            // Thống kê theo cấp độ
+            var byLevel = questionsList
+                .GroupBy(q => q.CapDo)
+                .Select(g => new
+                {
+                    CapDo = g.Key,
+                    SoLuong = g.Count()
+                })
+                .OrderBy(x => x.CapDo)
+                .ToList();
+
+            return new
+            {
+                TongSoCauHoi = questionsList.Count,
+                SoCauHoiDon = questionsList.Count(q => q.LoaiCauHoi == "Single"),
+                SoCauHoiNhom = questionsList.Count(q => q.LoaiCauHoi == "Group"),
+                SoCauHoiGhepNoi = questionsList.Count(q => q.LoaiCauHoi == "GN"),
+                SoCauHoiDienTu = questionsList.Count(q => q.LoaiCauHoi == "DT"),
+                ThongKeTheoLoai = byType,
+                ThongKeTheoCLO = byCLO,
+                ThongKeTheoCapDo = byLevel
+            };
+        }
+
+        /// <summary>
+        /// Lấy danh sách các loại câu hỏi có trong hệ thống
+        /// </summary>
+        public async Task<object> GetQuestionTypesAsync()
+        {
+            var entities = await _cauHoiRepository.GetAllAsync();
+
+            var types = entities
+                .Where(e => e.MaCauHoiCha == null && !e.XoaTam.GetValueOrDefault())
+                .Select(e => e.LoaiCauHoi)
+                .Distinct()
+                .Where(type => !string.IsNullOrEmpty(type))
+                .Select(type => new
+                {
+                    Value = type,
+                    Label = type switch
+                    {
+                        "Single" => "Câu hỏi đơn",
+                        "Group" => "Câu hỏi nhóm",
+                        "GN" => "Câu hỏi ghép nối",
+                        "DT" => "Câu hỏi điền từ",
+                        _ => type
+                    }
+                })
+                .ToList();
+
+            return types;
+        }
+
         private bool IsDescendantOf(CauHoi entity, Guid rootId, IEnumerable<CauHoi> all)
         {
             while (entity.MaCauHoiCha != null)
