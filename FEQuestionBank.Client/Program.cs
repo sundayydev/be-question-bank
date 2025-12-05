@@ -27,6 +27,7 @@ builder.Services.AddScoped<IDeThiApiClient,DeThiApiClient>();
 builder.Services.AddScoped<IYeuCauRutTrichApiClient,YeuCauRutTrichApiClient>();
 builder.Services.AddScoped<IFileApiClient, FileApiClient>();
 builder.Services.AddScoped<ICauHoiApiClient, CauHoiApiClient>();
+builder.Services.AddScoped<IImportApiClient, ImportApiClient>();
 
 // AuthApiClient (dùng HttpClient đơn giản, không TokenHandler)
 builder.Services.AddScoped<IAuthApiClient, AuthApiClient>();

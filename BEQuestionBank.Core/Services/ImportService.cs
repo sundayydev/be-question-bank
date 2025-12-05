@@ -471,8 +471,8 @@ namespace BEQuestionBank.Core.Services
                 string contentType = imagePart.ContentType;
 
                 // LƯU ẢNH DƯỚI DẠNG BASE64 NHÚNG TRỰC TIẾP VÀO HTML
-                string base64 = Convert.ToBase64String(imageBytes);
-                sb.Append($"<img src=\"data:{contentType};base64,{base64}\" style=\"max-width:100%; height:auto; display:block; margin: 10px 0;\" />");
+                    string base64 = Convert.ToBase64String(imageBytes);
+                    sb.Append($"<img src=\"data:{contentType};base64,{base64}\" style=\"max-width:100%; height:auto; display:block; margin: 10px 0;\" />");
 
                 // Không cần lưu vào bảng File riêng vì đã nhúng trong NoiDung
             }
@@ -598,8 +598,8 @@ namespace BEQuestionBank.Core.Services
             // Lưu Batch
             try
             {
-                await _cauHoiRepository.AddRangeAsync(entities);
-                result.SuccessCount = entities.Count;
+            await _cauHoiRepository.AddRangeAsync(entities);
+            result.SuccessCount = entities.Count;
             }
             catch (Exception ex)
             {
