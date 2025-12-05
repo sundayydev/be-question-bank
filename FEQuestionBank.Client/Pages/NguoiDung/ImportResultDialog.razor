@@ -1,0 +1,120 @@
+﻿@using BeQuestionBank.Shared.DTOs.user
+@* ImportResultDialog.razor - Enhanced with modern UI *@
+<MudDialog @bind-IsVisible="IsVisible"
+           Options="new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseOnEscapeKey = true }">
+    <TitleContent>
+        <div class="d-flex align-center justify-space-between" style="padding: 0;">
+            <MudText Typo="Typo.h5" Class="d-flex align-center font-weight-600" Style="color: #1a1a2e;">
+                <MudIcon Icon="@Icons.Material.Filled.ImportExport" Color="Color.Primary" Class="mr-3"
+                         Style="font-size: 28px;"/>
+                Kết quả nhập người dùng từ Excel
+            </MudText>
+        </div>
+    </TitleContent>
+
+    <DialogContent>
+        <div style="height: 500px; overflow-y: auto;">
+            <MudGrid Spacing="3" Class="my-2">
+                <!-- Improved stats cards with modern design, better spacing and subtle backgrounds -->
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-2 text-center rounded-lg"
+                              Style="  background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%); border-left: 4px solid #2196f3; box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircleOutline" Size="Size.Large"
+                                 Color="Color.Success"
+                                 Style="font-size: 40px;"/>
+                        <MudText Typo="Typo.h3" Class="mt-3 font-weight-600"
+                                 Style="color: #1b5e20;">@Result.SuccessCount</MudText>
+                        <MudText Typo="Typo.body2" Style="color: #558b2f; font-weight: 500;">Thành công</MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-2 text-center rounded-lg"
+                              Style="background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%); border-left: 4px solid #f44336; box-shadow: 0 2px 8px rgba(244, 67, 54, 0.1);">
+                        <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Size="Size.Large" Color="Color.Error"
+                                 Style="font-size: 40px;"/>
+                        <MudText Typo="Typo.h3" Class="mt-3 font-weight-600"
+                                 Style="color: #b71c1c;">@Result.ErrorCount</MudText>
+                        <MudText Typo="Typo.body2" Style="color: #c62828; font-weight: 500;">Lỗi</MudText>
+                    </MudPaper>
+                </MudItem>
+
+                @if (!string.IsNullOrWhiteSpace(Result.Message))
+                {
+                    <!-- Improved alert styling with better visual hierarchy -->
+                    <MudItem xs="12">
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="rounded-lg"
+                                  Style="background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%); color: #0277bd; border-left: 4px solid #0288d1;">
+                            <strong>Thông tin:</strong> @Result.Message
+                        </MudAlert>
+                    </MudItem>
+                }
+
+                @if (Result.ErrorCount > 0)
+                {
+                    <!-- Enhanced error section with better styling and visual feedback -->
+                    <MudItem xs="12">
+                        <MudAlert Severity="Severity.Warning" Class="mb-4 rounded-lg"
+                                  Style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); color: #e65100; border-left: 4px solid #ff9800;">
+                            Có <strong>@Result.ErrorCount</strong> dòng bị lỗi. Vui lòng sửa và thử lại.
+                        </MudAlert>
+
+                        <MudExpansionPanels Class="rounded-lg" Style="box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+                            <MudExpansionPanel Text="@($"Xem chi tiết {Result.Errors.Count} lỗi")"
+                                               IsInitiallyExpanded="false"
+                                               Class="rounded-lg">
+                                <MudList T="string" Dense="true">
+                                    @foreach (var err in Result.Errors)
+                                    {
+                                        <MudListItem T="string" Class="py-2"
+                                                     Style="border-left: 3px solid #ff7043; padding-left: 12px; margin-bottom: 4px;">
+                                            <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning"
+                                                     Class="mr-3" Size="Size.Small"/>
+                                            <MudText Style="color: #333; font-size: 0.9rem;">@err</MudText>
+                                        </MudListItem>
+                                    }
+                                </MudList>
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+                    </MudItem>
+                }
+                else
+                {
+                    <!-- Enhanced success alert with better styling -->
+                    <MudItem xs="12">
+                        <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Class="rounded-lg"
+                                  Style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); color: #1b5e20; border-left: 4px solid #4caf50;">
+                            <MudIcon Icon="@Icons.Material.Filled.TaskAlt" Color="Color.Success" Class="mr-3"
+                                     Size="Size.Small"/>
+                            <strong>Tuyệt vời!</strong> Tất cả đã nhập thành công!
+                        </MudAlert>
+                    </MudItem>
+                }
+            </MudGrid>
+        </div>
+    </DialogContent>
+
+    <!-- Improved action buttons with better styling and layout -->
+    <DialogActions>
+        <div class="pa-6"
+             style="background: #f5f7fa; border-top: 1px solid #e0e0e0; display: flex; justify-content: flex-end;">
+            <MudButton OnClick="OnClose" Variant="Variant.Outlined" Class="rounded-lg">
+                Đóng
+            </MudButton>
+            <MudButton OnClick="OnViewList" Variant="Variant.Filled" Color="Color.Primary" Class="ml-3 rounded-lg">
+                <MudIcon Icon="@Icons.Material.Filled.List" Class="mr-2"/>
+                Xem danh sách
+            </MudButton>
+        </div>
+    </DialogActions>
+
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public ImportResultDto Result { get; set; } = default!;
+    [Parameter] public bool IsVisible { get; set; }
+
+    private void OnClose() => MudDialog.Cancel();
+    private void OnViewList() => MudDialog.Close(DialogResult.Ok("view-list"));
+}

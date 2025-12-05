@@ -11,7 +11,7 @@ namespace BeQuestionBank.API.Controllers
 {
     [Route("api/[controller]")] 
     [ApiController]
-    //[Authorize]
+    // [Authorize]
     public class CauHoiController : ControllerBase
     {
         private readonly CauHoiService _cauHoiService;
@@ -24,75 +24,21 @@ namespace BeQuestionBank.API.Controllers
         }
 
         /// <summary>
-        /// Lấy danh sách tất cả câu hỏi với phân trang và lọc nâng cao
+        /// Lấy tất cả câu hỏi (Thường dùng cho trang danh sách)
         /// </summary>
         [HttpGet]
-        [SwaggerOperation(
-            Summary = "Lấy danh sách câu hỏi",
-            Description = "Lấy danh sách tất cả câu hỏi với hỗ trợ phân trang, tìm kiếm, lọc theo loại câu hỏi, khoa, môn học, phần."
-        )]
-        public async Task<IActionResult> GetAll(
-            [FromQuery] int pageIndex = 1,
-            [FromQuery] int pageSize = 20,
-            [FromQuery] string? keyword = null,
-            [FromQuery] string? loaiCauHoi = null,
-            [FromQuery] Guid? khoaId = null,
-            [FromQuery] Guid? monHocId = null,
-            [FromQuery] Guid? phanId = null,
-            [FromQuery] string? sortBy = "NgayTao",
-            [FromQuery] string? sortOrder = "desc")
+        [SwaggerOperation("Lấy tất cả câu hỏi")]
+        public async Task<IActionResult> GetAll()
         {
             try
             {
-                var result = await _cauHoiService.GetAllWithFilterAsync(
-                    pageIndex,
-                    pageSize,
-                    keyword,
-                    loaiCauHoi,
-                    khoaId,
-                    monHocId,
-                    phanId,
-                    sortBy,
-                    sortOrder
-                );
-
+                // Lưu ý: Bạn cần bổ sung hàm GetAllAsync vào Service nếu chưa có
+                var result = await _cauHoiService.GetAllAsync();
                 return Ok(ApiResponseFactory.Success(result));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Lỗi khi lấy danh sách câu hỏi");
-                return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
-            }
-        }
-
-        /// <summary>
-        /// Lấy danh sách câu hỏi đơn (Single questions)
-        /// </summary>
-        [HttpGet("single-questions")]
-        [SwaggerOperation(
-            Summary = "Lấy danh sách câu hỏi đơn",
-            Description = "Lấy danh sách câu hỏi dạng trắc nghiệm đơn (không có câu hỏi con)."
-        )]
-        public async Task<IActionResult> GetSingleQuestions(
-            [FromQuery] int pageIndex = 1,
-            [FromQuery] int pageSize = 20,
-            [FromQuery] string? keyword = null,
-            [FromQuery] Guid? phanId = null)
-        {
-            try
-            {
-                var result = await _cauHoiService.GetSingleQuestionsAsync(
-                    pageIndex,
-                    pageSize,
-                    keyword,
-                    phanId
-                );
-
-                return Ok(ApiResponseFactory.Success(result));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi lấy danh sách câu hỏi đơn");
                 return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
             }
         }
@@ -236,6 +182,16 @@ namespace BeQuestionBank.API.Controllers
             }
         }
 
+        // Helper để lấy ID người dùng từ Token JWT
+        private Guid GetCurrentUserId()
+        {
+            var idClaim = User.FindFirst("Id") ?? User.FindFirst(ClaimTypes.NameIdentifier);
+            if (idClaim != null && Guid.TryParse(idClaim.Value, out Guid userId))
+            {
+                return userId;
+            }
+            return Guid.Empty; // Hoặc throw exception nếu bắt buộc phải có user
+        }
         /// <summary>
         /// Thống kê số lượng câu hỏi theo loại
         /// </summary>
@@ -260,7 +216,7 @@ namespace BeQuestionBank.API.Controllers
                 return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
             }
         }
-
+        
         /// <summary>
         /// Lấy các loại câu hỏi có sẵn
         /// </summary>
@@ -283,23 +239,14 @@ namespace BeQuestionBank.API.Controllers
             }
         }
 
-        // Helper để lấy ID người dùng từ Token JWT
-        private Guid GetCurrentUserId()
-        {
-            var idClaim = User.FindFirst("Id") ?? User.FindFirst(ClaimTypes.NameIdentifier);
-            if (idClaim != null && Guid.TryParse(idClaim.Value, out Guid userId))
-            {
-                return userId;
-            }
-            return Guid.Empty; // Hoặc throw exception nếu bắt buộc phải có user
-        }
         /// <summary>
         /// Lấy danh sách câu hỏi nhóm (có phân trang và lọc)
         /// </summary>
         [HttpGet("group-questions")]
         [SwaggerOperation(
             Summary = "Lấy danh sách câu hỏi nhóm",
-            Description = "Trả về danh sách câu hỏi thuộc dạng nhóm với hỗ trợ phân trang, tìm kiếm và lọc theo các tiêu chí."
+            Description =
+                "Trả về danh sách câu hỏi thuộc dạng nhóm với hỗ trợ phân trang, tìm kiếm và lọc theo các tiêu chí."
         )]
         public async Task<IActionResult> GetGroupQuestions(
             [FromQuery] int pageIndex = 1,
@@ -312,13 +259,13 @@ namespace BeQuestionBank.API.Controllers
             try
             {
                 var result = await _cauHoiService.GetCauHoiNhomAsync(
-                    pageIndex, 
-                    pageSize, 
-                    keyword, 
-                    khoaId, 
-                    monHocId, 
+                    pageIndex,
+                    pageSize,
+                    keyword,
+                    khoaId,
+                    monHocId,
                     phanId);
-                
+
                 return Ok(ApiResponseFactory.Success(result));
             }
             catch (Exception ex)
@@ -334,14 +281,15 @@ namespace BeQuestionBank.API.Controllers
         [HttpGet("group-questions/{id}")]
         [SwaggerOperation(
             Summary = "Lấy chi tiết câu hỏi nhóm",
-            Description = "Lấy thông tin chi tiết của một câu hỏi nhóm bao gồm nội dung đoạn văn và tất cả các câu hỏi con với câu trả lời."
+            Description =
+                "Lấy thông tin chi tiết của một câu hỏi nhóm bao gồm nội dung đoạn văn và tất cả các câu hỏi con với câu trả lời."
         )]
         public async Task<IActionResult> GetGroupQuestionById(Guid id)
         {
             try
             {
                 var result = await _cauHoiService.GetGroupQuestionDetailAsync(id);
-                
+         
                 if (result == null)
                     return NotFound(ApiResponseFactory.NotFound<object>("Không tìm thấy câu hỏi nhóm"));
 
@@ -353,7 +301,6 @@ namespace BeQuestionBank.API.Controllers
                 return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
             }
         }
-
         /// <summary>
         /// Lấy danh sách câu hỏi con của một câu hỏi nhóm
         /// </summary>
@@ -367,7 +314,7 @@ namespace BeQuestionBank.API.Controllers
             try
             {
                 var result = await _cauHoiService.GetChildQuestionsByParentIdAsync(parentId);
-                
+         
                 return Ok(ApiResponseFactory.Success(result));
             }
             catch (Exception ex)
@@ -376,6 +323,7 @@ namespace BeQuestionBank.API.Controllers
                 return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
             }
         }
+        
 
         [HttpGet("pairing-question")]
         [SwaggerOperation(
@@ -418,6 +366,66 @@ namespace BeQuestionBank.API.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Lỗi khi lấy danh sách câu hỏi");
+                return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Tạo câu hỏi điền từ (Fill in the blank) - DT
+        /// </summary>
+        [HttpPost("dientu")]
+        [SwaggerOperation(
+            Summary = "Tạo câu hỏi điền từ",
+            Description = "Tạo câu hỏi dạng điền từ, các đáp án đều đúng và thứ tự cực kỳ quan trọng."
+        )]
+        public async Task<IActionResult> CreateDienTu([FromBody] CreateCauHoiDienTuDto request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ", ModelState));
+
+            try
+            {
+                var userId = GetCurrentUserId();
+                var result = await _cauHoiService.CreateCauHoiDienTuAsync(request, userId);
+
+                if (result != null)
+                    return Ok(ApiResponseFactory.Success(result, "Tạo câu hỏi điền từ thành công"));
+
+                return BadRequest(ApiResponseFactory.Error<object>(400, "Tạo thất bại"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi tạo câu hỏi điền từ");
+                return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Tạo câu hỏi ghép nối (Matching) - GN
+        /// </summary>
+        [HttpPost("ghepnoi")]
+        [SwaggerOperation(
+            Summary = "Tạo câu hỏi ghép nối",
+            Description = "Tạo một nhóm câu hỏi ghép nối (có câu cha làm tiêu đề và các cặp Trái - Phải)."
+        )]
+        public async Task<IActionResult> CreateGhepNoi([FromBody] CreateCauHoiGhepNoiDto request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ", ModelState));
+
+            try
+            {
+                var userId = GetCurrentUserId();
+                var result = await _cauHoiService.CreateCauHoiGhepNoiAsync(request, userId);
+
+                if (result != null)
+                    return Ok(ApiResponseFactory.Success(result, "Tạo câu hỏi ghép nối thành công"));
+
+                return BadRequest(ApiResponseFactory.Error<object>(400, "Tạo thất bại"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi tạo câu hỏi ghép nối");
                 return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
             }
         }
