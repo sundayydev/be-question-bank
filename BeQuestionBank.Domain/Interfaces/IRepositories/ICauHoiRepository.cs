@@ -1,4 +1,4 @@
-﻿using BeQuestionBank.Domain.Models;
+using BeQuestionBank.Domain.Models;
 using BeQuestionBank.Shared.Enums;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
@@ -17,6 +17,9 @@ public interface ICauHoiRepository : IRepository<CauHoi>
 
     // Đổi Object -> CauHoi? (cho phép null)
     Task<CauHoi?> GetByIdWithAnswersAsync(Guid maCauHoi);
+
+    // Lấy câu hỏi kèm theo các câu hỏi con (dành cho Group Questions)
+    Task<CauHoi?> GetByIdWithChildrenAsync(Guid maCauHoi);
 
     Task<IEnumerable<CauHoi>> GetByCLoAsync(EnumCLO maCLo);
     Task<IEnumerable<CauHoi>> GetByMaPhanAsync(Guid maPhan);

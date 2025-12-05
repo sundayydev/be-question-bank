@@ -1,4 +1,4 @@
-﻿using BeQuestionBank.Domain.Interfaces.IRepositories;
+using BeQuestionBank.Domain.Interfaces.IRepositories;
 using BeQuestionBank.Domain.Models;
 using BeQuestionBank.Shared.DTOs.File;
 using BeQuestionBank.Shared.Enums;
@@ -39,6 +39,14 @@ namespace BEQuestionBank.Core.Services
 
         // Regex Audio: [<audio>]path/to/file.mp3[</audio>]
         private readonly Regex _audioPattern = new Regex(@"\[<audio>\](.*?)\[</audio>\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        // Regex LaTeX: $...$ for inline and $$...$$ for display math
+        private readonly Regex _latexInlinePattern = new Regex(@"\$([^\$]+)\$", RegexOptions.Compiled);
+        private readonly Regex _latexDisplayPattern = new Regex(@"\$\$([^\$]+)\$\$", RegexOptions.Compiled);
+
+        // Regex LaTeX with \(...\) and \[...\]
+        private readonly Regex _latexInlineParenPattern = new Regex(@"\\\((.+?)\\\)", RegexOptions.Compiled);
+        private readonly Regex _latexDisplayBracketPattern = new Regex(@"\\\[(.+?)\\\]", RegexOptions.Compiled | RegexOptions.Singleline);
 
         public ImportService(ICauHoiRepository cauHoiRepository, ILogger<ImportService> logger)
         {
@@ -88,7 +96,6 @@ namespace BEQuestionBank.Core.Services
         public async Task<List<QuestionData>> ParseWordFileAsync(IFormFile wordFile, string? mediaFolderPath)
         {
             // Folder chứa ảnh/audio gốc (nếu import file có kèm folder media bên ngoài)
-            // Nếu upload zip thì cần giải nén trước, ở đây giả sử mediaFolderPath là đường dẫn folder chứa file media
             string sourceMediaFolder = mediaFolderPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "temp_media");
 
             var questions = new List<QuestionData>();
@@ -220,7 +227,6 @@ namespace BEQuestionBank.Core.Services
                         };
 
                         // Lấy nội dung HTML của dòng tiêu đề này (bao gồm cả ảnh/audio nếu có)
-                        // Truyền ref currentQuestion để hàm xử lý file đính kèm gắn vào câu hỏi này
                         currentQuestion.NoiDung = ParagraphToHtml(para, doc, sourceMediaFolder, currentQuestion, ref currentGroup);
                         continue;
                     }
@@ -234,7 +240,6 @@ namespace BEQuestionBank.Core.Services
                     }
 
                     // --- 5. NỘI DUNG BỔ SUNG CHO CÂU HỎI HIỆN TẠI ---
-                    // (Ví dụ: Dòng text xuống dòng, hoặc ảnh minh họa nằm riêng 1 dòng)
                     if (currentQuestion != null)
                     {
                         // Bỏ qua dòng trống hoàn toàn
@@ -244,7 +249,6 @@ namespace BEQuestionBank.Core.Services
                             currentQuestion.NoiDung += "<br/>" + html;
                         }
                     }
-                    // Nếu không thuộc câu hỏi nào và đang ở ngoài nhóm (rác hoặc intro), có thể bỏ qua
                 }
 
                 // Kết thúc vòng lặp, check câu hỏi cuối cùng
@@ -284,12 +288,11 @@ namespace BEQuestionBank.Core.Services
             QuestionData currentQuestion, QuestionData? currentGroup)
         {
             // Convert cả đoạn văn đáp án sang HTML trước để giữ định dạng (đậm, nghiêng, ảnh...)
-            // Lưu ý: pass 'currentQuestion' để ảnh/audio trong đáp án được gắn vào FileData của câu hỏi
             string fullHtml = ParagraphToHtml(para, doc, sourceMediaFolder, currentQuestion, ref currentGroup);
             string fullText = para.InnerText.Trim();
 
             // Xác định đáp án nào (A, B, C, D)
-            char dapAnChar = fullText.ToUpper()[0]; // Lấy ký tự đầu tiên
+            char dapAnChar = fullText.ToUpper()[0];
             int thuTu = dapAnChar - 'A' + 1;
 
             // Kiểm tra đúng/sai (Gạch chân) và hoán vị (In nghiêng)
@@ -304,17 +307,13 @@ namespace BEQuestionBank.Core.Services
                     // Check gạch chân -> Đúng
                     if (run.RunProperties.Underline != null && run.RunProperties.Underline.Val != UnderlineValues.None)
                         isCorrect = true;
-                    // Check in nghiêng -> KHÔNG hoán vị (cố định) - Theo logic bạn yêu cầu ở prompt trước
-                    // Hoặc ngược lại tùy logic dự án: "In nghiêng là có hoán vị". Ở đây tôi để: In nghiêng => Cố định (False)
+                    // Check in nghiêng -> KHÔNG hoán vị (cố định)
                     if (run.RunProperties.Italic != null)
                         isShuffle = false;
                 }
             }
 
             // Clean nội dung: Xóa "A." ở đầu chuỗi HTML
-            // Cách đơn giản: Regex replace kí tự đầu tiên của text trong HTML
-            // Tuy nhiên HTML phức tạp. Cách an toàn nhất cho hiển thị là để nguyên hoặc replace text thuần.
-            // Ở đây ta dùng Regex replace text pattern A. ở đầu
             string cleanHtml = Regex.Replace(fullHtml, @"^[A-D]\.\s*", "", RegexOptions.IgnoreCase);
 
             currentQuestion.Answers.Add(new AnswerData
@@ -331,17 +330,14 @@ namespace BEQuestionBank.Core.Services
             QuestionData? currentQuestion, ref QuestionData? currentGroup)
         {
             var sb = new StringBuilder();
-            var audioSb = new StringBuilder(); // Chứa HTML audio player
+            var audioSb = new StringBuilder();
 
             foreach (var run in para.Elements<Run>())
             {
                 var text = run.InnerText;
                 if (!string.IsNullOrEmpty(text))
                 {
-                    // Clean các tag hệ thống ra khỏi text hiển thị (nếu muốn)
-                    // text = text.Replace("[<br>]", "").Replace("[<egc>]", ""); 
-                    // Tùy nhu cầu, ở đây giữ nguyên style text
-
+                    // Apply text formatting
                     if (run.RunProperties != null)
                     {
                         if (run.RunProperties.Bold != null) text = $"<b>{text}</b>";
@@ -360,18 +356,21 @@ namespace BEQuestionBank.Core.Services
 
             string html = sb.ToString();
 
+            // --- XỬ LÝ LATEX - CHUYỂN ĐỔI SANG HTML ---
+            html = ConvertLatexToHtml(html);
+
             // --- XỬ LÝ AUDIO (Regex trên toàn bộ HTML của đoạn văn) ---
             var matches = _audioPattern.Matches(html);
             foreach (Match match in matches)
             {
-                string audioFileName = match.Groups[1].Value.Trim(); // VD: audio/47-49.mp3
+                string audioFileName = match.Groups[1].Value.Trim();
 
                 // Xử lý copy file audio
                 string savedFileName = ProcessAudioFile(audioFileName, sourceMediaFolder, currentQuestion, currentGroup);
 
                 if (!string.IsNullOrEmpty(savedFileName))
                 {
-                    // Tạo HTML Player
+                    // Tạo HTML Player - Lưu đường dẫn file
                     string audioPlayerHtml = $@"
                         <div class='audio-player-wrapper'>
                             <audio controls>
@@ -388,6 +387,47 @@ namespace BEQuestionBank.Core.Services
 
             // Ghép Audio vào cuối đoạn văn
             return html + audioSb.ToString();
+        }
+
+        /// <summary>
+        /// Chuyển đổi LaTeX sang HTML với MathJax/KaTeX support
+        /// </summary>
+        private string ConvertLatexToHtml(string content)
+        {
+            if (string.IsNullOrEmpty(content))
+                return content;
+
+            // Xử lý display math trước ($$...$$)
+            content = _latexDisplayPattern.Replace(content, match =>
+            {
+                string latex = match.Groups[1].Value.Trim();
+                // Wrap với delimiters cho MathJax
+                return $@"<div class='math-display'>\[{latex}\]</div>";
+            });
+
+            // Xử lý display math với \[...\]
+            content = _latexDisplayBracketPattern.Replace(content, match =>
+            {
+                string latex = match.Groups[1].Value.Trim();
+                return $@"<div class='math-display'>\[{latex}\]</div>";
+            });
+
+            // Xử lý inline math ($...$)
+            content = _latexInlinePattern.Replace(content, match =>
+            {
+                string latex = match.Groups[1].Value.Trim();
+                // Wrap với delimiters cho MathJax
+                return $@"<span class='math-inline'>\({latex}\)</span>";
+            });
+
+            // Xử lý inline math với \(...\)
+            content = _latexInlineParenPattern.Replace(content, match =>
+            {
+                string latex = match.Groups[1].Value.Trim();
+                return $@"<span class='math-inline'>\({latex}\)</span>";
+            });
+
+            return content;
         }
 
         private string ExtractImagesFromRun(Run run, WordprocessingDocument doc, ref QuestionData? question, ref QuestionData? group)
@@ -430,29 +470,11 @@ namespace BEQuestionBank.Core.Services
                 stream.Read(imageBytes, 0, imageBytes.Length);
                 string contentType = imagePart.ContentType;
 
-                if (USE_IMAGE_AS_BASE64)
-                {
-                    string base64 = Convert.ToBase64String(imageBytes);
-                    sb.Append($"<img src=\"data:{contentType};base64,{base64}\" style=\"max-width:100%; height:auto; display:block; margin: 10px 0;\" />");
-                }
-                else
-                {
-                    // Lưu ra file vật lý (wwwroot/images)
-                    string fileName = $"{Guid.NewGuid()}{GetExtension(contentType)}";
-                    string savePath = Path.Combine(_storagePath, "images", fileName);
+                // LƯU ẢNH DƯỚI DẠNG BASE64 NHÚNG TRỰC TIẾP VÀO HTML
+                string base64 = Convert.ToBase64String(imageBytes);
+                sb.Append($"<img src=\"data:{contentType};base64,{base64}\" style=\"max-width:100%; height:auto; display:block; margin: 10px 0;\" />");
 
-                    if (!Directory.Exists(Path.GetDirectoryName(savePath)))
-                        Directory.CreateDirectory(Path.GetDirectoryName(savePath)!);
-
-                    File.WriteAllBytes(savePath, imageBytes);
-
-                    // Thêm thông tin FileData vào câu hỏi/nhóm để lưu DB (nếu cần)
-                    var fileData = new FileData { FileName = fileName, FileType = FileType.Image };
-                    if (question != null) question.Files.Add(fileData);
-                    else if (group != null) group.Files.Add(fileData);
-
-                    sb.Append($"<img src=\"/images/{fileName}\" style=\"max-width:100%;\" />");
-                }
+                // Không cần lưu vào bảng File riêng vì đã nhúng trong NoiDung
             }
             catch (Exception ex)
             {
@@ -465,26 +487,24 @@ namespace BEQuestionBank.Core.Services
             try
             {
                 // relativePath VD: audio/47-49.mp3
-                // sourceMediaFolder: Đường dẫn folder chứa file này bên ngoài (do user upload hoặc cấu hình)
-
                 string sourcePath = Path.Combine(sourceMediaFolder, relativePath.Replace("/", Path.DirectorySeparatorChar.ToString()));
 
                 if (File.Exists(sourcePath))
                 {
                     string newFileName = $"{Guid.NewGuid()}{Path.GetExtension(sourcePath)}";
-                    string destFolder = Path.Combine(_storagePath, "media"); // wwwroot/media
+                    string destFolder = Path.Combine(_storagePath, "media");
 
                     if (!Directory.Exists(destFolder)) Directory.CreateDirectory(destFolder);
 
                     string destPath = Path.Combine(destFolder, newFileName);
                     File.Copy(sourcePath, destPath, true);
 
-                    // Thêm FileData vào DTO để lưu DB
+                    // Lưu thông tin file audio vào database
                     var fileData = new FileData
                     {
                         FileName = newFileName,
                         FileType = FileType.Audio,
-                        // Nếu muốn lưu binary vào DB thì đọc bytes tại đây
+                        FilePath = $"/media/{newFileName}" // Lưu đường dẫn
                     };
 
                     if (question != null) question.Files.Add(fileData);
@@ -521,8 +541,18 @@ namespace BEQuestionBank.Core.Services
         {
             // Lấy mã số lớn nhất hiện tại
             int currentMaxMaSo = 0;
-            // Cần implement hàm lấy MaxMaSo trong Repo, hoặc query đơn giản
-            // currentMaxMaSo = await _cauHoiRepository.GetMaxMaSoCauHoiAsync();
+            try
+            {
+                var existingQuestions = await _cauHoiRepository.GetByMaPhanAsync(maPhan);
+                if (existingQuestions != null && existingQuestions.Any())
+                {
+                    currentMaxMaSo = existingQuestions.Max(q => q.MaSoCauHoi);
+                }
+            }
+            catch
+            {
+                currentMaxMaSo = 0;
+            }
 
             var entities = new List<CauHoi>();
 
@@ -538,21 +568,22 @@ namespace BEQuestionBank.Core.Services
                         MaCauHoi = qData.MaCauHoi,
                         MaPhan = maPhan,
                         NoiDung = qData.NoiDungNhom,
-                        LoaiCauHoi = "Nhom", // Hoặc "Group"
+                        LoaiCauHoi = "Nhom",
                         MaSoCauHoi = currentMaxMaSo,
                         NgayTao = DateTime.UtcNow,
-                        MaCauHoiCha = null, // Nhóm không có cha
+                        MaCauHoiCha = null,
                         SoCauHoiCon = qData.CauHoiCon.Count,
-                        // Map Files nếu có
+                        TrangThai = true,
+                        HoanVi = false // Nhóm không hoán vị
                     };
                     entities.Add(groupEntity);
 
                     // 2. Lưu các câu hỏi con
                     foreach (var subQ in qData.CauHoiCon)
                     {
-                        currentMaxMaSo++; // Tăng mã số cho câu con
+                        currentMaxMaSo++;
                         var subEntity = CreateCauHoiEntity(subQ, maPhan, currentMaxMaSo);
-                        subEntity.MaCauHoiCha = groupEntity.MaCauHoi; // Gắn cha
+                        subEntity.MaCauHoiCha = groupEntity.MaCauHoi;
                         entities.Add(subEntity);
                     }
                 }
@@ -565,13 +596,21 @@ namespace BEQuestionBank.Core.Services
             }
 
             // Lưu Batch
-            await _cauHoiRepository.AddRangeAsync(entities);
-            result.SuccessCount = entities.Count;
+            try
+            {
+                await _cauHoiRepository.AddRangeAsync(entities);
+                result.SuccessCount = entities.Count;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi lưu câu hỏi vào database");
+                result.Errors.Add($"Lỗi lưu database: {ex.Message}");
+            }
         }
 
         private CauHoi CreateCauHoiEntity(QuestionData dto, Guid maPhan, int maSo)
         {
-            return new CauHoi
+            var cauHoi = new CauHoi
             {
                 MaCauHoi = dto.MaCauHoi,
                 MaPhan = maPhan,
@@ -581,7 +620,10 @@ namespace BEQuestionBank.Core.Services
                 CLO = dto.CLO,
                 NgayTao = DateTime.UtcNow,
                 HoanVi = true,
-                MaCauHoiCha = dto.MaCauHoiCha, // Có thể null hoặc ID nhóm
+                TrangThai = true,
+                MaCauHoiCha = dto.MaCauHoiCha,
+                SoLanDuocThi = 0,
+                SoLanDung = 0,
 
                 // Map Câu Trả Lời
                 CauTraLois = dto.Answers.Select(a => new CauTraLoi
@@ -593,13 +635,236 @@ namespace BEQuestionBank.Core.Services
                     LaDapAn = a.LaDapAn,
                     HoanVi = a.HoanVi
                 }).ToList()
-
-                // Map Files (nếu cần lưu bảng File riêng)
-                // ...
             };
+
+            return cauHoi;
         }
 
-        // Đặt đoạn này ở cuối file WordImportService.cs, TRƯỚC dấu đóng ngoặc nhọn } của namespace
+        // --- PREVIEW IMPORT (VALIDATION ONLY) ---
+        
+        public async Task<ImportPreviewResult> PreviewImportAsync(IFormFile wordFile, string? mediaFolderPath)
+        {
+            var result = new ImportPreviewResult();
+
+            // 1. Validate File
+            if (wordFile == null || wordFile.Length == 0)
+            {
+                result.Errors.Add("File không được để trống.");
+                return result;
+            }
+            if (!wordFile.FileName.EndsWith(".docx", StringComparison.OrdinalIgnoreCase))
+            {
+                result.Errors.Add("Chỉ hỗ trợ định dạng .docx.");
+                return result;
+            }
+
+            // 2. Parse File Word
+            try
+            {
+                var questions = await ParseWordFileAsync(wordFile, mediaFolderPath);
+                result.TotalQuestionsFound = questions.Count;
+
+                // 3. Validate từng câu hỏi
+                int questionNumber = 0;
+                foreach (var question in questions)
+                {
+                    questionNumber++;
+                    var validationResult = ValidateQuestion(question, questionNumber);
+                    result.Questions.Add(validationResult);
+
+                    if (validationResult.IsValid)
+                        result.ValidCount++;
+                    else
+                        result.InvalidCount++;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi preview import file Word");
+                result.Errors.Add($"Lỗi xử lý file: {ex.Message}");
+            }
+
+            return result;
+        }
+
+        private QuestionValidationResult ValidateQuestion(QuestionData question, int questionNumber)
+        {
+            var result = new QuestionValidationResult
+            {
+                QuestionNumber = questionNumber,
+                IsGroup = question.IsGroup,
+                CLO = question.CLO?.ToString(),
+                ContentPreview = GetContentPreview(question),
+                IsValid = true
+            };
+
+            // Validate nội dung
+            if (question.IsGroup)
+            {
+                if (string.IsNullOrWhiteSpace(question.NoiDungNhom))
+                {
+                    result.Errors.Add("Nhóm câu hỏi không có nội dung dẫn");
+                    result.IsValid = false;
+                }
+
+                if (question.CauHoiCon.Count == 0)
+                {
+                    result.Errors.Add("Nhóm câu hỏi không có câu hỏi con nào");
+                    result.IsValid = false;
+                }
+                else
+                {
+                    result.SubQuestionsCount = question.CauHoiCon.Count;
+                    
+                    // Validate từng câu hỏi con
+                    int subQuestionIndex = 0;
+                    foreach (var subQ in question.CauHoiCon)
+                    {
+                        subQuestionIndex++;
+                        var subValidation = ValidateQuestionContent(subQ, $"{questionNumber}.{subQuestionIndex}");
+                        result.SubQuestions.Add(subValidation);
+                        
+                        if (!subValidation.IsValid)
+                            result.IsValid = false;
+                    }
+                }
+            }
+            else
+            {
+                // Validate câu hỏi đơn
+                var validation = ValidateQuestionContent(question, questionNumber.ToString());
+                result.Errors.AddRange(validation.Errors);
+                result.Warnings.AddRange(validation.Warnings);
+                result.AnswersCount = validation.AnswersCount;
+                result.CorrectAnswersCount = validation.CorrectAnswersCount;
+                result.HasImages = validation.HasImages;
+                result.HasAudio = validation.HasAudio;
+                result.HasLatex = validation.HasLatex;
+                
+                if (!validation.IsValid)
+                    result.IsValid = false;
+            }
+
+            return result;
+        }
+
+        private QuestionContentValidation ValidateQuestionContent(QuestionData question, string identifier)
+        {
+            var result = new QuestionContentValidation
+            {
+                Identifier = identifier,
+                IsValid = true
+            };
+
+            // 1. Validate nội dung câu hỏi
+            if (string.IsNullOrWhiteSpace(question.NoiDung))
+            {
+                result.Errors.Add($"Câu {identifier}: Không có nội dung câu hỏi");
+                result.IsValid = false;
+            }
+            else
+            {
+                // Check for LaTeX
+                if (question.NoiDung.Contains("$") || question.NoiDung.Contains("\\(") || question.NoiDung.Contains("\\["))
+                    result.HasLatex = true;
+
+                // Check for images
+                if (question.NoiDung.Contains("<img"))
+                    result.HasImages = true;
+
+                // Check for audio
+                if (question.NoiDung.Contains("<audio"))
+                    result.HasAudio = true;
+            }
+
+            // 2. Validate đáp án
+            result.AnswersCount = question.Answers.Count;
+
+            if (question.Answers.Count == 0)
+            {
+                result.Errors.Add($"Câu {identifier}: Không có đáp án nào");
+                result.IsValid = false;
+            }
+            else
+            {
+                // Check số lượng đáp án
+                if (question.Answers.Count < 2)
+                {
+                    result.Warnings.Add($"Câu {identifier}: Chỉ có {question.Answers.Count} đáp án (khuyến nghị ít nhất 2)");
+                }
+
+                // Check đáp án đúng
+                var correctAnswers = question.Answers.Where(a => a.LaDapAn).ToList();
+                result.CorrectAnswersCount = correctAnswers.Count;
+
+                if (correctAnswers.Count == 0)
+                {
+                    result.Errors.Add($"Câu {identifier}: Không có đáp án đúng nào (cần gạch chân đáp án đúng)");
+                    result.IsValid = false;
+                }
+                else if (correctAnswers.Count > 1)
+                {
+                    result.Warnings.Add($"Câu {identifier}: Có {correctAnswers.Count} đáp án đúng (câu hỏi nhiều đáp án đúng)");
+                }
+
+                // Check nội dung đáp án
+                for (int i = 0; i < question.Answers.Count; i++)
+                {
+                    var answer = question.Answers[i];
+                    if (string.IsNullOrWhiteSpace(answer.NoiDung))
+                    {
+                        result.Errors.Add($"Câu {identifier}: Đáp án {(char)('A' + i)} không có nội dung");
+                        result.IsValid = false;
+                    }
+                }
+
+                // Check thứ tự đáp án
+                var expectedOrder = question.Answers.OrderBy(a => a.ThuTu).Select(a => a.ThuTu).ToList();
+                var actualOrder = Enumerable.Range(1, question.Answers.Count).ToList();
+                if (!expectedOrder.SequenceEqual(actualOrder))
+                {
+                    result.Warnings.Add($"Câu {identifier}: Thứ tự đáp án không liên tục (có thể thiếu đáp án)");
+                }
+            }
+
+            // 3. Validate CLO
+            if (question.CLO == null)
+            {
+                result.Warnings.Add($"Câu {identifier}: Không có CLO (Course Learning Outcome)");
+            }
+
+            // 4. Validate files
+            if (question.Files.Any(f => f.FileType == FileType.Audio))
+            {
+                result.HasAudio = true;
+                foreach (var audioFile in question.Files.Where(f => f.FileType == FileType.Audio))
+                {
+                    // Check if audio file exists (if path is available)
+                    if (string.IsNullOrEmpty(audioFile.FileName))
+                    {
+                        result.Warnings.Add($"Câu {identifier}: File audio không có tên file");
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        private string GetContentPreview(QuestionData question)
+        {
+            string content = question.IsGroup ? question.NoiDungNhom : question.NoiDung;
+            
+            // Remove HTML tags for preview
+            content = System.Text.RegularExpressions.Regex.Replace(content, @"<[^>]+>", " ");
+            content = System.Text.RegularExpressions.Regex.Replace(content, @"\s+", " ");
+            content = content.Trim();
+
+            // Limit length
+            if (content.Length > 100)
+                content = content.Substring(0, 100) + "...";
+
+            return content;
+        }
 
         // --- CÁC CLASS DTO HỖ TRỢ ---
 
@@ -607,6 +872,54 @@ namespace BEQuestionBank.Core.Services
         {
             public int SuccessCount { get; set; }
             public List<string> Errors { get; set; } = new List<string>();
+        }
+
+        public class ImportPreviewResult
+        {
+            public int TotalQuestionsFound { get; set; }
+            public int ValidCount { get; set; }
+            public int InvalidCount { get; set; }
+            public List<string> Errors { get; set; } = new List<string>();
+            public List<QuestionValidationResult> Questions { get; set; } = new List<QuestionValidationResult>();
+
+            public bool HasErrors => Errors.Any() || InvalidCount > 0;
+            public string Summary => HasErrors 
+                ? $"Tìm thấy {TotalQuestionsFound} câu hỏi: {ValidCount} hợp lệ, {InvalidCount} có lỗi"
+                : $"Tìm thấy {TotalQuestionsFound} câu hỏi, tất cả đều hợp lệ";
+        }
+
+        public class QuestionValidationResult
+        {
+            public int QuestionNumber { get; set; }
+            public bool IsGroup { get; set; }
+            public string? CLO { get; set; }
+            public string ContentPreview { get; set; } = string.Empty;
+            public bool IsValid { get; set; }
+            public int AnswersCount { get; set; }
+            public int CorrectAnswersCount { get; set; }
+            public int SubQuestionsCount { get; set; }
+            public bool HasImages { get; set; }
+            public bool HasAudio { get; set; }
+            public bool HasLatex { get; set; }
+            public List<string> Errors { get; set; } = new List<string>();
+            public List<string> Warnings { get; set; } = new List<string>();
+            public List<QuestionContentValidation> SubQuestions { get; set; } = new List<QuestionContentValidation>();
+
+            public string Status => IsValid ? "✓ Hợp lệ" : "✗ Có lỗi";
+            public string Type => IsGroup ? "Nhóm" : "Đơn";
+        }
+
+        public class QuestionContentValidation
+        {
+            public string Identifier { get; set; } = string.Empty;
+            public bool IsValid { get; set; }
+            public int AnswersCount { get; set; }
+            public int CorrectAnswersCount { get; set; }
+            public bool HasImages { get; set; }
+            public bool HasAudio { get; set; }
+            public bool HasLatex { get; set; }
+            public List<string> Errors { get; set; } = new List<string>();
+            public List<string> Warnings { get; set; } = new List<string>();
         }
 
         public class QuestionData
@@ -639,7 +952,8 @@ namespace BEQuestionBank.Core.Services
         {
             public string FileName { get; set; } = string.Empty;
             public FileType FileType { get; set; } = FileType.Image;
-            public Guid? MaCauHoi { get; set; } // Để map ID sau khi lưu DB
+            public Guid? MaCauHoi { get; set; }
+            public string? FilePath { get; set; } // Đường dẫn file (cho Audio)
         }
     }
 }
