@@ -8,7 +8,9 @@ using NPOI.SS.Formula.Functions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using BeQuestionBank.Shared.DTOs.CauTraLoi;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace BEQuestionBank.Core.Services
@@ -253,6 +255,273 @@ namespace BEQuestionBank.Core.Services
             // Sử dụng hàm Update cơ bản của GenericRepository
             await _cauHoiRepository.UpdateAsync(entity);
             return true;
+        }
+
+        /// <summary>
+        /// Lấy tất cả câu hỏi nhóm → tự động hiển thị NH2, NH3, NH10...
+        /// </summary>
+        public async Task<List<CauHoiDto>> GetCauHoiNhomAsync()
+        {
+            var groups = await _cauHoiRepository.GetAllGroupsAsync();
+
+            var result = new List<CauHoiDto>();
+
+            // Regex để kiểm tra loại câu hỏi NH + số (VD: NH1, NH2, NH10)
+            Regex regexNH = new Regex(@"^NH\d+$", RegexOptions.IgnoreCase);
+
+            foreach (var parent in groups
+                         .Where(g => g.MaCauHoiCha == null
+                                     && g.CauHoiCons.Any() // phải có câu hỏi con
+                                     && !string.IsNullOrEmpty(g.LoaiCauHoi)
+                                     && regexNH.IsMatch(g.LoaiCauHoi))) // đúng loại NHx
+            {
+                int soCon = parent.CauHoiCons.Count;
+
+                var parentDto = new CauHoiDto
+                {
+                    MaCauHoi = parent.MaCauHoi,
+                    MaPhan = parent.MaPhan,
+                    MaSoCauHoi = parent.MaSoCauHoi,
+                    NoiDung = parent.NoiDung,
+                    HoanVi = parent.HoanVi,
+                    CapDo = parent.CapDo,
+                    SoCauHoiCon = soCon,
+                    NgayTao = parent.NgayTao,
+                    CLO = parent.CLO,
+                    LoaiCauHoi = parent.LoaiCauHoi,
+
+                    CauHoiCons = parent.CauHoiCons.Select(child => new CauHoiDto
+                    {
+                        MaCauHoi = child.MaCauHoi,
+                        MaSoCauHoi = child.MaSoCauHoi,
+                        NoiDung = child.NoiDung,
+                        HoanVi = child.HoanVi,
+                        CapDo = child.CapDo,
+                        CLO = child.CLO,
+                        LoaiCauHoi = child.LoaiCauHoi,
+                        CauTraLois = child.CauTraLois.Select(a => new CauTraLoiDto
+                        {
+                            MaCauTraLoi = a.MaCauTraLoi,
+                            NoiDung = a.NoiDung,
+                            LaDapAn = a.LaDapAn,
+                            HoanVi = a.HoanVi
+                        }).ToList()
+                    }).ToList()
+                };
+
+                result.Add(parentDto);
+            }
+
+            return result.OrderByDescending(x => x.MaSoCauHoi).ToList();
+        }
+
+        /// <summary>
+        /// Lấy tất cả câu hỏi ghép nối → loại GN
+        /// </summary>
+        // public async Task<List<GhepNoiDto>> GetCauHoiGhepNoiAsync()
+        // {
+        //     var list = await _cauHoiRepository.GetAllAsync();
+        //
+        //     // lấy GN
+        //     var gn = list.Where(x => x.LoaiCauHoi == "GN" && !x.XoaTam.GetValueOrDefault()).ToList();
+        //
+        //     var result = new List<GhepNoiDto>();
+        //     var visited = new HashSet<Guid>();
+        //
+        //     foreach (var cau in gn)
+        //     {
+        //         if (visited.Contains(cau.MaCauHoi)) continue;
+        //
+        //         var doi = gn.FirstOrDefault(x => x.MaCauHoi == cau.MaCauHoiCha);
+        //
+        //         if (doi != null)
+        //         {
+        //             visited.Add(cau.MaCauHoi);
+        //             visited.Add(doi.MaCauHoi);
+        //
+        //             result.Add(new GhepNoiDto
+        //             {
+        //                 Trai = new CauHoiDto
+        //                 {
+        //                     MaCauHoi = cau.MaCauHoi,
+        //                     MaPhan = cau.MaPhan,
+        //                     MaSoCauHoi = cau.MaSoCauHoi,
+        //                     NoiDung = cau.NoiDung,
+        //                     HoanVi = cau.HoanVi,
+        //                     CapDo = cau.CapDo,
+        //                     SoCauHoiCon = cau.SoCauHoiCon,
+        //                     NgayTao = cau.NgayTao,
+        //                     CLO = cau.CLO,
+        //                     LoaiCauHoi = cau.LoaiCauHoi,
+        //                 },
+        //                 Phai = new CauHoiDto
+        //                 {
+        //                     MaCauHoi = doi.MaCauHoi,
+        //                     MaPhan = doi.MaPhan,
+        //                     MaSoCauHoi = doi.MaSoCauHoi,
+        //                     NoiDung = doi.NoiDung,
+        //                     HoanVi = doi.HoanVi,
+        //                     CapDo = doi.CapDo,
+        //                     SoCauHoiCon = doi.SoCauHoiCon,
+        //                     NgayTao = doi.NgayTao,
+        //                     CLO = doi.CLO,
+        //                     LoaiCauHoi = doi.LoaiCauHoi,
+        //                 },
+        //             });
+        //         }
+        //     }
+        //
+        //     return result;
+        // }
+        public async Task<List<GhepNoiGroupDto>> GetCauHoiGhepNoiAsync()
+        {
+            var list = await _cauHoiRepository.GetAllAsync();
+
+            // 1. LẤY GN CHA (chỉ câu GHÉP NỐI gốc)
+            var roots = list
+                .Where(x => x.LoaiCauHoi == "GN"
+                            && x.MaCauHoiCha == null
+                            && !x.XoaTam.GetValueOrDefault())
+                .ToList();
+
+            var result = new List<GhepNoiGroupDto>();
+
+            foreach (var root in roots)
+            {
+                // 2. TÌM TẤT CẢ GN CON của root
+                var children = list
+                    .Where(x => x.LoaiCauHoi == "GN" 
+                                && !x.XoaTam.GetValueOrDefault()
+                                && IsDescendantOf(x, root.MaCauHoi, list))
+                    .ToList();
+
+                var visited = new HashSet<Guid>();
+                var pairs = new List<GhepNoiDto>();
+
+                // 3. GHÉP CẶP: child → itsChild
+                foreach (var cau in children)
+                {
+                    if (visited.Contains(cau.MaCauHoi))
+                        continue;
+
+                    // tìm child của "cau"
+                    var doi = children.FirstOrDefault(x => x.MaCauHoiCha == cau.MaCauHoi);
+
+                    if (doi != null)
+                    {
+                        visited.Add(cau.MaCauHoi);
+                        visited.Add(doi.MaCauHoi);
+
+                        pairs.Add(new GhepNoiDto
+                        {
+                            Trai = new CauHoiDto
+                            {
+                                MaCauHoi = cau.MaCauHoi,
+                                MaPhan = cau.MaPhan,
+                                MaSoCauHoi = cau.MaSoCauHoi,
+                                NoiDung = cau.NoiDung,
+                                HoanVi = cau.HoanVi,
+                                CapDo = cau.CapDo,
+                                SoCauHoiCon = cau.SoCauHoiCon,
+                                NgayTao = cau.NgayTao,
+                                CLO = cau.CLO,
+                                LoaiCauHoi = cau.LoaiCauHoi,
+                            },
+                            Phai = new CauHoiDto
+                            {
+                                MaCauHoi = doi.MaCauHoi,
+                                MaPhan = doi.MaPhan,
+                                MaSoCauHoi = doi.MaSoCauHoi,
+                                NoiDung = doi.NoiDung,
+                                HoanVi = doi.HoanVi,
+                                CapDo = doi.CapDo,
+                                SoCauHoiCon = doi.SoCauHoiCon,
+                                NgayTao = doi.NgayTao,
+                                CLO = doi.CLO,
+                                LoaiCauHoi = doi.LoaiCauHoi,
+                            }
+                        });
+                    }
+                }
+
+                // 4. ADD GROUP OUTPUT
+                result.Add(new GhepNoiGroupDto
+                {
+                    NhomCha = new CauHoiDto
+                    {
+                        MaCauHoi = root.MaCauHoi,
+                        NoiDung = root.NoiDung,
+                        LoaiCauHoi = root.LoaiCauHoi
+                    },
+                    Pairs = pairs
+                });
+            }
+
+            return result;
+        }
+       
+
+        /// <summary>
+        /// Lấy tất cả câu hỏi ĐIỀN TỪ (DT)
+        /// → Không có câu con
+        /// → Nhiều đáp án, tất cả đều đúng (LaDapAn = true)
+        /// → Thứ tự đáp án cực kỳ quan trọng
+        /// </summary>
+        public async Task<List<CauHoiDto>> GetCauHoiDienTuAsync()
+        {
+            var allQuestions = await _cauHoiRepository.GetAllWithAnswersAsync();
+
+            var dienTuQuestions = allQuestions
+                .Where(q => 
+                        q.LoaiCauHoi == "DT" 
+                        && q.MaCauHoiCha == null 
+                        && !q.XoaTam.GetValueOrDefault()
+                        && (!q.CauHoiCons.Any()) 
+                        && q.CauTraLois.Any()    
+                )
+                .Select(q => new CauHoiDto
+                {
+                    MaCauHoi = q.MaCauHoi,
+                    MaPhan = q.MaPhan ,
+                    MaSoCauHoi = q.MaSoCauHoi,
+                    NoiDung = q.NoiDung ?? "", 
+                    HoanVi = false, 
+                    CapDo = q.CapDo,
+                    SoCauHoiCon = 0,
+                    NgayTao = q.NgayTao,
+                    CLO = q.CLO,
+                    LoaiCauHoi = "DT",
+
+                    // Quan trọng: giữ nguyên thứ tự đáp án (không shuffle)
+                    CauTraLois = q.CauTraLois
+                        .OrderBy(a => a.ThuTu) 
+                        .Select(a => new CauTraLoiDto
+                        {
+                            MaCauTraLoi = a.MaCauTraLoi,
+                            ThuTu =a.ThuTu, 
+                            NoiDung = a.NoiDung,     
+                            LaDapAn = true,          
+                            HoanVi = false
+                        })
+                        .ToList()
+                })
+                .OrderByDescending(x => x.MaSoCauHoi)
+                .ToList();
+
+            return dienTuQuestions;
+        }
+        private bool IsDescendantOf(CauHoi entity, Guid rootId, IEnumerable<CauHoi> all)
+        {
+            while (entity.MaCauHoiCha != null)
+            {
+                if (entity.MaCauHoiCha == rootId)
+                    return true;
+
+                entity = all.FirstOrDefault(x => x.MaCauHoi == entity.MaCauHoiCha);
+                if (entity == null)
+                    return false;
+            }
+            return false;
         }
     }
 }

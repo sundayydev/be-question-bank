@@ -1,60 +1,113 @@
 ﻿@page "/user/upload-excel"
 @inherits FEQuestionBank.Client.Pages.User.UploadExcelUserBase
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge">
-    <MudBreadcrumbs Items="_breadcrumbs" Style="margin-top:2px;" />
-    <MudText Typo="Typo.h5"
-             Style="@($"color:{Colors.Red.Darken2};")"
-             Class="mb-6 text-center text-uppercase fw-bold">
-        Tải lên danh sách người dùng từ Excel
-    </MudText>
+<MudContainer MaxWidth="MaxWidth.Large" >
+    <!-- Breadcrumbs -->
+    <MudBreadcrumbs Items="_breadcrumbs" />
 
-    <MudGrid>
-        <!-- KHỐI UPLOAD -->
+    <!-- Header Section -->
+    <div style="margin-bottom: 30px; text-align: center;">
+        <MudText Typo="Typo.h4" 
+                 Class="fw-bold" 
+                 Style="color: #2c3e50; margin-bottom: 0.5rem;">
+            Tải lên danh sách người dùng
+        </MudText>
+        <MudText Typo="Typo.body2" 
+                 Style="color: #7f8c8d;">
+            Chọn file Excel (.xlsx) từ máy tính của bạn để nhập danh sách người dùng
+        </MudText>
+    </div>
+
+    <MudGrid Spacing="3">
+        <!-- Upload Section -->
         <MudItem xs="12">
-            <MudPaper Elevation="2" Rounded="true" Class="p-4 mb-3">
-                <MudText Typo="Typo.subtitle1" Class="fw-semibold mb-3" Style="@($"color:{Colors.Blue.Darken3};")">
-                    Chọn file Excel (.xlsx)
-                </MudText>
+           <MudCard Class="upload-card" 
+         Style="border: 2px dashed #3498db; 
+                background: linear-gradient(135deg, #ecf0f1 0%, #f8f9fa 100%); 
+                padding: 3rem 2rem; 
+                text-align: center; 
+                border-radius: 12px; 
+                transition: all 0.3s ease;">
 
-                <MudFileUpload T="IBrowserFile"
-                               OnFilesChanged="OnFileSelected"
-                               Accept=".xlsx"
-                               Disabled="@IsUploading">
-                    <ActivatorContent>
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Primary"
-                                   StartIcon="@Icons.Material.Filled.CloudUpload"
-                                   Disabled="@IsUploading"
-                                   Style="@($"background-color:{Colors.Blue.Darken3}; color:white; border-radius:10px; padding:6px 16px;")">
-                            @(SelectedFile != null ? $"Đã chọn: {SelectedFile.Name}" : "Chọn hoặc kéo thả file Excel")
-                        </MudButton>
+    <MudStack AlignItems="AlignItems.Center" Spacing="2">
 
-                    </ActivatorContent>
-                </MudFileUpload>
+        <MudIcon Icon="@Icons.Material.Filled.CloudUpload"
+                 Style="font-size: 3rem; color: #3498db;" />
 
-                @if (SelectedFile != null)
-                {
-                    <MudAlert Severity="Severity.Info" Class="mt-3">
-                        <strong>@SelectedFile.Name</strong> — Kích thước: @((SelectedFile.Size / 1024f).ToString("F1")) KB
-                    </MudAlert>
-                }
-            </MudPaper>
-        </MudItem>
+        <div>
+            <MudText Typo="Typo.h6"
+                     Class="fw-semibold"
+                     Style="color: #2c3e50; margin-bottom: 0.5rem;">
+                Chọn file Excel
+            </MudText>
 
-        <!-- KHỐI HÀNH ĐỘNG -->
+            <!--  ĐÃ LOẠI BỎ "kéo thả file" -->
+            <MudText Typo="Typo.body2" Style="color: #95a5a6;">
+                Nhấp nút bên dưới để chọn file Excel (.xlsx)
+            </MudText>
+        </div>
+
+        <!-- Chỉ nút chọn file -->
+        <MudFileUpload T="IBrowserFile"
+                       OnFilesChanged="OnFileSelected"
+                       Accept=".xlsx"
+                       Disabled="@IsUploading"
+                       id="file-input">
+            <ActivatorContent>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.FolderOpen"
+                           Disabled="@IsUploading"
+                           Style="background-color: #3498db; 
+                          color: white; 
+                          border-radius: 8px; 
+                          padding: 0.75rem 1.5rem; 
+                          text-transform: none; 
+                          font-size: 0.95rem;">
+                    @(SelectedFile != null ? $"Đã chọn: {SelectedFile.Name}" : "Chọn file")
+                </MudButton>
+            </ActivatorContent>
+        </MudFileUpload>
+
+
+        <!-- File Info -->
+        @if (SelectedFile != null)
+        {
+            <MudAlert Severity="Severity.Info"
+                      Class="mt-3"
+                      Style="background-color: #e3f2fd; border-left: 4px solid #3498db;">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudIcon Icon="@Icons.Material.Filled.Description" Style="color: #3498db;" />
+                    <MudText Style="color: #2c3e50; font-size: 0.9rem;">
+                        <strong>@SelectedFile.Name</strong> — @((SelectedFile.Size / 1024f).ToString("F1")) KB
+                    </MudText>
+                </MudStack>
+            </MudAlert>
+        }
+    </MudStack>
+</MudCard>
+</MudItem>
+
+        <!-- Action Buttons Section -->
         <MudItem xs="12">
-            <MudPaper Elevation="2" Rounded="true" Class="p-3 d-flex justify-content-between align-items-center">
-                <div class="d-flex gap-2">
-                    <!-- Nút tải lên -->
+            <MudStack Row="true" 
+                      Spacing="2" 
+                      Class="d-flex justify-space-between align-center flex-wrap"
+                      Style="gap: 1rem;">
+                <!-- Left Actions -->
+                <MudStack Row="true" Spacing="2" Class="d-flex flex-wrap">
+                    <!-- Upload Button -->
                     <MudButton Variant="Variant.Filled"
                                Color="Color.Success"
                                OnClick="UploadFile"
                                Disabled="@(SelectedFile == null || IsUploading)"
-                               Style="border-radius:10px; padding:6px 16px; color:white !important;">
+                               Style="background-color: #27ae60; color: white; border-radius: 8px; padding: 0.75rem 1.5rem; text-transform: none; min-width: 140px;">
                         @if (IsUploading)
                         {
-                            <MudProgressCircular Size="Size.Small" Indeterminate Class="me-2"/>
+                            <MudProgressCircular Size="Size.Small" 
+                                                 Indeterminate="true" 
+                                                 Color="Color.Inherit"
+                                                 Class="me-2"/>
                             <span>Đang tải lên...</span>
                         }
                         else
@@ -64,28 +117,32 @@
                         }
                     </MudButton>
 
-                    <!-- Nút hủy file -->
+                    <!-- Cancel Button -->
                     <MudButton Variant="Variant.Outlined"
-                               StartIcon="@Icons.Material.Filled.Delete"
+                               StartIcon="@Icons.Material.Filled.Clear"
                                Disabled="@(SelectedFile == null || IsUploading)"
-                               Style="@($"background-color:{Colors.Red.Darken2}; color:white !important; " +
-                                      $"border-radius:10px; padding:6px 16px; border:1px solid {Colors.Red.Darken2};")"
+                               Style="color: #e74c3c; border: 2px solid #e74c3c; border-radius: 8px; padding: 0.75rem 1.5rem; text-transform: none;"
                                OnClick="CancelFile">
                         Hủy file
                     </MudButton>
+                </MudStack>
 
-
-                </div>
-
-                <!-- Nút quay lại -->
+                <!-- Back Button -->
                 <MudButton Variant="Variant.Outlined"
                            StartIcon="@Icons.Material.Filled.ArrowBack"
-                           Style="@($"color:{Colors.Green.Darken2};" +
-                                  $"border-radius:10px; padding:6px 16px; border:1px solid {Colors.Green.Darken2};")"
+                           Style="color: #34495e; border: 2px solid #bdc3c7; border-radius: 8px; padding: 0.75rem 1.5rem; text-transform: none;"
                            OnClick="GoBack">
                     Quay lại
                 </MudButton>
-            </MudPaper>
+            </MudStack>
         </MudItem>
     </MudGrid>
 </MudContainer>
+
+<style>
+    .upload-card:hover {
+        border-color: #2980b9 !important;
+        background: linear-gradient(135deg, #dfe6e9 0%, #f1f3f5 100%) !important;
+        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15) !important;
+    }
+</style>

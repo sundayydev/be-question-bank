@@ -6,6 +6,7 @@ using BE_CIRRO.Shared.DTOs;
 using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using BEQuestionBank.Core.Helpers;
 using BeQuestionBank.Shared.DTOs.Common;
 using BEQuestionBank.Shared.DTOs.user;
 
@@ -17,11 +18,13 @@ namespace BE_CIRRO.API.Controllers
     {
         private readonly AuthService _authService;
         private readonly ILogger<AuthController> _logger;
+        private readonly IConfiguration _configuration;   // THÊM DÒNG NÀY
 
-        public AuthController(AuthService authService, ILogger<AuthController> logger)
+        public AuthController(AuthService authService, ILogger<AuthController> logger, IConfiguration configuration)
         {
             _authService = authService;
             _logger = logger;
+            _configuration = configuration;   // NHẬN VÀO ĐÂY
         }
 
         [HttpPost("register")]
@@ -66,30 +69,90 @@ namespace BE_CIRRO.API.Controllers
         }
 
         // GET: /api/auth/me - Lấy thông tin user hiện tại từ JWT
-        [HttpGet("me")]
-        [Authorize]
-        public async Task<IActionResult> GetMe()
+        // [HttpGet("me")]
+        // public async Task<IActionResult> GetMe()
+        // {
+        //     try
+        //     {
+        //         // Ưu tiên đọc từ claim chuẩn trước
+        //         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier) 
+        //                           ?? User.FindFirstValue("UserId"); // fallback custom claim
+        //
+        //         if (string.IsNullOrEmpty(userIdClaim))
+        //             return Unauthorized(ApiResponseFactory.Unauthorized("Token không chứa thông tin user"));
+        //
+        //         if (!Guid.TryParse(userIdClaim, out Guid userId))
+        //             return Unauthorized(ApiResponseFactory.Unauthorized("UserId trong token không hợp lệ"));
+        //
+        //         var user = await _authService.GetCurrentUserAsync(userId);
+        //         if (user == null)
+        //             return NotFound(ApiResponseFactory.NotFound<NguoiDungDto>("Không tìm thấy user"));
+        //
+        //         return Ok(ApiResponseFactory.Success(user, "Lấy thông tin user thành công"));
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         _logger.LogError(ex, "Lỗi khi lấy thông tin user");
+        //         return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
+        //     }
+        // }
+      [HttpGet("me")]
+        public async Task<IActionResult> GetMe([FromQuery] string? token = null)
         {
             try
             {
-                // Lấy user ID từ JWT token
-                // Đảm bảo bạn dùng using System.Security.Claims;
-                var userIdClaim = User.FindFirstValue("UserId");
-                if (string.IsNullOrEmpty(userIdClaim))
+                // 1. Ưu tiên lấy token từ Header (Access Token bình thường)
+                if (string.IsNullOrEmpty(token) && Request.Headers.Authorization.Count > 0)
+                {
+                    var authHeader = Request.Headers.Authorization.ToString();
+                    if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                        token = authHeader["Bearer ".Length..].Trim();
+                }
+
+                // 2. Nếu vẫn không có → bắt buộc phải có token từ query
+                if (string.IsNullOrEmpty(token))
+                    return Unauthorized(ApiResponseFactory.Unauthorized("Không tìm thấy token"));
+
+                ClaimsPrincipal? principal = null;
+
+                // THỬ GIẢI MÃ NHƯ ACCESS TOKEN TRƯỚC
+                principal = _authService.ValidateToken(token);
+
+                // NẾU KHÔNG PHẢI → THỬ GIẢI MÃ NHƯ REFRESH TOKEN (bỏ qua hết hạn)
+                if (principal == null)
+                {
+                    var jwtHelper = new JwtHelper(_configuration);
+                    principal = jwtHelper.GetPrincipalFromExpiredToken(token);
+                }
+
+                // Token hoàn toàn không giải mã được
+                if (principal == null)
                     return Unauthorized(ApiResponseFactory.Unauthorized("Token không hợp lệ"));
 
-                var user = await _authService.GetCurrentUserAsync(userIdClaim);
-                if (user == null)
-                    return NotFound(ApiResponseFactory.NotFound<NguoiDungDto>("Không tìm thấy thông tin user"));
+                // Lấy userId từ claim (hỗ trợ cả NameIdentifier và UserId)
+                var userIdClaim = principal.FindFirstValue(ClaimTypes.NameIdentifier)
+                                  ?? principal.FindFirstValue("UserId");
 
-                return Ok(ApiResponseFactory.Success(user, "Lấy thông tin user thành công"));
+                if (string.IsNullOrEmpty(userIdClaim) ||
+                    !Guid.TryParse(userIdClaim, out var userId) ||
+                    userId == Guid.Empty)
+                {
+                    return Unauthorized(ApiResponseFactory.Unauthorized("Token không chứa thông tin người dùng hợp lệ"));
+                }
+
+                var user = await _authService.GetCurrentUserAsync(userId);
+                if (user == null)
+                    return NotFound(ApiResponseFactory.NotFound<NguoiDungDto>("Không tìm thấy người dùng"));
+
+                return Ok(ApiResponseFactory.Success(user, "Lấy thông tin người dùng thành công"));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting current user info");
-                return StatusCode(500, ApiResponseFactory.ServerError("Lỗi khi lấy thông tin user: " + ex.Message));
+                _logger.LogError(ex, "Lỗi khi lấy thông tin user từ token");
+                return StatusCode(500, ApiResponseFactory.ServerError("Lỗi hệ thống: " + ex.Message));
             }
         }
+
 
         // POST: /api/auth/refresh - Làm mới access token
         [HttpPost("refresh")]
@@ -147,7 +210,7 @@ namespace BE_CIRRO.API.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ApiResponseFactory.ValidationError<object>("Dữ liệu đầu vào không hợp lệ"));
 
-                var userIdClaim = User.FindFirstValue("UserId"); // <-- Dùng FindFirstValue
+                var userIdClaim = User.FindFirstValue("UserId"); 
                 if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
                     return Unauthorized(ApiResponseFactory.Unauthorized("Token không hợp lệ"));
 

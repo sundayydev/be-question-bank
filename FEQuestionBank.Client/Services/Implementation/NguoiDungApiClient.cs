@@ -19,14 +19,14 @@ public class NguoiDungApiClient : BaseApiClient, INguoiDungApiClient
         (int page = 1, int pageSize = 10, string? sort = null, string? search = null)
         => GetPagedAsync<NguoiDungDto>("api/NguoiDung/paged", page, pageSize, sort, search);
     
-    public async Task<ApiResponse<NguoiDungDto>> CreateNguoiDungAsync(NguoiDungDto model)
+    public async Task<ApiResponse<NguoiDungDto>> CreateNguoiDungAsync(CreateNguoiDungDto model)
     {
         var res = await _httpClient.PostAsJsonAsync("api/NguoiDung", model);
         return await res.Content.ReadFromJsonAsync<ApiResponse<NguoiDungDto>>() 
                ?? new ApiResponse<NguoiDungDto>(500, "Lỗi khi tạo người dùng");
     }
 
-    public async Task<ApiResponse<NguoiDungDto>> UpdateNguoiDungAsync(Guid id, NguoiDungDto model)
+    public async Task<ApiResponse<NguoiDungDto>> UpdateNguoiDungAsync(Guid id, UpdateNguoiDungDto model)
     {
         var res = await _httpClient.PatchAsJsonAsync($"api/NguoiDung/{id}", model);
         return await res.Content.ReadFromJsonAsync<ApiResponse<NguoiDungDto>>()

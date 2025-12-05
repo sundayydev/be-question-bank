@@ -1,15 +1,23 @@
+using System.Net.Http.Headers;
 using BeQuestionBank.Shared.DTOs.Common;
 using FEQuestionBank.Client.Services.Interface;
 using System.Net.Http.Json;
 using System.Text.Json;
+using BEQuestionBank.Shared.DTOs.user;
+using Blazored.LocalStorage;
 
 namespace FEQuestionBank.Client.Services.Implementation
 {
     public class AuthApiClient : IAuthApiClient
     {
         private readonly HttpClient _http;
+        private readonly ILocalStorageService _localStorage; // dùng Blazored.LocalStorage hoặc tương tự
 
-        public AuthApiClient(HttpClient http) => _http = http;
+        public AuthApiClient(HttpClient http, ILocalStorageService localStorage)
+        {
+            _http = http;
+            _localStorage = localStorage;
+        }
 
         public async Task<ApiResponse<JsonElement>> LoginAsync(string tenDangNhap, string matKhau)
         {
@@ -25,11 +33,27 @@ namespace FEQuestionBank.Client.Services.Implementation
             return await HandleResponse(response);
         }
 
-        public async Task<ApiResponse<JsonElement>> GetCurrentUserAsync()
+        public async Task<ApiResponse<NguoiDungDto>> GetCurrentUserAsync()
         {
+            // Lấy token JWT từ localStorage
+            var token = await _localStorage.GetItemAsync<string>("authToken");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
             var response = await _http.GetAsync("api/auth/me");
-            return await HandleResponse(response);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new ApiResponse<NguoiDungDto>((int)response.StatusCode, "Lỗi khi lấy thông tin người dùng");
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<NguoiDungDto>>();
+            return result ?? new ApiResponse<NguoiDungDto>(500, "Lỗi khi xử lý phản hồi từ server");
         }
+
+
 
         public async Task<ApiResponse<JsonElement>> RefreshTokenAsync(string refreshToken)
         {

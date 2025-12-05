@@ -64,7 +64,7 @@ public class NguoiDungController(NguoiDungService service, ILogger<NguoiDungCont
     // POST: api/NguoiDung
     [HttpPost]
     [SwaggerOperation("Thêm một người dùng mới")]
-    public async Task<IActionResult> CreateNguoiDungAsync([FromBody] NguoiDungDto model)
+    public async Task<IActionResult> CreateNguoiDungAsync([FromBody] CreateNguoiDungDto model)
     {
         try
         {
@@ -115,7 +115,7 @@ public class NguoiDungController(NguoiDungService service, ILogger<NguoiDungCont
     // PATCH: api/NguoiDung/{id}
     [HttpPatch("{id}")]
     [SwaggerOperation("Cập nhật thông tin người dùng")]
-    public async Task<IActionResult> UpdateNguoiDungAsync(string id, [FromBody] NguoiDungDto model)
+    public async Task<IActionResult> UpdateNguoiDungAsync(string id, [FromBody] UpdateNguoiDungDto model)
     {
         try
         {
@@ -359,6 +359,7 @@ public class NguoiDungController(NguoiDungService service, ILogger<NguoiDungCont
             TenDangNhap = user.TenDangNhap,
             HoTen = user.HoTen,
             Email = user.Email,
+            TenKhoa = user.Khoa != null ? user.Khoa.TenKhoa : null,
             VaiTro = user.VaiTro,
             BiKhoa = user.BiKhoa,
             MaKhoa = user.MaKhoa,

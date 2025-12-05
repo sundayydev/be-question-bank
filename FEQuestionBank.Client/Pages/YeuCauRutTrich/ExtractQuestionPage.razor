@@ -478,17 +478,15 @@
                         <!-- Bước 3: Xem trước -->
                         <MudButton Variant="Variant.Outlined"
                                    Color="Color.Info"
-                                   StartIcon="@Icons.Material.Filled.Preview"
                                    OnClick="XemTruocMaTran"
                                    Disabled="@(_model.MaMonHoc == Guid.Empty)">
-                            <MudIcon Icon="@Icons.Material.Filled.DarkMode" Size="Size.Small" Class="mr-1" />
+                            <MudIcon Icon="@Icons.Material.Filled.Looks3" Size="Size.Small" Class="mr-1" />
                             Xem trước ma trận
                         </MudButton>
 
                         <!-- Bước 4: Kiểm tra -->
                         <MudButton Variant="Variant.Filled"
                                    Color="Color.Warning"
-                                   StartIcon="@Icons.Material.Filled.CheckCircle"
                                    OnClick="KiemTraMaTran"
                                    Disabled="@(_isChecking || _model.MaMonHoc == Guid.Empty)">
                             <MudIcon Icon="@Icons.Material.Filled.Looks4" Size="Size.Small" Class="mr-1" />
@@ -498,7 +496,6 @@
                         <!-- Bước 6: Rút trích (chỉ khi đã validate) -->
                         <MudButton Variant="Variant.Filled"
                                    Color="Color.Success"
-                                   StartIcon="@Icons.Material.Filled.AutoFixHigh"
                                    OnClick="RutTrichDeThi"
                                    Disabled="@(_isProcessing || !_isValidated)">
                             <MudIcon Icon="@Icons.Material.Filled.Looks5" Size="Size.Small" Class="mr-1" />

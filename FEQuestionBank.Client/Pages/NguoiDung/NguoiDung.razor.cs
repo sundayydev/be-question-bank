@@ -123,10 +123,15 @@ namespace FEQuestionBank.Client.Pages
 
             if (!result.Canceled)
             {
-                var user = (NguoiDungDto)result.Data;
-                await SaveNguoiDungAsync(user);
+                var data = (Dictionary<string, object>)result.Data;
+
+                var user = (NguoiDungDto)data["User"];
+                var password = data.ContainsKey("Password") ? (string?)data["Password"] : null;
+
+                await SaveNguoiDungAsync(user, password);
                 await table!.ReloadServerData();
             }
+
         }
 
         protected async Task OnEdit(NguoiDungDto user)
@@ -142,11 +147,17 @@ namespace FEQuestionBank.Client.Pages
 
             if (!result.Canceled)
             {
-                var updated = (NguoiDungDto)result.Data;
-                await SaveNguoiDungAsync(updated);
+                var data = (Dictionary<string, object>)result.Data;
+
+                var updatedUser = (NguoiDungDto)data["User"];
+                var password = data.ContainsKey("Password") ? (string?)data["Password"] : null;
+
+                await SaveNguoiDungAsync(updatedUser, password);
                 await table!.ReloadServerData();
             }
+
         }
+
 
         protected async Task OnToggleLock(NguoiDungDto user)
         {
@@ -193,61 +204,56 @@ namespace FEQuestionBank.Client.Pages
             DialogService.Show<NguoiDungDetailDialog>("Chi tiết người dùng", parameters);
         }
 
-        private async Task SaveNguoiDungAsync(NguoiDungDto user)
+        private async Task SaveNguoiDungAsync(NguoiDungDto user, string? password)
         {
             try
             {
                 if (user.MaNguoiDung == Guid.Empty)
                 {
-                    var createDto = new NguoiDungDto
+                    var createDto = new CreateNguoiDungDto
                     {
                         TenDangNhap = user.TenDangNhap,
-                        MatKhau = user.MatKhau ?? "123456", 
                         HoTen = user.HoTen,
                         Email = user.Email,
                         VaiTro = user.VaiTro,
-                        BiKhoa = user.BiKhoa
+                        BiKhoa = user.BiKhoa,
+                        MatKhau = string.IsNullOrWhiteSpace(password) ? "123456" : password
                     };
 
                     var response = await NguoiDungApiClient.CreateNguoiDungAsync(createDto);
 
                     if (response.Success)
-                    {
                         Snackbar.Add("Tạo người dùng thành công!", Severity.Success);
-                        var createdUser = response.Data; 
-                    }
                     else
-                    {
                         Snackbar.Add(response.Message, Severity.Error);
-                    }
+
+                    return;
                 }
-                else
+                
+                var updateDto = new UpdateNguoiDungDto
                 {
-                    var updateDto = new NguoiDungDto
-                    {
-                        TenDangNhap = user.TenDangNhap,
-                        HoTen = user.HoTen,
-                        Email = user.Email,
-                        VaiTro = user.VaiTro,
-                        BiKhoa = user.BiKhoa
-                    };
+                    TenDangNhap = user.TenDangNhap,
+                    HoTen = user.HoTen,
+                    Email = user.Email,
+                    VaiTro = user.VaiTro,
+                    BiKhoa = user.BiKhoa,
+                    MatKhau = string.IsNullOrWhiteSpace(password) ? null : password
+                };
 
-                    if (!string.IsNullOrWhiteSpace(user.MatKhau))
-                        updateDto.MatKhau = user.MatKhau;
+                var updateResponse = await NguoiDungApiClient.UpdateNguoiDungAsync(user.MaNguoiDung, updateDto);
 
-                    var response = await NguoiDungApiClient.UpdateNguoiDungAsync(user.MaNguoiDung, updateDto);
-
-                    if (response.Success)
-                        Snackbar.Add("Cập nhật thành công!", Severity.Success);
-                    else
-                        Snackbar.Add(response.Message, Severity.Error);
-                }
+                if (updateResponse.Success)
+                    Snackbar.Add("Cập nhật thành công!", Severity.Success);
+                else
+                    Snackbar.Add(updateResponse.Message, Severity.Error);
             }
             catch (Exception ex)
             {
                 Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
             }
         }
+
+
 
     }
 }

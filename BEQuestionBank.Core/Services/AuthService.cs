@@ -22,6 +22,7 @@ namespace BE_CIRRO.Core.Services;
 public class AuthService
 {
     private readonly NguoiDungService _userService;
+    private readonly KhoaService _khoaService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthService> _logger;
     private readonly IDatabase _redisDb;
@@ -88,7 +89,8 @@ public class AuthService
                 _logger.LogWarning("Mật khẩu không đúng cho {TenDangNhap}", dto.TenDangNhap);
                 return null;
             }
-
+            user.NgayDangNhapCuoi = DateTime.UtcNow; 
+            await _userService.UpdateAsync(user); 
             var tokenDto = await GenerateTokenAsync(user);
             _logger.LogInformation("Đăng nhập thành công: {TenDangNhap}", dto.TenDangNhap);
             return tokenDto;
@@ -101,18 +103,37 @@ public class AuthService
     }
 
     // LẤY USER HIỆN TẠI
-    public async Task<NguoiDungDto?> GetCurrentUserAsync(string userId)
+    public async Task<NguoiDungDto?> GetCurrentUserAsync(Guid userId)
     {
         try
         {
-            if (!Guid.TryParse(userId, out var userIdGuid))
+            if (userId == Guid.Empty)
             {
                 _logger.LogWarning("ID người dùng không hợp lệ: {UserId}", userId);
                 return null;
             }
 
-            var user = await _userService.GetByIdAsync(userIdGuid);
-            return user?.Adapt<NguoiDungDto>();
+            var user = await _userService.GetByIdAsync(userId);
+            if (user == null) return null;
+
+            // var userDto = user.Adapt<NguoiDungDto>();
+            //
+            //
+            // return userDto;
+            return new NguoiDungDto
+            {
+                MaNguoiDung = user.MaNguoiDung,
+                TenDangNhap = user.TenDangNhap,
+                HoTen = user.HoTen,
+                Email = user.Email,
+                VaiTro = user.VaiTro,
+                BiKhoa = user.BiKhoa,
+                MaKhoa = user.MaKhoa,
+                TenKhoa = user.Khoa?.TenKhoa,
+                NgayTao = user.NgayTao,
+                NgayCapNhat = user.NgayCapNhat,
+                NgayDangNhapCuoi = user.NgayDangNhapCuoi
+            };
         }
         catch (Exception ex)
         {
@@ -225,10 +246,10 @@ public class AuthService
 
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, user.MaNguoiDung.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, user.MaNguoiDung.ToString()), // <-- THÊM DÒNG NÀY
             new Claim(ClaimTypes.Name, user.TenDangNhap),
             new Claim(ClaimTypes.Role, user.VaiTro.ToString()),
-            new Claim("UserId", user.MaNguoiDung.ToString()),
+            new Claim("UserId", user.MaNguoiDung.ToString()), // có thể bỏ dòng này nếu muốn sạch
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
         };

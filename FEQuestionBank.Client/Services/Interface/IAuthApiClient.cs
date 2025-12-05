@@ -1,5 +1,6 @@
 ﻿using BeQuestionBank.Shared.DTOs.Common;
 using System.Text.Json;
+using BEQuestionBank.Shared.DTOs.user;
 
 namespace FEQuestionBank.Client.Services.Interface
 {
@@ -7,7 +8,7 @@ namespace FEQuestionBank.Client.Services.Interface
     {
         Task<ApiResponse<JsonElement>> LoginAsync(string tenDangNhap, string matKhau);
         Task<ApiResponse<JsonElement>> RegisterAsync(string tenDangNhap, string matKhau, string? email = null, string vaiTro = "User");
-        Task<ApiResponse<JsonElement>> GetCurrentUserAsync();
+        Task<ApiResponse<NguoiDungDto>> GetCurrentUserAsync();
         Task<ApiResponse<JsonElement>> RefreshTokenAsync(string refreshToken);
         Task<ApiResponse<JsonElement>> LogoutAsync();
         Task<ApiResponse<JsonElement>> ChangePasswordAsync(string matKhauHienTai, string matKhauMoi);

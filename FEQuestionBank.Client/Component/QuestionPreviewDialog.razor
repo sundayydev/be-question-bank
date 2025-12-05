@@ -11,18 +11,18 @@
                 <MudStack Row="true" Spacing="1" Style="flex-wrap: wrap; gap: 8px;">
                     @if (!string.IsNullOrEmpty(TenKhoa))
                     {
-                        <MudChip T="string" Icon="@Icons.Material.Filled.Business" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@TenKhoa</MudChip>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@TenKhoa</MudChip>
                     }
                     @if (!string.IsNullOrEmpty(TenMon))
                     {
-                        <MudChip T="string" Icon="@Icons.Material.Filled.MenuBook" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">@TenMon</MudChip>
+                        <MudChip T="string"Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">@TenMon</MudChip>
                     }
                     @if (!string.IsNullOrEmpty(TenPhan))
                     {
-                        <MudChip T="string" Icon="@Icons.Material.Filled.Bookmark" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">@TenPhan</MudChip>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">@TenPhan</MudChip>
                     }
-                    <MudChip T="string" Icon="@Icons.Material.Filled.Flag" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">CLO: @CloName</MudChip>
-                    <MudChip T="string" Icon="@Icons.Material.Filled.SignalCellularAlt" Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined">Cấp độ: @CapDo</MudChip>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">CLO: @CloName</MudChip>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined">Cấp độ: @CapDo</MudChip>
                 </MudStack>
             </MudPaper>
 
@@ -71,12 +71,17 @@
 
 <style>
     .answer-correct {
-        background-color: var(--mud-palette-success-lighten-5);
-        border: 1px solid var(--mud-palette-success);
+        background-color: #e6ffed;      /* xanh lá nhạt rất dịu */
+        border: 1px solid #4caf50;      /* xanh lá đậm */
+        color: #2e7d32;                 /* chữ xanh đậm */
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-weight: 600;
+        box-shadow: 0px 2px 4px rgba(0,0,0,0.08);
     }
 
     .answer-normal {
-        border: 1px solid var(--mud-palette-grey-lighten-2);
+        border: 1px solid #e0e0e0;
     }
 
     .transition-all {

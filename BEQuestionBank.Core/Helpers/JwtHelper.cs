@@ -37,8 +37,8 @@ public class JwtHelper
 
         var claims = new[]
         {
-            new Claim("userId", userId),
-            new Claim("username", username),
+            new Claim(ClaimTypes.NameIdentifier, userId), // <-- Sửa chỗ này
+            new Claim(ClaimTypes.Name, username),
             new Claim(ClaimTypes.Role, role),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
@@ -54,7 +54,7 @@ public class JwtHelper
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    // Refresh Token (JWT với hạn dài hơn)
+    // Refresh Token
     public string GenerateRefreshToken(string userId, string username)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
@@ -62,8 +62,8 @@ public class JwtHelper
 
         var claims = new[]
         {
-            new Claim("userId", userId),
-            new Claim("username", username),
+            new Claim(ClaimTypes.NameIdentifier, userId), // <-- Sửa chỗ này
+            new Claim(ClaimTypes.Name, username),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

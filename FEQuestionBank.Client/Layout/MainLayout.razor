@@ -15,12 +15,15 @@
 
     <!-- Nội dung chính -->
     <MudMainContent Class="@MainContentCssClass">
-        @Body
+        <CascadingValue Value="(Action<bool>)(hide => _hideLayout = hide)">
+            @Body
+        </CascadingValue>
     </MudMainContent>
 </MudLayout>
 
 @code {
     private bool _drawerOpen = true;
+    private bool _hideLayout;
 
     private void ToggleDrawer()
     {
@@ -28,18 +31,14 @@
         StateHasChanged();
     }
 
-    private bool HideLayout => ShouldHideLayout();
+    private bool HideLayout => _hideLayout || ShouldHideLayout();
 
     private bool ShouldHideLayout()
     {
-        // Lấy đường dẫn hiện tại, loại bỏ domain
         var relativePath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri).ToLower();
-
-        // Danh sách các route muốn ẩn Header + Sidebar
-        var hiddenPages = new[] { "login", "register", "forgot-password" };
-
+        var hiddenPages = new[] { "login", "register", "forgot-password", "404" };
         return hiddenPages.Any(p => relativePath.StartsWith(p));
-        
     }
+
     private string MainContentCssClass => HideLayout ? "mud-main-content-auth" : "";
 }

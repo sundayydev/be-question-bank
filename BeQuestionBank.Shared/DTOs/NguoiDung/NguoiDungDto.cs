@@ -6,7 +6,6 @@ namespace BEQuestionBank.Shared.DTOs.user
     {
         public Guid MaNguoiDung { get; set; }
         public string TenDangNhap { get; set; }
-        public string MatKhau { get; set; }
         public Guid? MaKhoa { get; set; }
         public string ?TenKhoa { get; set; }
         public string HoTen { get; set; }
