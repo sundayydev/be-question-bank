@@ -1,10 +1,11 @@
-﻿using BEQuestionBank.Core.Services;
-using BeQuestionBank.Shared.DTOs.Common;
-using BEQuestionBank.Shared.DTOs.DeThi;
+﻿using BeQuestionBank.Shared.DTOs.Common;
+using BeQuestionBank.Shared.DTOs.DeThi;
 using BeQuestionBank.Shared.DTOs.Khoa;
-using BEQuestionBank.Shared.DTOs.MaTran;
 using BeQuestionBank.Shared.DTOs.MonHoc;
 using BeQuestionBank.Shared.DTOs.Pagination;
+using BEQuestionBank.Core.Services;
+using BEQuestionBank.Shared.DTOs.DeThi;
+using BEQuestionBank.Shared.DTOs.MaTran;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -14,12 +15,14 @@ namespace BeQuestionBank.API.Controllers;
 [ApiController]
 public class DeThiController : ControllerBase
 {
+    private readonly DeThiExportForStudentService _exportService;
     private readonly DeThiService _service;
     private readonly ILogger<DeThiController> _logger;
 
-    public DeThiController(DeThiService service, ILogger<DeThiController> logger)
+    public DeThiController(DeThiService service, DeThiExportForStudentService exportService, ILogger<DeThiController> logger)
     {
         _service = service;
+        _exportService = exportService;
         _logger = logger;
     }
 
@@ -115,62 +118,62 @@ public class DeThiController : ControllerBase
         }
     }
     // GET: api/DeThi/MonHoc/{maMonHoc}
-[HttpGet("MonHoc/{maMonHoc}")]
-[SwaggerOperation("Lấy danh sách đề thi theo mã môn học")]
-public async Task<IActionResult> GetByMaMonHocAsync(Guid maMonHoc)
-{
-    try
+    [HttpGet("MonHoc/{maMonHoc}")]
+    [SwaggerOperation("Lấy danh sách đề thi theo mã môn học")]
+    public async Task<IActionResult> GetByMaMonHocAsync(Guid maMonHoc)
     {
-        if (maMonHoc == Guid.Empty)
+        try
         {
-            return StatusCode(StatusCodes.Status400BadRequest,
-                ApiResponseFactory.ValidationError<object>("Mã môn học không hợp lệ."));
-        }
+            if (maMonHoc == Guid.Empty)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest,
+                    ApiResponseFactory.ValidationError<object>("Mã môn học không hợp lệ."));
+            }
 
-        var deThis = await _service.GetByMaMonHocAsync(maMonHoc);
-        if (deThis == null || !deThis.Any())
+            var deThis = await _service.GetByMaMonHocAsync(maMonHoc);
+            if (deThis == null || !deThis.Any())
+            {
+                return StatusCode(StatusCodes.Status404NotFound,
+                    ApiResponseFactory.NotFound<object>($"Không tìm thấy đề thi nào với mã môn học: {maMonHoc}"));
+            }
+
+            return StatusCode(StatusCodes.Status200OK,
+                ApiResponseFactory.Success<object>(deThis, "Lấy danh sách đề thi thành công!"));
+        }
+        catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status404NotFound,
-                ApiResponseFactory.NotFound<object>($"Không tìm thấy đề thi nào với mã môn học: {maMonHoc}"));
+            _logger.LogError(ex, "Lỗi khi lấy danh sách đề thi theo mã môn học: {maMonHoc}", maMonHoc);
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
-
-        return StatusCode(StatusCodes.Status200OK,
-            ApiResponseFactory.Success<object>(deThis, "Lấy danh sách đề thi thành công!"));
     }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Lỗi khi lấy danh sách đề thi theo mã môn học: {maMonHoc}", maMonHoc);
-        return StatusCode(StatusCodes.Status500InternalServerError,
-            ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
-    }
-}
 
-// GET: api/DeThi/Approved
-[HttpGet("Approved")]
-[SwaggerOperation("Lấy danh sách đề thi đã được duyệt")]
-public async Task<IActionResult> GetApprovedDeThisAsync()
-{
-    try
+    // GET: api/DeThi/Approved
+    [HttpGet("Approved")]
+    [SwaggerOperation("Lấy danh sách đề thi đã được duyệt")]
+    public async Task<IActionResult> GetApprovedDeThisAsync()
     {
-        var deThis = await _service.GetApprovedDeThisAsync();
-        if (deThis == null || !deThis.Any())
+        try
         {
-            return StatusCode(StatusCodes.Status404NotFound,
-                ApiResponseFactory.NotFound<object>("Không tìm thấy đề thi đã được duyệt."));
+            var deThis = await _service.GetApprovedDeThisAsync();
+            if (deThis == null || !deThis.Any())
+            {
+                return StatusCode(StatusCodes.Status404NotFound,
+                    ApiResponseFactory.NotFound<object>("Không tìm thấy đề thi đã được duyệt."));
+            }
+
+            return StatusCode(StatusCodes.Status200OK,
+                ApiResponseFactory.Success<object>(deThis, "Lấy danh sách đề thi đã được duyệt thành công!"));
         }
-
-        return StatusCode(StatusCodes.Status200OK,
-            ApiResponseFactory.Success<object>(deThis, "Lấy danh sách đề thi đã được duyệt thành công!"));
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi lấy danh sách đề thi đã được duyệt.");
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
+        }
     }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Lỗi khi lấy danh sách đề thi đã được duyệt.");
-        return StatusCode(StatusCodes.Status500InternalServerError,
-            ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
-    }
-}
 
-   
+
     // POST: api/DeThi
     [HttpPost]
     [SwaggerOperation("Thêm Đề Thi mới")]
@@ -178,7 +181,7 @@ public async Task<IActionResult> GetApprovedDeThisAsync()
     {
         if (deThiCreateDto == null)
         {
-            return StatusCode(StatusCodes.Status400BadRequest, 
+            return StatusCode(StatusCodes.Status400BadRequest,
                 ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ."));
         }
         try
@@ -186,11 +189,11 @@ public async Task<IActionResult> GetApprovedDeThisAsync()
             var (success, message, maDeThi) = await _service.AddAsync(deThiCreateDto);
             if (!success)
             {
-                return StatusCode(StatusCodes.Status400BadRequest, 
+                return StatusCode(StatusCodes.Status400BadRequest,
                     ApiResponseFactory.ValidationError<object>(message));
             }
 
-          
+
             var responseData = new
             {
                 MaDeThi = maDeThi,
@@ -200,12 +203,12 @@ public async Task<IActionResult> GetApprovedDeThisAsync()
                 deThiCreateDto.ChiTietDeThis
             };
 
-            return StatusCode(StatusCodes.Status201Created, 
+            return StatusCode(StatusCodes.Status201Created,
                 ApiResponseFactory.Success(responseData, "Thêm đề thi thành công!"));
         }
         catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, 
+            return StatusCode(StatusCodes.Status500InternalServerError,
                 ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
     }
@@ -259,7 +262,7 @@ public async Task<IActionResult> GetApprovedDeThisAsync()
             return StatusCode(StatusCodes.Status500InternalServerError, ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
     }
-   
+
     // POST: api/YeuCauRutTrich/CheckQuestions
     [HttpPost("CheckQuestions")]
     [SwaggerOperation("Kiểm tra xem có đủ câu hỏi theo ma trận hay không")]
@@ -308,7 +311,7 @@ public async Task<IActionResult> GetApprovedDeThisAsync()
     {
         try
         {
-            var query = await _service.GetAllBasicAsync(); 
+            var query = await _service.GetAllBasicAsync();
 
             // Filtering
             if (!string.IsNullOrWhiteSpace(search))
@@ -372,5 +375,50 @@ public async Task<IActionResult> GetApprovedDeThisAsync()
                 ApiResponseFactory.ServerError("Đã xảy ra lỗi khi xử lý."));
         }
     }
+    [HttpPost("{id}/export")]
+    [SwaggerOperation(Summary = "Xuất đề thi Word/PDF cho sinh viên", Description = "Hỗ trợ hoán vị đáp án và in kèm đáp án. Format: 'word' hoặc 'pdf'.")]
+    [SwaggerResponse(200, "File đề thi", typeof(FileResult))]
+    [SwaggerResponse(404, "Không tìm thấy đề thi")]
+    [SwaggerResponse(500, "Lỗi server")]
+    public async Task<IActionResult> ExportDeThi(Guid id, [FromBody] YeuCauXuatDeThiDto? request = null)
+    {
+        if (id == Guid.Empty)
+            return BadRequest(ApiResponseFactory.ValidationError<object>("ID đề thi không hợp lệ."));
 
+        request ??= new YeuCauXuatDeThiDto();
+        request.MaDeThi = id;
+
+        try
+        {
+            byte[] fileBytes;
+            string contentType;
+            string extension;
+
+            if (request.Format?.Equals("pdf", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                fileBytes = await _exportService.ExportPdfAsync(request);
+                contentType = "application/pdf";
+                extension = "pdf";
+            }
+            else
+            {
+                fileBytes = await _exportService.ExportWordAsync(request);
+                contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                extension = "docx";
+            }
+
+            var fileName = $"DeThi_{id:N}_{(request.IncludeDapAn ? "CoDapAn" : "")}_{DateTime.Now:yyyyMMdd}.{extension}";
+            return File(fileBytes, contentType, fileName);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(ApiResponseFactory.NotFound<object>("Không tìm thấy đề thi"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi xuất đề thi {MaDeThi}", id);
+            return StatusCode(500, ApiResponseFactory.ServerError("Không thể xuất đề thi: " + ex.Message));
+        }
+
+    }
 }

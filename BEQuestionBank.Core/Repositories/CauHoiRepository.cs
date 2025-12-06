@@ -106,15 +106,45 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
         return await _context.CauHois
             .AsNoTracking()
             .Where(c => c.MaCauHoiCha == null &&
-                       (c.LoaiCauHoi == "Group" || c.CauHoiCons.Any()) &&
+                        (c.LoaiCauHoi == "NH" || c.CauHoiCons.Any()) &&
                        c.XoaTam != true)
             .Include(c => c.Phan)
             .Include(c => c.CauHoiCons.Where(child => child.XoaTam != true))
                 .ThenInclude(child => child.CauTraLois)
-            .OrderByDescending(c => c.NgayTao)
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<CauHoi>> GetAllGhepNoiAsync()
+    {
+        return await _context.CauHois
+            .Where(c => c.LoaiCauHoi == "GN" && c.MaCauHoiCha == null)
+            .Include(c => c.CauHoiCons) // load câu hỏi con
+            .ThenInclude(ch => ch.CauTraLois) // load câu trả lời
+            .AsSplitQuery() // <--- đây
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<CauHoi>> GetAllMultipleChoiceAsync()
+    {
+        return await _context.CauHois
+            .Where(c => c.LoaiCauHoi == "MN" && c.MaCauHoiCha == null)
+            .Include(c => c.CauHoiCons) // load câu hỏi con
+            .ThenInclude(ch => ch.CauTraLois) // load câu trả lời
+            .AsSplitQuery() // <--- đây
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<CauHoi>> GetAllDienTuAsync()
+    {
+        return await _context.CauHois
+            .Where(c => c.LoaiCauHoi == "DT" && c.MaCauHoiCha == null)
+            .Include(c => c.CauHoiCons) // load câu hỏi con
+            .ThenInclude(ch => ch.CauTraLois) // load câu trả lời
+            .AsSplitQuery() // <--- đây
+            .ToListAsync();
+    }
+    
+    
     public async Task<CauHoi> AddWithAnswersAsync(CauHoi cauHoi)
     {
         await _context.CauHois.AddAsync(cauHoi);

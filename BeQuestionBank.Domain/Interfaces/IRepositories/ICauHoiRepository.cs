@@ -32,6 +32,9 @@ public interface ICauHoiRepository : IRepository<CauHoi>
 
     // Đổi Object -> CauHoi
     Task<IEnumerable<CauHoi>> GetAllGroupsAsync();
+    Task<IEnumerable<CauHoi>> GetAllGhepNoiAsync();
+    Task<IEnumerable<CauHoi>> GetAllDienTuAsync();
+    Task<IEnumerable<CauHoi>> GetAllMultipleChoiceAsync();
 
     // Đổi tham số input và return type từ Object -> CauHoi
     Task<CauHoi> AddWithAnswersAsync(CauHoi cauHoi);

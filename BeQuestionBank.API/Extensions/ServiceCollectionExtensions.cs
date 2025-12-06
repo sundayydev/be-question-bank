@@ -32,6 +32,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IYeuCauRutTrichRepository,YeuCauRutTrichRepository>();
         services.AddScoped<CauHoiRepository>();
         services.AddScoped<ICauHoiRepository,CauHoiRepository>();
+        services.AddScoped<DeThiExportForStudentService>();
         
         //nguoidung
         services.AddScoped<NguoiDungService>();

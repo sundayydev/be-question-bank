@@ -10,6 +10,9 @@ namespace FEQuestionBank.Client.Services.Interface
 
         // Đổi bool -> object
         Task<ApiResponse<object>> CreateSingleQuestionAsync(CreateCauHoiWithCauTraLoiDto request);
+        Task<ApiResponse<object>> CreateFillingQuestionAsync(CreateCauHoiDienTuDto request);
+        Task<ApiResponse<object>> CreatePairingQuestionAsync(CreateCauHoiGhepNoiDto request);
+        Task<ApiResponse<object>> CreateMultipeChoiceQuestionAsync(CreateCauHoiMultipleChoiceDto request);
 
         // Đổi bool -> object
         Task<ApiResponse<object>> CreateGroupQuestionAsync(CreateCauHoiNhomDto request); // Lưu ý DTO này

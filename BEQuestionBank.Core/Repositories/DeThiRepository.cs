@@ -87,4 +87,21 @@ public class DeThiRepository : GenericRepository<DeThi>, IDeThiRepository
             .ThenInclude(chc => chc.CauTraLois)
             .FirstOrDefaultAsync(dt => dt.MaDeThi == maDeThi);
     }
+    public async Task<DeThi?> GetFullForExportAsync(Guid maDeThi)
+    {
+        return await _context.DeThis
+            .Include(d => d.MonHoc)
+                .ThenInclude(m => m.Khoa)
+            .Include(d => d.ChiTietDeThis!)
+                .ThenInclude(ct => ct.Phan)
+            .Include(d => d.ChiTietDeThis!)
+                .ThenInclude(ct => ct.CauHoi!)
+                    .ThenInclude(ch => ch.CauTraLois)
+            .Include(d => d.ChiTietDeThis!)
+                .ThenInclude(ct => ct.CauHoi!)
+                    .ThenInclude(ch => ch.CauHoiCons)
+                        .ThenInclude(chc => chc.CauTraLois)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(d => d.MaDeThi == maDeThi);
+    }
 }

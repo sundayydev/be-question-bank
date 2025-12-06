@@ -1,9 +1,12 @@
 ﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
-public class CreateQuestionBase : ComponentBase
+namespace FEQuestionBank.Client.Pages.CauHoi;
+
+public partial class CreateSelectQuestionManyBase : ComponentBase
 {
     [Inject] NavigationManager Navigation { get; set; } = default!;
+
     protected List<BreadcrumbItem> _breadcrumbs = new()
     {
         new BreadcrumbItem("Trang chủ", href: "/"),
@@ -16,14 +19,17 @@ public class CreateQuestionBase : ComponentBase
         // Điều hướng đến trang tương ứng hoặc xử lý logic khác
         switch (type)
         {
-            case "single":
-                Navigation.NavigateTo("/question/create-question-select-single");
-                break;
             case "group":
-                Navigation.NavigateTo("/question/create-question-select-many");
+                Navigation.NavigateTo("/create-question/group");
                 break;
-            case "upload":
-                Navigation.NavigateTo("/question/upload");
+            case "essay":
+                Navigation.NavigateTo("/create-question/essay");
+                break;
+            case "filling":
+                Navigation.NavigateTo("/create-question/filling");
+                break;
+            case "pairing":
+                Navigation.NavigateTo("/create-question/pairing");
                 break;
         }
     }

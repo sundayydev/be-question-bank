@@ -1,0 +1,201 @@
+﻿@page "/question/create-question-select-many"
+@inherits CreateSelectQuestionManyBase
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+    <!-- Breadcrumbs -->
+    <MudBreadcrumbs Items="_breadcrumbs"></MudBreadcrumbs>
+
+    <!-- Unified header design matching CreateUser style -->
+    <div class="create-question-header">
+        <h1 class="create-question-title">Chọn loại câu hỏi </h1>
+        <p style="color: rgba(255,255,255,0.85); margin-top: 8px; margin-bottom: 0; font-size: 16px;">
+            Chọn phương thức phù hợp để tạo câu hỏi mới
+        </p>
+    </div>
+
+    <!-- Cards Grid -->
+    <MudGrid Justify="Justify.Center" Spacing="4">
+        <!-- Single Answer Card -->
+        <MudItem xs="12" sm="6" md="5">
+            <div class="method-card method-card-blue" @onclick="@(() => SelectQuestionType("group"))">
+                <div class="method-icon method-icon-blue">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large"/>
+                </div>
+                <h2 class="method-title">Trắc nghiệm câu hỏi nhóm</h2>
+                <p class="method-description">
+                    Có câu hỏi cha bên ngoài bọc các câu hỏi con
+                </p>
+            </div>
+        </MudItem>
+
+        <!-- tu luan-->
+        <MudItem xs="12" sm="6" md="5">
+            <div class="method-card method-card-green" @onclick="@(() => SelectQuestionType("essay"))">
+                <div class="method-icon method-icon-green">
+                    <MudIcon Icon="@Icons.Material.Filled.Checklist" Size="Size.Large"/>
+                </div>
+                <h2 class="method-title">Câu hỏi tự luận</h2>
+                <p class="method-description">
+                    Câu hỏi tự luận không có đáp án nhé
+                </p>
+            </div>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="5">
+            <div class="method-card method-card-amber" @onclick="@(() => SelectQuestionType("filling"))">
+                <div class="method-icon method-icon-amber">
+                    <MudIcon Icon="@Icons.Material.Filled.Code" Size="Size.Large"/>
+                </div>
+                <h2 class="method-title">Câu hỏi điền từ</h2>
+                <p class="method-description">
+                    Câu hỏi có điền các cau trả lời vào thứ tự chỗ trống câu hỏi
+                </p>
+            </div>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="5">
+            <div class="method-card method-card-darkgray" @onclick="@(() => SelectQuestionType("pairing"))">
+                <div class="method-icon method-icon-darkgray">
+                    <MudIcon Icon="@Icons.Material.Filled.CloseFullscreen" Size="Size.Large"/>
+                </div>
+                <h2 class="method-title">Câu hỏi ghép nối</h2>
+                <p class="method-description">
+                    Câu hỏi ghép câu hỏi ở cột trái qua đáp án cột phải
+                </p>
+            </div>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+
+<style>
+
+
+    /* Header */
+    .create-question-header {
+        background: #6C5CE7; /* màu trơn */
+        padding: 40px 20px;
+        border-radius: 16px;
+        margin-bottom: 40px;
+        box-shadow: 0 8px 24px rgba(108, 92, 231, 0.15);
+        color: white;
+    }
+
+    .create-question-title {
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        margin: 0;
+        font-size: 28px;
+    }
+
+    /* Cards */
+    .method-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 32px 24px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 2px solid transparent;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .method-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.35s ease;
+    }
+
+    .method-card-blue::before {
+        background: #3b82f6;
+    }
+
+    .method-card-green::before {
+        background: #10b981;
+    }
+
+    .method-card-amber::before {
+        background: #f59e0b;
+    }
+
+    .method-card-darkgray::before {
+        background: #94a3b8;
+    }
+
+
+    .method-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+        border-color: #E8E1FF;
+    }
+
+    .method-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    /* Icon */
+    .method-icon {
+        width: 64px;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        font-size: 36px;
+        border: 1px solid #dfe6e9;
+        transition: all 0.3s ease;
+    }
+
+    .method-icon-blue {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+    }
+
+    .method-icon-green {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+
+    .method-icon-amber {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+    }
+
+    .method-icon-darkgray {
+        background: linear-gradient(135deg, #b0b0b0 0%, #666666 100%);
+        color: white; /* hoặc #222 nếu muốn đậm hơn */
+    }
+
+    .method-card:hover .method-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    /* Titles & Description */
+    .method-title {
+        font-size: 20px;
+        font-weight: 700;
+        margin: 16px 0 12px 0;
+        color: #2D3436;
+        text-align: center;
+    }
+
+    .method-description {
+        font-size: 14px;
+        color: #636E72;
+        text-align: center;
+        line-height: 1.5;
+        margin: 0;
+    }
+</style>

@@ -6,10 +6,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using StackExchange.Redis;
+using Syncfusion.Licensing;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-
+SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1JFaF1cXGFCf1FpRGFGfV5ycUVPallYTnJYUj0eQnxTdEBiW39bcnVQT2RbWE1xVkleYg==");
 // Add services to the container.
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
@@ -42,6 +43,7 @@ builder.Services.AddCors(options =>
     });
 });
 
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 // Đăng ký Redis
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
 builder.Services.AddSingleton<IConnectionMultiplexer>(
@@ -152,6 +154,7 @@ builder.Services.AddSwaggerGen(c =>
 builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
 
 builder.Services.AddOpenApi();
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
