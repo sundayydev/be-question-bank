@@ -1,0 +1,64 @@
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+
+<div id="@_elementId" class="latex-content @Class">
+    @((MarkupString)Content)
+</div>
+
+@code {
+    /// <summary>
+    /// The content containing LaTeX formulas to render.
+    /// LaTeX can be delimited by:
+    /// - $...$ for inline math
+    /// - $$...$$ for display math
+    /// - \[...\] for display math
+    /// - \(...\) for inline math
+    /// </summary>
+    [Parameter]
+    public string Content { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Additional CSS class for the container
+    /// </summary>
+    [Parameter]
+    public string Class { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Whether to auto-render on first render
+    /// </summary>
+    [Parameter]
+    public bool AutoRender { get; set; } = true;
+
+    private string _elementId = $"latex-{Guid.NewGuid():N}";
+    private string _lastContent = string.Empty;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && AutoRender && !string.IsNullOrEmpty(Content))
+        {
+            await RenderLatexAsync();
+            _lastContent = Content;
+        }
+        else if (!firstRender && Content != _lastContent && !string.IsNullOrEmpty(Content))
+        {
+            await RenderLatexAsync();
+            _lastContent = Content;
+        }
+    }
+
+    /// <summary>
+    /// Manually trigger LaTeX rendering
+    /// </summary>
+    public async Task RenderLatexAsync()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("LatexRenderer.renderWhenReady", _elementId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"LaTeX render error: {ex.Message}");
+        }
+    }
+}
+

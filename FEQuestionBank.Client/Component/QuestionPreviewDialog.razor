@@ -32,7 +32,7 @@
                     <b>Nội dung câu hỏi:</b>
                 </MudText>
                 <MudDivider Class="mb-2" />
-                <MudText Typo="Typo.body1" Style="white-space: pre-wrap; font-size: 1.1rem;">@QuestionContent</MudText>
+                <LatexContent Content="@QuestionContent" Class="question-latex-preview"/>
             </MudPaper>
 
             <MudText Typo="Typo.subtitle2" Class="mb-2 ml-1"><b>Các lựa chọn trả lời:</b></MudText>
@@ -51,7 +51,9 @@
                                 @alpha
                             </MudAvatar>
 
-                            <MudText Class="flex-grow-1" Style="@(ans.IsCorrect ? "font-weight: 500;" : "")">@ans.Text</MudText>
+                            <div class="flex-grow-1 answer-latex-content" style="@(ans.IsCorrect ? "font-weight: 500;" : "")">
+                                <LatexContent Content="@ans.Text"/>
+                            </div>
 
                             @if (ans.IsCorrect)
                             {

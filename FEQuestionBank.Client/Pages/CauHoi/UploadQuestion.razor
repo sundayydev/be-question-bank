@@ -1,169 +1,575 @@
-﻿@page "/question/upload"
+@page "/question/upload"
 @inject NavigationManager Nav
 
-<MudContainer MaxWidth="MaxWidth.Large">
-    <!-- Breadcrumb -->
-    <MudBreadcrumbs Items="_breadcrumbs" Style="margin-top:2px;" />
-    <!-- Chọn Khoa, Môn, Chương/Phần -->
-    <MudPaper Elevation="2" Class="pa-4 mb-6">
-        <MudText Typo="Typo.subtitle1" Class="mb-3">Chọn khoa, môn học và chương/phần</MudText>
-        <MudGrid Spacing="3">
-            <MudItem sm="4">
-                <MudSelect T="string" 
-                           Label="Khoa" 
-                           Placeholder="-- Chọn khoa --" 
-                           Variant="Variant.Outlined" 
-                           Required="true"
-                           Value="@(SelectedKhoa?.ToString())"
-                           ValueChanged="@(s => OnKhoaChanged(s != null ? Guid.Parse(s) : null))"
-                >
-                    @foreach (var khoa in Khoas)
-                    {
-                        <MudSelectItem Value="@khoa.MaKhoa.ToString()" >@khoa.TenKhoa</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudItem>
+<link href="css/upload-question.css" rel="stylesheet" />
 
-            <MudItem sm="4">
-                <MudSelect T="string" 
-                           Label="Môn học" 
-                           Placeholder="-- Chọn môn học --" 
-                           Variant="Variant.Outlined" 
-                           Required="true"
-                           Value="@(SelectedMonHoc?.ToString())"
-                           ValueChanged="@(s => OnMonHocChanged(s != null ? Guid.Parse(s) : null))"
-                           Disabled="@(SelectedKhoa == null)">
-                    @foreach (var mon in MonHocs)
-                    {
-                        <MudSelectItem Value="@mon.MaMonHoc.ToString()">@mon.TenMonHoc</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudItem>
-
-            <MudItem sm="4">
-                <MudSelect T="string" 
-                           Label="Chương/Phần" 
-                           Placeholder="-- Chọn chương/phần --" 
-                           Variant="Variant.Outlined" 
-                           Required="true"
-                           Value="@(SelectedPhanId?.ToString())"
-                           ValueChanged="@(s => SelectedPhanId = s != null ? Guid.Parse(s) : null)"
-                           Disabled="@(SelectedMonHoc == null)">
-                    @foreach (var phan in Phans)
-                    {
-                        <MudSelectItem Value="@phan.MaPhan.ToString()">
-                            @if (phan.MaPhanCha == null)
-                            {
-                                <strong>@phan.TenPhan</strong>
-                            }
-                            else
-                            {
-                                <span style="margin-left: 20px;">└ @phan.TenPhan</span>
-                            }
-                        </MudSelectItem>
-                    }
-                </MudSelect>
-            </MudItem>
-        </MudGrid>
-    </MudPaper>
-
-    <!-- Hai cột: Upload Word & Upload ZIP -->
-    <MudGrid>
-        <!-- CỘT 1: Upload Word -->
-        <MudItem xs="6">
-            <MudPaper Elevation="2" Class="pa-6" Style="border-radius: 16px; background-color: #fff;">
-                <MudStack Row="true" AlignItems="@AlignItems.Center" Spacing="1" Class="mb-4">
-                    <MudIcon Icon="@Icons.Material.Filled.Description" 
-                             Style="@($"color:{Colors.Blue.Darken3};")" Size="Size.Medium" />
-                    <MudText Typo="Typo.h6" Class="fw-bold" Style="@($"color:{Colors.Blue.Darken3};")">
-                        Nhập từ Word
+<div class="upload-container">
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge">
+        <!-- Header -->
+        <MudPaper Elevation="3" Class="pa-6 mb-4 glass-card" Style="border-radius: 20px;">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                <div>
+                    <MudText Typo="Typo.h4" Class="fw-bold" Style="color: #212529;">
+                        Import Câu Hỏi
                     </MudText>
-                    <MudTooltip Text="Tải lên file Word để hệ thống tự động đọc câu hỏi từ nội dung.">
-                        <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Default" Size="Size.Small" Class="ms-1" />
-                    </MudTooltip>
-                </MudStack>
-
-                <div class="border-dashed border-primary"
-                     style="border: 2px dashed #3f51b5; border-radius: 10px; padding: 40px; text-align: center;">
-                    <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Large" Class="mb-2" Style="@($"color:{Colors.Blue.Darken3};")" />
-                    <MudText Typo="Typo.subtitle1" Class="fw-semibold mb-1">Tải lên file Word</MudText>
-                    <MudText Typo="Typo.body2" Class="text-muted">
-                        Kéo thả hoặc nhấp để chọn file<br />
-                        Hỗ trợ: .docx, .doc
+                    <MudText Typo="Typo.body2" Color="Color.Default" Class="mt-2">
+                        Upload file Word hoặc ZIP để import hàng loạt câu hỏi vào hệ thống
                     </MudText>
-                    <InputFile OnChange="@OnWordFileSelected" accept=".docx,.doc" />
                 </div>
-
-                <MudButton Variant="Variant.Outlined"
-                           StartIcon="@Icons.Material.Filled.Info"
-                           Style="@($"color:{Colors.Blue.Darken3};")"
-                           FullWidth="true"
-                           Class="mt-4 fw-semibold">
-                    Xem hướng dẫn định dạng Word
+                <MudButton Variant="Variant.Outlined" 
+                           StartIcon="@Icons.Material.Filled.HelpOutline"
+                           Color="Color.Primary"
+                           Style="border-radius: 20px; font-weight: 600;">
+                    Hướng Dẫn
                 </MudButton>
+            </MudStack>
+        </MudPaper>
 
-                <MudPaper Elevation="0" Class="p-4 mt-4" Style="background-color: #f5f8ff; border-radius: 12px;">
-                    <MudText Typo="Typo.subtitle2" Class="fw-semibold mb-2 d-flex align-items-center"
-                             Style="@($"color:{Colors.Blue.Darken3};")">
-                        <MudIcon Icon="@Icons.Material.Filled.Settings" Size="Size.Small" Class="me-1" />
-                        Tính năng:
-                    </MudText>
-                    <MudList T="string" Dense="true">
-                        <MudListItem T="string">Phân tích câu hỏi từ file Word</MudListItem>
-                        <MudListItem T="string">Tự động nhận diện CLO</MudListItem>
-                        <MudListItem T="string">Hỗ trợ LaTeX và công thức toán</MudListItem>
-                        <MudListItem T="string">Xử lý định dạng gạch chân (Hoán vị)</MudListItem>
-                    </MudList>
-                </MudPaper>
-            </MudPaper>
-        </MudItem>
-
-        <!-- CỘT 2: Upload ZIP -->
-        <MudItem xs="6">
-            <MudPaper Elevation="2" Class="pa-6" Style="border-radius: 16px; background-color: #fff;">
-                <MudStack Row="true" AlignItems="@AlignItems.Center" Spacing="1" Class="mb-4">
-                    <MudIcon Icon="@Icons.Material.Filled.FolderZip" Style="@($"color:{Colors.Green.Darken2};")" Size="Size.Medium"/>
-                    <MudText Typo="Typo.h6" Class="fw-bold" Style="@($"color:{Colors.Green.Darken2};")">
-                        Upload File Zip
-                    </MudText>
-                    <MudTooltip Text="Tải lên tệp ZIP để hệ thống tự động đọc cấu trúc và nội dung.">
-                        <MudIcon Icon="@Icons.Material.Filled.Info" Style="@($"color:{Colors.Green.Darken2};")" Size="Size.Small" Class="ms-1"/>
-                    </MudTooltip>
-                </MudStack>
-
-                <div class="border-dashed border-success"
-                     style="border: 2px dashed #4caf50; border-radius: 10px; padding: 40px; text-align: center;">
-                    <MudIcon Icon="@Icons.Material.Filled.FolderZip" Size="Size.Large" Class="mb-2" Style="@($"color:{Colors.Green.Darken2};")"/>
-                    <MudText Typo="Typo.subtitle1" Class="fw-semibold mb-1 text-success">Tải lên tệp ZIP</MudText>
-                    <MudText Typo="Typo.body2" Class="text-muted">
-                        Kéo thả hoặc nhấp để chọn file ZIP<br/>
-                        Hỗ trợ: .zip (tối đa 100MB)
-                    </MudText>
-                    <InputFile OnChange="@OnZipFileSelected" accept=".zip"/>
+        <!-- Step Indicator -->
+        <MudPaper Elevation="2" Class="pa-4 mb-4 glass-card" Style="border-radius: 20px;">
+            <div class="step-indicator">
+                <div class="step @(CurrentStep >= 1 ? "active" : "") @(CurrentStep > 1 ? "completed" : "")">
+                    <div class="step-circle">@(CurrentStep > 1 ? "✓" : "1")</div>
+                    <MudText Typo="Typo.body2" Style="font-weight: 600;">Chọn Phần</MudText>
                 </div>
+                <div class="step @(CurrentStep >= 2 ? "active" : "") @(CurrentStep > 2 ? "completed" : "")">
+                    <div class="step-circle">@(CurrentStep > 2 ? "✓" : "2")</div>
+                    <MudText Typo="Typo.body2" Style="font-weight: 600;">Upload File</MudText>
+                </div>
+                <div class="step @(CurrentStep >= 3 ? "active" : "") @(CurrentStep > 3 ? "completed" : "")">
+                    <div class="step-circle">@(CurrentStep > 3 ? "✓" : "3")</div>
+                    <MudText Typo="Typo.body2" Style="font-weight: 600;">Preview</MudText>
+                </div>
+                <div class="step @(CurrentStep >= 4 ? "active" : "")">
+                    <div class="step-circle">@(CurrentStep >= 4 ? "✓" : "4")</div>
+                    <MudText Typo="Typo.body2" Style="font-weight: 600;">Import</MudText>
+                </div>
+            </div>
+        </MudPaper>
 
-                <MudButton Variant="Variant.Outlined"
-                           StartIcon="@Icons.Material.Filled.Info"
-                           Style="@($"color:{Colors.Green.Darken2};")"
-                           FullWidth="true"
-                           Class="mt-4 fw-semibold">
-                    Xem hướng dẫn định dạng ZIP
-                </MudButton>
+        <!-- Chọn Khoa, Môn, Phần -->
+        <MudPaper Elevation="3" Class="pa-6 mb-4 glass-card" Style="border-radius: 20px;">
+            <MudText Typo="Typo.h6" Class="mb-4 fw-bold" Style="font-size: 20px;">
+                <MudIcon Icon="@Icons.Material.Filled.School" Class="me-2"/> Bước 1: Chọn Khoa, Môn và Phần
+            </MudText>
+            <MudGrid Spacing="3">
+                <MudItem xs="12" sm="4">
+                    <MudSelect T="string" Label="Khoa" Variant="Variant.Outlined" 
+                               Value="@(SelectedKhoa?.ToString())"
+                               ValueChanged="@(s => OnKhoaChanged(s != null ? Guid.Parse(s) : null))"
+                               AnchorOrigin="Origin.BottomCenter"
+                               Dense="true">
+                        @foreach (var khoa in Khoas)
+                        {
+                            <MudSelectItem Value="@khoa.MaKhoa.ToString()">@khoa.TenKhoa</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudSelect T="string" Label="Môn học" Variant="Variant.Outlined"
+                               Value="@(SelectedMonHoc?.ToString())"
+                               ValueChanged="@(s => OnMonHocChanged(s != null ? Guid.Parse(s) : null))"
+                               Disabled="@(SelectedKhoa == null)"
+                               Dense="true">
+                        @foreach (var mon in MonHocs)
+                        {
+                            <MudSelectItem Value="@mon.MaMonHoc.ToString()">@mon.TenMonHoc</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudSelect T="string" Label="Chương/Phần" Variant="Variant.Outlined"
+                               Value="@(SelectedPhanId?.ToString())"
+                               ValueChanged="@(s => OnPhanChanged(s != null ? Guid.Parse(s) : null))"
+                               Disabled="@(SelectedMonHoc == null)"
+                               Dense="true">
+                        @foreach (var phan in Phans)
+                        {
+                            <MudSelectItem Value="@phan.MaPhan.ToString()">
+                                @if (phan.MaPhanCha == null)
+                                {
+                                    <strong>@phan.TenPhan</strong>
+                                }
+                                else
+                                {
+                                    <span style="margin-left: 20px;">└ @phan.TenPhan</span>
+                                }
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
 
-                <MudPaper Elevation="0" Class="p-4 mt-4" Style="background-color: #e9f8f0; border-radius: 12px;">
-                    <MudText Typo="Typo.subtitle2" Class="fw-semibold mb-2 d-flex align-items-center"
-                             Style="@($"color:{Colors.Green.Darken2};")">
-                        <MudIcon Icon="@Icons.Material.Filled.Settings" Size="Size.Small" Class="me-1"/>
-                        Cấu trúc gói đề
-                    </MudText>
-                    <MudList T="string" Dense="true">
-                        <MudListItem T="string">File Word (.docx) – Bắt buộc</MudListItem>
-                        <MudListItem T="string">Thư mục /audio – Tùy chọn</MudListItem>
-                        <MudListItem T="string">Thư mục /images – Tùy chọn</MudListItem>
-                        <MudListItem T="string">Tự động chuyển đổi WebP</MudListItem>
-                    </MudList>
+        @if (SelectedPhanId.HasValue)
+        {
+            <!-- Upload Files -->
+            <MudGrid>
+                <!-- Word Upload -->
+                <MudItem xs="12" md="6">
+                    <div class="upload-card">
+                        <MudPaper Elevation="3" Class="pa-6 glass-card" Style="height: 100%;">
+                            <MudStack Spacing="3">
+                                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                        <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Primary" Size="Size.Large"/>
+                                        <div>
+                                            <MudText Typo="Typo.h6" Class="fw-bold">File Word</MudText>
+                                            <MudText Typo="Typo.body2" Color="Color.Default">Import từ .docx</MudText>
+                                        </div>
+                                    </MudStack>
+                                    @if (WordFile != null)
+                                    {
+                                        <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle" Style="font-weight: 600;">Đã chọn</MudChip>
+                                    }
+                                </MudStack>
+
+                                <div class="upload-zone" style="border-color: #007bff;">
+                                    <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Large" Color="Color.Primary" Class="mb-3 pulse-animation"/>
+                                    <MudText Typo="Typo.h6" Class="fw-semibold mb-2">Kéo thả file vào đây</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Default">hoặc nhấp để chọn file</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Default" Class="mt-2">
+                                        Hỗ trợ: .docx (tối đa 100MB)
+                                    </MudText>
+                                    <InputFile OnChange="@OnWordFileSelected" accept=".docx"/>
+                                </div>
+
+                                @if (WordFile != null)
+                                {
+                                    <MudAlert Severity="Severity.Info" Dense="true" Style="border-radius: 10px; font-weight: 500;">
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                            <MudIcon Icon="@Icons.Material.Filled.Description"/>
+                                            <div>
+                                                <strong>@WordFile.Name</strong><br/>
+                                                <small>@FormatFileSize(WordFile.Size)</small>
+                                            </div>
+                                        </MudStack>
+                                    </MudAlert>
+                                }
+
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                                           FullWidth="true"
+                                           StartIcon="@Icons.Material.Filled.Preview"
+                                           Disabled="@(WordFile == null || IsProcessing)"
+                                           OnClick="@PreviewWordFile"
+                                           Style="border-radius: 12px; font-weight: 700; padding: 14px; text-transform: uppercase; letter-spacing: 1px;">
+                                    Preview & Validate
+                                </MudButton>
+                            </MudStack>
+                        </MudPaper>
+                    </div>
+                </MudItem>
+
+                <!-- ZIP Upload -->
+                <MudItem xs="12" md="6">
+                    <div class="upload-card">
+                        <MudPaper Elevation="3" Class="pa-6 glass-card" Style="height: 100%;">
+                            <MudStack Spacing="3">
+                                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                        <MudIcon Icon="@Icons.Material.Filled.FolderZip" Color="Color.Success" Size="Size.Large"/>
+                                        <div>
+                                            <MudText Typo="Typo.h6" Class="fw-bold">File ZIP</MudText>
+                                            <MudText Typo="Typo.body2" Color="Color.Default">Word + Media</MudText>
+                                        </div>
+                                    </MudStack>
+                                    @if (ZipFile != null)
+                                    {
+                                        <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle" Style="font-weight: 600;">Đã chọn</MudChip>
+                                    }
+                                </MudStack>
+
+                                <div class="upload-zone" style="border-color: #28a745;">
+                                    <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Large" Color="Color.Success" Class="mb-3 pulse-animation"/>
+                                    <MudText Typo="Typo.h6" Class="fw-semibold mb-2">Kéo thả file ZIP vào đây</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Default">hoặc nhấp để chọn file</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Default" Class="mt-2">
+                                        Hỗ trợ: .zip (tối đa 200MB)
+                                    </MudText>
+                                    <InputFile OnChange="@OnZipFileSelected" accept=".zip"/>
+                                </div>
+
+                                @if (ZipFile != null)
+                                {
+                                    <MudAlert Severity="Severity.Info" Dense="true" Style="border-radius: 10px; font-weight: 500;">
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                            <MudIcon Icon="@Icons.Material.Filled.FolderZip"/>
+                                            <div>
+                                                <strong>@ZipFile.Name</strong><br/>
+                                                <small>@FormatFileSize(ZipFile.Size)</small>
+                                            </div>
+                                        </MudStack>
+                                    </MudAlert>
+                                }
+
+                                <MudButton Variant="Variant.Filled" Color="Color.Success" 
+                                           FullWidth="true"
+                                           StartIcon="@Icons.Material.Filled.Preview"
+                                           Disabled="@(ZipFile == null || IsProcessing)"
+                                           OnClick="@PreviewZipFile"
+                                           Style="border-radius: 12px; font-weight: 700; padding: 14px; text-transform: uppercase; letter-spacing: 1px;">
+                                    Preview & Validate
+                                </MudButton>
+                            </MudStack>
+                        </MudPaper>
+                    </div>
+                </MudItem>
+            </MudGrid>
+
+            <!-- Preview Results -->
+            @if (PreviewResult != null)
+            {
+                <MudPaper Elevation="3" Class="pa-6 mt-4 glass-card" Style="border-radius: 20px;">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+                        <MudText Typo="Typo.h5" Class="fw-bold" Style="font-size: 24px;">
+                            <MudIcon Icon="@Icons.Material.Filled.Assessment" Class="me-2" Size="Size.Large"/> Kết Quả Validation
+                        </MudText>
+                        <MudChip T="string" Icon="@Icons.Material.Filled.Quiz" Style="font-weight: 600; font-size: 14px;">
+                            @PreviewResult.TotalFound câu hỏi
+                        </MudChip>
+                    </MudStack>
+
+                    <!-- Summary Stats -->
+                    <MudGrid Class="mb-5">
+                        <MudItem xs="12" sm="4">
+                            <div class="stats-card total">
+                                <div class="stats-number">@PreviewResult.TotalFound</div>
+                                <MudText Typo="Typo.body1" Style="font-weight: 600; font-size: 16px;">Tổng số câu hỏi</MudText>
+                            </div>
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <div class="stats-card valid">
+                                <div class="stats-number">@PreviewResult.ValidCount</div>
+                                <MudText Typo="Typo.body1" Style="font-weight: 600; font-size: 16px;">Hợp lệ ✓</MudText>
+                            </div>
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <div class="stats-card invalid">
+                                <div class="stats-number">@PreviewResult.InvalidCount</div>
+                                <MudText Typo="Typo.body1" Style="font-weight: 600; font-size: 16px;">Có lỗi ✗</MudText>
+                            </div>
+                        </MudItem>
+                    </MudGrid>
+
+                    <!-- Alert -->
+                    @if (PreviewResult.HasErrors)
+                    {
+                        <MudAlert Severity="Severity.Warning" Class="mb-4" Elevation="2" Style="border-radius: 12px; font-weight: 500; border-left: 5px solid #ff9800;">
+                            <MudText Typo="Typo.body1" Style="font-weight: 600;">
+                                <strong>⚠️ Tìm thấy @PreviewResult.InvalidCount câu hỏi có lỗi.</strong>
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mt-1">
+                                Vui lòng sửa các lỗi trong file Word trước khi import vào hệ thống.
+                            </MudText>
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Success" Class="mb-4 success-pulse" Elevation="2" Style="border-radius: 12px; font-weight: 500; border-left: 5px solid #4caf50;">
+                            <MudText Typo="Typo.body1" Style="font-weight: 600;">
+                                <strong>✅ Tất cả @PreviewResult.TotalFound câu hỏi đều hợp lệ!</strong>
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mt-1">
+                                File sẵn sàng để import vào hệ thống. Nhấn nút "Import" bên dưới để tiếp tục.
+                            </MudText>
+                        </MudAlert>
+                    }
+
+                    <!-- Questions List -->
+                    <MudDivider Class="my-4"/>
+                    
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+                        <MudText Typo="Typo.h6" Class="fw-bold" Style="font-size: 20px;">
+                            📋 Chi tiết từng câu hỏi
+                        </MudText>
+                        <MudButton Variant="Variant.Text" 
+                                   Size="Size.Small"
+                                   OnClick="@(() => ExpandAll())"
+                                   Style="font-weight: 600;">
+                            @(ExpandedQuestions.Count == PreviewResult.Questions.Count ? "Thu gọn tất cả" : "Xem tất cả")
+                        </MudButton>
+                    </MudStack>
+                    
+                    @foreach (var question in PreviewResult.Questions)
+                    {
+                        var isExpanded = ExpandedQuestions.Contains(question.QuestionNumber);
+                        
+                        <div class="question-validation-card @(question.IsValid ? "valid" : "invalid")">
+                            <MudPaper Elevation="2" Class="pa-4" Style="background: rgba(255,255,255,0.98);">
+                                <MudStack Spacing="3">
+                                    <!-- Header -->
+                                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                            <MudIcon Icon="@(question.IsGroup ? Icons.Material.Filled.Folder : Icons.Material.Filled.QuestionAnswer)" 
+                                                     Size="Size.Medium"
+                                                     Color="@(question.IsValid ? Color.Success : Color.Error)"/>
+                                            <MudText Typo="Typo.h6" Class="fw-bold" Style="font-size: 18px;">Câu @question.QuestionNumber</MudText>
+                                            <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="Color.Default" Style="font-weight: 600;">
+                                                @question.Type
+                                            </MudChip>
+                                            @if (!string.IsNullOrEmpty(question.CLO))
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Info" Icon="@Icons.Material.Filled.School" Style="font-weight: 600;">
+                                                    @question.CLO
+                                                </MudChip>
+                                            }
+                                        </MudStack>
+                                        <MudChip T="string" Color="@(question.IsValid ? Color.Success : Color.Error)" 
+                                                 Icon="@(question.IsValid ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Error)"
+                                                 Style="font-weight: 700; font-size: 13px; padding: 8px 16px;">
+                                            @question.Status
+                                        </MudChip>
+                                    </MudStack>
+
+                                    <!-- Preview Text -->
+                                    <MudPaper Elevation="0" Class="pa-3" Style="background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%); border-radius: 10px; border: 1px solid #e8e8e8;">
+                                        <MudText Typo="Typo.body2" Style="font-style: italic; color: #555; line-height: 1.8;">
+                                            <MudIcon Icon="@Icons.Material.Filled.FormatQuote" Size="Size.Small" Style="opacity: 0.5;"/>
+                                            @question.Preview
+                                        </MudText>
+                                    </MudPaper>
+
+                                    <!-- Meta Info & Expand Button -->
+                                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" FlexWrap="FlexWrap.Wrap">
+                                        <MudStack Row="true" Spacing="1" FlexWrap="FlexWrap.Wrap" AlignItems="AlignItems.Center">
+                                            @if (!question.IsGroup)
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.List" Style="font-weight: 600;">
+                                                    @question.AnswersCount đáp án
+                                                </MudChip>
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Check" Style="font-weight: 600;">
+                                                    @question.CorrectAnswersCount đúng
+                                                </MudChip>
+                                            }
+                                            else
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.Folder" Style="font-weight: 600;">
+                                                    @question.SubQuestionsCount câu con
+                                                </MudChip>
+                                            }
+                                            @if (question.Features.HasLatex)
+                                            {
+                                                <span class="feature-badge latex">📐 LATEX</span>
+                                            }
+                                            @if (question.Features.HasImages)
+                                            {
+                                                <span class="feature-badge image">🖼️ ẢNH</span>
+                                            }
+                                            @if (question.Features.HasAudio)
+                                            {
+                                                <span class="feature-badge audio">🔊 AUDIO</span>
+                                            }
+                                        </MudStack>
+                                        
+                                        <div class="expand-btn" @onclick="@(() => ToggleExpand(question.QuestionNumber))">
+                                            <MudIcon Icon="@(isExpanded ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Size="Size.Small"/>
+                                            <span>@(isExpanded ? "Thu gọn" : "Xem chi tiết")</span>
+                                        </div>
+                                    </MudStack>
+
+                                    <!-- Detail Content (Expandable) -->
+                                    <div class="detail-content @(isExpanded ? "show" : "")">
+                                        @if (isExpanded)
+                                        {
+                                            <MudDivider Class="my-3" Style="border-color: rgba(102, 126, 234, 0.2);"/>
+                                            
+                                            @if (!question.IsGroup)
+                                            {
+                                                <!-- Nội dung câu hỏi đầy đủ -->
+                                                <div class="question-content-display question-latex-preview">
+                                                    <MudText Typo="Typo.subtitle1" Class="fw-bold mb-3" Style="color: #495057; font-size: 16px;">
+                                                        <MudIcon Icon="@Icons.Material.Filled.QuestionAnswer" Size="Size.Small" Class="me-1"/>
+                                                        Nội dung câu hỏi:
+                                                    </MudText>
+                                                    <LatexContent Content="@question.Preview" Class="question-text"/>
+                                                </div>
+
+                                                <!-- Danh sách đáp án -->
+                                                @if (QuestionAnswers.ContainsKey(question.QuestionNumber))
+                                                {
+                                                    <MudText Typo="Typo.subtitle1" Class="fw-bold mt-4 mb-3" Style="color: #495057; font-size: 16px;">
+                                                        <MudIcon Icon="@Icons.Material.Filled.CheckCircleOutline" Size="Size.Small" Class="me-1"/>
+                                                        Các đáp án (@question.AnswersCount):
+                                                    </MudText>
+                                                    <MudStack Spacing="2">
+                                                        @foreach (var answer in QuestionAnswers[question.QuestionNumber])
+                                                        {
+                                                            <div class="answer-item-display @(answer.IsCorrect ? "correct" : "")">
+                                                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                                                    <span class="answer-label @(answer.IsCorrect ? "correct" : "")">
+                                                                        @answer.Label
+                                                                    </span>
+                                                                    <div class="answer-latex-content">
+                                                                        <LatexContent Content="@answer.Content"/>
+                                                                    </div>
+                                                                    @if (answer.IsCorrect)
+                                                                    {
+                                                                        <MudChip T="string" Size="Size.Small" 
+                                                                                 Color="Color.Success" 
+                                                                                 Icon="@Icons.Material.Filled.Check" 
+                                                                                 Style="font-weight: 700;">
+                                                                            Đáp án đúng
+                                                                        </MudChip>
+                                                                    }
+                                                                </MudStack>
+                                                            </div>
+                                                        }
+                                                    </MudStack>
+                                                }
+                                            }
+                                        }
+                                    </div>
+
+                                    <!-- Errors -->
+                                    @if (question.Errors.Any())
+                                    {
+                                        <MudPaper Elevation="0" Class="pa-4 mt-3" Style="background: linear-gradient(135deg, #ffebee 0%, #fff5f5 100%); border-radius: 12px; border: 2px solid #ffcdd2;">
+                                            <MudText Typo="Typo.subtitle1" Class="fw-bold mb-3" Style="color: #c62828; font-size: 15px;">
+                                                <MudIcon Icon="@Icons.Material.Filled.Error" Class="me-2" Size="Size.Small"/>
+                                                Lỗi cần sửa:
+                                            </MudText>
+                                            <MudStack Spacing="1">
+                                                @foreach (var error in question.Errors)
+                                                {
+                                                    <div class="error-chip">
+                                                        <MudIcon Icon="@Icons.Material.Filled.Close" Size="Size.Small" Style="margin-right: 6px;"/>
+                                                        @error
+                                                    </div>
+                                                }
+                                            </MudStack>
+                                        </MudPaper>
+                                    }
+
+                                    <!-- Warnings -->
+                                    @if (question.Warnings.Any())
+                                    {
+                                        <MudPaper Elevation="0" Class="pa-4 mt-3" Style="background: linear-gradient(135deg, #fff8e1 0%, #fffef5 100%); border-radius: 12px; border: 2px solid #ffecb3;">
+                                            <MudText Typo="Typo.subtitle1" Class="fw-bold mb-3" Style="color: #f57c00; font-size: 15px;">
+                                                <MudIcon Icon="@Icons.Material.Filled.Warning" Class="me-2" Size="Size.Small"/>
+                                                Cảnh báo:
+                                            </MudText>
+                                            <MudStack Spacing="1">
+                                                @foreach (var warning in question.Warnings)
+                                                {
+                                                    <div class="warning-chip">
+                                                        <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Style="margin-right: 6px;"/>
+                                                        @warning
+                                                    </div>
+                                                }
+                                            </MudStack>
+                                        </MudPaper>
+                                    }
+
+                                    <!-- Sub Questions -->
+                                    @if (question.SubQuestions.Any())
+                                    {
+                                        <MudPaper Elevation="0" Class="pa-4 mt-3" Style="background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%); border-left: 5px solid #6c757d; border-radius: 12px;">
+                                            <MudText Typo="Typo.subtitle1" Class="fw-bold mb-3" Style="color: #495057; font-size: 16px;">
+                                                <MudIcon Icon="@Icons.Material.Filled.AccountTree" Class="me-2"/>
+                                                Câu hỏi con (@question.SubQuestionsCount câu):
+                                            </MudText>
+                                            @foreach (var sub in question.SubQuestions)
+                                            {
+                                                <MudPaper Elevation="2" Class="pa-3 mb-2" Style="background: white; border-radius: 10px; border: 1px solid #e0e0e0;">
+                                                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                                            <MudIcon Icon="@Icons.Material.Filled.SubdirectoryArrowRight" Size="Size.Small"/>
+                                                            <MudText Typo="Typo.body1" Class="fw-bold">Câu @sub.Identifier</MudText>
+                                                            <MudText Typo="Typo.body2" Color="Color.Default">
+                                                                (@sub.AnswersCount đáp án, @sub.CorrectAnswersCount đúng)
+                                                            </MudText>
+                                                        </MudStack>
+                                                        <MudChip T="string" Size="Size.Small" 
+                                                                 Color="@(sub.IsValid ? Color.Success : Color.Error)" 
+                                                                 Style="font-weight: 600;">
+                                                            @(sub.IsValid ? "✓ Hợp lệ" : "✗ Có lỗi")
+                                                        </MudChip>
+                                                    </MudStack>
+                                                    @if (sub.Errors.Any())
+                                                    {
+                                                        <MudDivider Class="my-2"/>
+                                                        <MudStack Spacing="1">
+                                                            @foreach (var err in sub.Errors)
+                                                            {
+                                                                <div class="error-chip" style="font-size: 12px;">@err</div>
+                                                            }
+                                                        </MudStack>
+                                                    }
+                                                    @if (sub.Warnings.Any())
+                                                    {
+                                                        <MudDivider Class="my-2"/>
+                                                        <MudStack Spacing="1">
+                                                            @foreach (var warn in sub.Warnings)
+                                                            {
+                                                                <div class="warning-chip" style="font-size: 12px;">@warn</div>
+                                                            }
+                                                        </MudStack>
+                                                    }
+                                                </MudPaper>
+                                            }
+                                        </MudPaper>
+                                    }
+                                </MudStack>
+                            </MudPaper>
+                        </div>
+                    }
+
+                    <!-- Action Buttons -->
+                    <MudDivider Class="my-5"/>
+                    <MudStack Row="true" Justify="Justify.Center" Spacing="4">
+                        @if (!PreviewResult.HasErrors)
+                        {
+                            <MudButton Variant="Variant.Filled" 
+                                       Color="Color.Success" 
+                                       Size="Size.Large"
+                                       StartIcon="@Icons.Material.Filled.CloudUpload"
+                                       OnClick="@PerformImport"
+                                       Disabled="@IsProcessing"
+                                           Style="border-radius: 15px; font-weight: 700; padding: 16px 50px; box-shadow: 0 4px 16px rgba(40, 167, 69, 0.25); text-transform: uppercase; letter-spacing: 1.2px;">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <span>Import @PreviewResult.TotalFound Câu Hỏi</span>
+                                    <MudIcon Icon="@Icons.Material.Filled.ArrowForward"/>
+                                </MudStack>
+                            </MudButton>
+                        }
+                        else
+                        {
+                            <MudButton Variant="Variant.Filled" 
+                                       Color="Color.Warning" 
+                                       Size="Size.Large"
+                                       StartIcon="@Icons.Material.Filled.Edit"
+                                       Style="border-radius: 15px; font-weight: 700; padding: 16px 40px; text-transform: uppercase; letter-spacing: 1.2px;">
+                                Sửa Lỗi Trong Word
+                            </MudButton>
+                        }
+                        <MudButton Variant="Variant.Outlined" 
+                                   Color="Color.Default"
+                                   Size="Size.Large"
+                                   StartIcon="@Icons.Material.Filled.Refresh"
+                                   OnClick="@ResetUpload"
+                                   Style="border-radius: 15px; font-weight: 700; padding: 16px 40px; border-width: 2px;">
+                            Upload File Khác
+                        </MudButton>
+                    </MudStack>
                 </MudPaper>
-            </MudPaper>
-        </MudItem>
-    </MudGrid>
-</MudContainer>
+            }
+        }
+    </MudContainer>
+</div>
+
+<!-- Loading Overlay -->
+@if (IsProcessing)
+{
+    <div class="progress-overlay">
+        <div class="progress-content">
+            <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" Style="width: 80px; height: 80px;"/>
+            <MudText Typo="Typo.h6" Class="mt-4 fw-bold" Style="font-size: 22px; color: #495057;">
+                @ProcessingMessage
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Default" Class="mt-2" Style="font-size: 14px;">
+                Vui lòng chờ trong giây lát...
+            </MudText>
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mt-4" Style="border-radius: 10px;"/>
+        </div>
+    </div>
+}
