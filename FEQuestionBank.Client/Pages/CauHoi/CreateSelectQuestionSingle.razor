@@ -1,54 +1,47 @@
-﻿@page "/question/create-question"
-@inherits CreateQuestionBase
+﻿@page "/question/create-question-select-single"
+@inherits CreateSelectQuestionSingleBase
 
-    <MudContainer MaxWidth="MaxWidth.ExtraLarge" >
-        <!-- Breadcrumbs -->
-        <MudBreadcrumbs Items="_breadcrumbs"></MudBreadcrumbs>
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+    <!-- Breadcrumbs -->
+    <MudBreadcrumbs Items="_breadcrumbs"></MudBreadcrumbs>
 
-        <!-- Unified header design matching CreateUser style -->
-        <div class="create-question-header">
-            <h1 class="create-question-title">Chọn loại câu hỏi</h1>
-            <p style="color: rgba(255,255,255,0.85); margin-top: 8px; margin-bottom: 0; font-size: 16px;">
-                Chọn phương thức phù hợp để tạo câu hỏi mới
-            </p>
-        </div>
+    <!-- Unified header design matching CreateUser style -->
+    <div class="create-question-header">
+        <h1 class="create-question-title">Chọn loại câu hỏi đơn</h1>
+        <p style="color: rgba(255,255,255,0.85); margin-top: 8px; margin-bottom: 0; font-size: 16px;">
+            Chọn phương thức phù hợp để tạo câu hỏi mới
+        </p>
+    </div>
 
-        <!-- Cards Grid -->
-        <MudGrid Justify="Justify.Center" Spacing="4">
-            <!-- Single Answer Card -->
-            <MudItem xs="12" sm="6" md="5">
-                <div class="method-card method-card-blue" @onclick="@(() => SelectQuestionType("single"))">
-                    <div class="method-icon method-icon-blue">
-                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" />
-                    </div>
-                    <h2 class="method-title">Trắc nghiệm đơn</h2>
+    <!-- Cards Grid -->
+    <MudGrid Justify="Justify.Center" Spacing="4">
+        <!-- Single Answer Card -->
+        <MudItem xs="12" sm="6" md="5">
+            <div class="method-card method-card-blue" @onclick="@(() => SelectQuestionType("single"))">
+                <div class="method-icon method-icon-blue">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large"/>
                 </div>
-            </MudItem>
+                <h2 class="method-title">Trắc nghiệm một đáp án</h2>
+                <p class="method-description">
+                    Câu hỏi có nhiều lựa chọn với 1 đáp án đúng
+                </p>
+            </div>
+        </MudItem>
 
-            <!-- Group Question Card -->
-            <MudItem xs="12" sm="6" md="5">
-                <div class="method-card method-card-green" @onclick="@(() => SelectQuestionType("group"))">
-                    <div class="method-icon method-icon-green">
-                        <MudIcon Icon="@Icons.Material.Filled.GridOn" Size="Size.Large" />
-                    </div>
-                    <h2 class="method-title">Trắc nghiệm câu hỏi nhóm</h2>
+        <!-- nh đáp án -->
+        <MudItem xs="12" sm="6" md="5">
+            <div class="method-card method-card-green" @onclick="@(() => SelectQuestionType("multipechoice"))">
+                <div class="method-icon method-icon-green">
+                    <MudIcon Icon="@Icons.Material.Filled.Checklist" Size="Size.Large"/>
                 </div>
-            </MudItem>
-
-            <!-- Upload File Card -->
-            <MudItem xs="12" sm="6" md="5">
-                <div class="method-card method-card-amber" @onclick="@(() => SelectQuestionType("upload"))">
-                    <div class="method-icon method-icon-amber">
-                        <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Large" />
-                    </div>
-                    <h2 class="method-title">Tải lên từ tệp</h2>
-                    <p class="method-description">
-                        Tạo nhiều câu hỏi từ file Word, Excel...
-                    </p>
-                </div>
-            </MudItem>
-        </MudGrid>
-    </MudContainer>
+                <h2 class="method-title">Câu hỏi nhiều đáp án</h2>
+                <p class="method-description">
+                    Câu hỏi có nhiều lựa chọn với ít nhất 2 đáp án đúng
+                </p>
+            </div>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
 
 
 <style>
