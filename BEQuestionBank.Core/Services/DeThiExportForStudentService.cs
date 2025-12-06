@@ -1,4 +1,4 @@
-﻿using BeQuestionBank.Domain.Interfaces.IRepositories;
+using BeQuestionBank.Domain.Interfaces.IRepositories;
 using BeQuestionBank.Domain.Models;
 using BeQuestionBank.Shared.DTOs.DeThi;
 using BeQuestionBank.Shared.Helpers;
@@ -92,7 +92,9 @@ namespace BEQuestionBank.Core.Services
 
                 string html = line;
 
+                // Regex cập nhật: match cả <span class='image-wrapper'> và <img> trực tiếp
                 var regex = new Regex(
+                    @"(<span\s+class\s*=\s*['""]image-wrapper['""][^>]*>.*?<img[^>]+src\s*=\s*""data:image/[^;]+;base64,([^""]+)""[^>]*style\s*=\s*""([^""]*)""[^>]*>.*?</span>)|" +
                     @"(<img[^>]+src\s*=\s*""data:image/[^;]+;base64,([^""]+)""[^>]*style\s*=\s*""([^""]*)""[^>]*>)|" +
                     @"(<span class='math-display'>\\\[(.*?)\\\]</span>)",
                     RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -108,26 +110,63 @@ namespace BEQuestionBank.Core.Services
                         ? html.Substring(pos, m.Index - pos)
                         : html.Substring(pos);
 
+                    // Kiểm tra xem text trước có kết thúc bằng <br/> không (trước khi xử lý)
+                    bool hasBrBefore = !string.IsNullOrWhiteSpace(textBefore) && 
+                                      Regex.IsMatch(textBefore, @"<br\s*/?>[\s]*$", RegexOptions.IgnoreCase);
+
                     if (!string.IsNullOrWhiteSpace(textBefore))
                     {
-                        string cleanText = CleanHtmlText(textBefore);
+                        // Xóa <br/> ở cuối để không duplicate
+                        string textToClean = hasBrBefore 
+                            ? Regex.Replace(textBefore, @"<br\s*/?>[\s]*$", "", RegexOptions.IgnoreCase)
+                            : textBefore;
+                        
+                        string cleanText = CleanHtmlText(textToClean);
                         if (!string.IsNullOrWhiteSpace(cleanText))
                             para.AppendText(cleanText);
                     }
 
                     if (!m.Success) break;
 
-                    // === ẢNH: INLINE WITH TEXT – NẰM ĐÚNG VỊ TRÍ TRONG DÒNG ===
-                    if (m.Groups[1].Success)
+                    // Nếu có <br/> trước ảnh, tạo paragraph mới cho ảnh để xuống dòng
+                    if (hasBrBefore && (m.Groups[1].Success || m.Groups[4].Success))
                     {
-                        string base64 = m.Groups[2].Value;
-                        string style = m.Groups[3].Value;
+                        para = section.AddParagraph();
+                        para.ParagraphFormat.BeforeSpacing = 6;
+                        para.ParagraphFormat.AfterSpacing = 6;
+                    }
+
+                    // === ẢNH: Xử lý cả <span class='image-wrapper'> và <img> trực tiếp ===
+                    // Group 1: <span class='image-wrapper'><img...></span>
+                    // Group 2: base64 trong span wrapper
+                    // Group 3: style trong span wrapper
+                    // Group 4: <img> trực tiếp (không có wrapper)
+                    // Group 5: base64 trong img trực tiếp
+                    // Group 6: style trong img trực tiếp
+                    if (m.Groups[1].Success || m.Groups[4].Success)
+                    {
+                        string base64 = m.Groups[1].Success ? m.Groups[2].Value : m.Groups[5].Value;
+                        string style = m.Groups[1].Success ? m.Groups[3].Value : m.Groups[6].Value;
                         byte[] imgBytes = Convert.FromBase64String(base64);
 
                         IWPicture pic = para.AppendPicture(imgBytes);
 
-                        // ĐÚNG YÊU CẦU: ảnh chảy cùng chữ, không xuống dòng
+                        // Luôn dùng Inline wrapping style
                         pic.TextWrappingStyle = TextWrappingStyle.Inline;
+                        
+                        // Nếu có <br/> trước hoặc style có "display:block"/"margin:" thì tạo paragraph mới sau ảnh
+                        // để ảnh xuống dòng riêng (đã tạo paragraph mới trước ảnh ở trên nếu có <br/>)
+                        bool shouldBeBlock = hasBrBefore ||
+                                            style.Contains("display:block", StringComparison.OrdinalIgnoreCase) ||
+                                            style.Contains("margin:", StringComparison.OrdinalIgnoreCase);
+                        
+                        if (shouldBeBlock)
+                        {
+                            // Tạo paragraph mới sau ảnh để text tiếp theo không dính vào ảnh
+                            para = section.AddParagraph();
+                            para.ParagraphFormat.BeforeSpacing = 6;
+                            para.ParagraphFormat.AfterSpacing = 6;
+                        }
 
                         // Lấy kích thước từ style (width/height)
                         var w = Regex.Match(style, @"width\s*:\s*(\d+)px", RegexOptions.IgnoreCase);
@@ -141,9 +180,9 @@ namespace BEQuestionBank.Core.Services
                         if (pic.Height == 0 || pic.Height > 500) pic.Height = 350;
                     }
                     // === CÔNG THỨC TOÁN: vẫn để inline (giữ nguyên như cũ) ===
-                    else if (m.Groups[4].Success)
+                    else if (m.Groups[7].Success)
                     {
-                        string latex = m.Groups[5].Value;
+                        string latex = m.Groups[8].Value;
                         WMath wMath = new WMath(doc);
                         wMath.MathParagraph.LaTeX = latex;
                         para.ChildEntities.Add(wMath);
