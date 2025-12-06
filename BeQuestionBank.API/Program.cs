@@ -152,6 +152,7 @@ builder.Services.AddSwaggerGen(c =>
 builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
 
 builder.Services.AddOpenApi();
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 

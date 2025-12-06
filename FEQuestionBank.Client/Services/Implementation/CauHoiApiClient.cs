@@ -31,6 +31,27 @@ namespace FEQuestionBank.Client.Services
                    ?? ApiResponseFactory.Error<object>(500, "Lỗi kết nối");
         }
 
+        public async Task<ApiResponse<object>> CreateFillingQuestionAsync(CreateCauHoiDienTuDto request)
+        {
+            var response = await _httpClient.PostAsJsonAsync("/api/cauhoi/dientu", request);
+            return await response.Content.ReadFromJsonAsync<ApiResponse<object>>()
+                   ?? ApiResponseFactory.Error<object>(500, "Lỗi kết nối");
+        }
+
+        public async Task<ApiResponse<object>> CreatePairingQuestionAsync(CreateCauHoiGhepNoiDto request)
+        {
+            var response = await _httpClient.PostAsJsonAsync("/api/cauhoi/ghepnoi", request);
+            return await response.Content.ReadFromJsonAsync<ApiResponse<object>>()
+                   ?? ApiResponseFactory.Error<object>(500, "Lỗi kết nối");
+        }
+
+        public async Task<ApiResponse<object>> CreateMultipeChoiceQuestionAsync(CreateCauHoiMultipleChoiceDto request)
+        {
+            var response = await _httpClient.PostAsJsonAsync("/api/cauhoi/multiplechoice", request);
+            return await response.Content.ReadFromJsonAsync<ApiResponse<object>>()
+                   ?? ApiResponseFactory.Error<object>(500, "Lỗi kết nối");
+        }
+
         // Sửa bool -> object
         public async Task<ApiResponse<object>> CreateGroupQuestionAsync(CreateCauHoiNhomDto request)
         {
