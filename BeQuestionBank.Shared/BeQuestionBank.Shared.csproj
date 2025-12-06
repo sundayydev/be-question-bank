@@ -7,6 +7,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Templates\Exam\Word\TemplateHutech_Chuan_2025.dotx" />
+    <None Remove="Templates\Exam\Word\TemplateHutech_Chuan_20251.dotx" />
+    <None Remove="Templates\Exam\Word\TemplateHutech_Chuan_20252.dotx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Templates\Exam\Pdf\StudentExamConfig.json" />
+    <EmbeddedResource Include="Templates\Exam\Word\TemplateHutech_Chuan_2025.dotx" />
+    <EmbeddedResource Include="Templates\Exam\Word\TemplateHutech_Chuan_20251.dotx" />
+    <EmbeddedResource Include="Templates\Exam\Word\TemplateHutech_Chuan_20252.dotx" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
     <PackageReference Include="NPOI" Version="2.7.4" />
   </ItemGroup>
