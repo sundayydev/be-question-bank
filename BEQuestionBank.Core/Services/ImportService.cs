@@ -28,14 +28,37 @@ namespace BEQuestionBank.Core.Services
         private readonly string _endGroupContentTag = "[<egc>]";
         private readonly string _endGroupTag = "[</sg>]";
 
-        // Regex nhận diện câu hỏi: (CLO1), (<1>), (1)
-        private readonly Regex _questionPattern = new Regex(@"^(\(<(\d+)>\)|\(CLO(\d+)\)|\(\d+\))", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        // Regex nhận diện câu hỏi: (CLO1), (<1>), (1) - có thể có loại câu hỏi [<MN>] sau đó
+        // Pattern cải thiện: xử lý spacing linh hoạt, có thể dính liền hoặc có khoảng trắng
+        // Pattern: (CLO1) [<MN>] Nội dung..., (<1>) [<TN>] Nội dung..., (1) [<TL>] Nội dung...
+        // Lưu ý: (<1>) A. answer là đáp án điền từ, KHÔNG phải câu hỏi mới
+        // Cải thiện: cho phép khoảng trắng tùy ý hoặc không có giữa các tag
+        private readonly Regex _questionPattern = new Regex(@"^(\(CLO\s*(\d+)\)|\(\s*\d+\s*\)|\(<\s*(\d+)\s*>\)(?!\s*[A-D]\.))", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        
+        // Regex nhận diện loại câu hỏi: [<TL>], [<NH>], [<TN>], [<MN>], [<GN>], [<DT>]
+        // Cải thiện: xử lý spacing linh hoạt trong tag
+        private readonly Regex _questionTypePattern = new Regex(@"\[\s*<\s*(?<type>TL|NH|TN|MN|GN|DT)\s*>\s*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        // Regex nhận diện CLO: (CLO1)
-        private readonly Regex _cloPattern = new Regex(@"\(CLO(\d+)\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        // Regex nhận diện CLO: (CLO1) - cải thiện để xử lý spacing
+        private readonly Regex _cloPattern = new Regex(@"\(CLO\s*(\d+)\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        
+        // Regex để xóa prefix khỏi nội dung câu hỏi: (CLO1), (<1>), (1), [<MN>], [<TN>]...
+        // Cải thiện: xử lý spacing linh hoạt
+        private readonly Regex _cleanPrefixPattern = new Regex(@"^(\(CLO\s*\d+\s*\)\s*|\(<\s*\d+\s*>\s*\)\s*|\(\s*\d+\s*\)\s*)?(\[\s*<\s*(?:TL|NH|TN|MN|GN|DT)\s*>\s*\]\s*)?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        // Regex nhận diện đáp án: A. B. C. D. (ở đầu dòng)
-        private readonly Regex _answerPattern = new Regex(@"^[A-D]\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        // Regex nhận diện đáp án: A. B. C. D. (ở đầu dòng) - cải thiện để xử lý spacing
+        private readonly Regex _answerPattern = new Regex(@"^\s*[A-D]\s*\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        // Regex nhận diện đáp án điền từ: (<1>) A. answer (cho câu hỏi điền từ)
+        // Pattern linh hoạt: có thể có hoặc không có space giữa (<1>) và A.
+        // Cải thiện: xử lý spacing linh hoạt trong (<1>)
+        private readonly Regex _fillInAnswerPattern = new Regex(@"^\(<\s*(\d+)\s*>\)\s*[A-D]\s*\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        
+        // Regex nhận diện pattern (<1>) đơn giản (để kiểm tra context) - cải thiện spacing
+        private readonly Regex _fillInPlaceholderPattern = new Regex(@"^\(<\s*(\d+)\s*>\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        // Regex nhận diện placeholder trong nội dung câu hỏi: {<1>}, {<2>}, etc.
+        private readonly Regex _placeholderPattern = new Regex(@"\{<(\d+)>\}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         // Regex Audio: [<audio>]path/to/file.mp3[</audio>]
         private readonly Regex _audioPattern = new Regex(@"\[<audio>\](.*?)\[</audio>\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -142,7 +165,8 @@ namespace BEQuestionBank.Core.Services
                             MaCauHoi = Guid.NewGuid(),
                             IsGroup = true,
                             NoiDungNhom = "",
-                            CauHoiCon = new List<QuestionData>()
+                            CauHoiCon = new List<QuestionData>(),
+                            LoaiCauHoi = "NH" // Nhóm câu hỏi
                         };
                         continue;
                     }
@@ -152,6 +176,33 @@ namespace BEQuestionBank.Core.Services
                     {
                         inGroupContent = false;
                         continue;
+                    }
+
+                    // --- 2.5. KIỂM TRA TAG LOẠI CÂU HỎI SAU [<egc>] (cho trường hợp [<DT>], [<GN>] nằm sau [<egc>]) ---
+                    if (inGroup && !inGroupContent && currentGroup != null)
+                    {
+                        // Kiểm tra xem có tag loại câu hỏi không: [<DT>], [<NH>], [<GN>], etc.
+                        var typeMatch = _questionTypePattern.Match(textRaw);
+                        if (typeMatch.Success)
+                        {
+                            string extractedType = typeMatch.Groups["type"].Value.ToUpper();
+                            // Nếu gặp [<DT>], luôn set thành DT (ưu tiên DT)
+                            // Nếu gặp [<GN>], set thành GN (Ghép nối)
+                            // Nếu gặp [<NH>], chỉ set nếu chưa có loại câu hỏi hoặc đang là NH
+                            if (extractedType == "DT")
+                            {
+                                currentGroup.LoaiCauHoi = "DT";
+                            }
+                            else if (extractedType == "GN")
+                            {
+                                currentGroup.LoaiCauHoi = "GN";
+                            }
+                            else if (extractedType == "NH" && 
+                                     (string.IsNullOrEmpty(currentGroup.LoaiCauHoi) || currentGroup.LoaiCauHoi == "NH"))
+                            {
+                                currentGroup.LoaiCauHoi = "NH";
+                            }
+                        }
                     }
 
                     // Kết thúc nhóm
@@ -194,19 +245,124 @@ namespace BEQuestionBank.Core.Services
                     // --- 2. XỬ LÝ NỘI DUNG DẪN CỦA NHÓM ---
                     if (inGroup && inGroupContent && currentGroup != null)
                     {
+                        // Kiểm tra xem có tag loại câu hỏi trong nội dung nhóm không: [<DT>], [<TN>], [<MN>], [<NH>], [<GN>], etc.
+                        var typeMatch = _questionTypePattern.Match(textRaw);
+                        if (typeMatch.Success)
+                        {
+                            string extractedType = typeMatch.Groups["type"].Value.ToUpper();
+                            // Nếu gặp [<DT>], luôn set thành DT (ưu tiên DT)
+                            // Nếu gặp [<GN>], set thành GN (Ghép nối)
+                            // Nếu gặp [<NH>], xác định là câu hỏi nhóm (NH)
+                            // Nếu chưa có loại câu hỏi, set loại được extract
+                            if (extractedType == "DT")
+                            {
+                                currentGroup.LoaiCauHoi = "DT";
+                            }
+                            else if (extractedType == "GN")
+                            {
+                                currentGroup.LoaiCauHoi = "GN";
+                            }
+                            else if (extractedType == "NH" || string.IsNullOrEmpty(currentGroup.LoaiCauHoi))
+                            {
+                                currentGroup.LoaiCauHoi = extractedType;
+                            }
+                        }
+                        
                         // Gộp HTML vào nội dung nhóm
                         string html = ParagraphToHtml(para, doc, sourceMediaFolder, null, ref currentGroup);
-                        currentGroup.NoiDungNhom += html;
+                        // Xóa tag loại câu hỏi khỏi nội dung nhóm: [<DT>], [<TN>], etc. (với spacing linh hoạt)
+                        html = _questionTypePattern.Replace(html, "").Trim();
+                        // Xóa tag kết thúc nhóm [</sg>] nếu có trong nội dung (với spacing linh hoạt)
+                        html = Regex.Replace(html, @"\[\s*</\s*sg\s*>\s*\]", "", RegexOptions.IgnoreCase);
+                        // Xóa các tag CLO và số thứ tự khỏi nội dung nhóm nếu có
+                        html = _cloPattern.Replace(html, "").Trim();
+                        html = Regex.Replace(html, @"\(\s*\d+\s*\)", "", RegexOptions.IgnoreCase);
+                        html = Regex.Replace(html, @"\(<\s*\d+\s*>\s*\)", "", RegexOptions.IgnoreCase);
+                        // Thêm khoảng trắng nếu cần và gộp vào nội dung nhóm
+                        if (currentGroup != null)
+                        {
+                            if (!string.IsNullOrWhiteSpace(currentGroup.NoiDungNhom) && !string.IsNullOrWhiteSpace(html))
+                            {
+                                currentGroup.NoiDungNhom += " " + html;
+                            }
+                            else
+                            {
+                                currentGroup.NoiDungNhom += html;
+                            }
+                        }
                         continue;
                     }
 
-                    // --- 3. XỬ LÝ CÂU HỎI (ĐƠN HOẶC CON) ---
+                    // --- 3. XỬ LÝ ĐÁP ÁN ĐIỀN TỪ (DT) VÀ GHÉP NỐI (GN) TRƯỚC (để tránh nhận diện nhầm (<1>) là câu hỏi mới) ---
+                    // Kiểm tra đáp án điền từ: (<1>) A. answer (cho DT)
+                    // Kiểm tra câu hỏi ghép nối: (<1>) Câu hỏi... A. Đáp án (cho GN)
+                    // Phải kiểm tra TRƯỚC khi kiểm tra câu hỏi mới để tránh nhận diện nhầm
+                    bool hasFillInPlaceholder = _fillInPlaceholderPattern.IsMatch(textRaw);
+                    bool isDTContext = (currentGroup != null && currentGroup.LoaiCauHoi == "DT") || 
+                                      (currentQuestion != null && currentQuestion.LoaiCauHoi == "DT");
+                    bool isGNContext = (currentGroup != null && currentGroup.LoaiCauHoi == "GN");
+                    
+                    // Nếu có pattern (<1>) và đang trong context DT, coi là đáp án điền từ
+                    if (hasFillInPlaceholder && isDTContext)
+                    {
+                        // Kiểm tra xem có phải format đáp án điền từ: (<1>) A. answer
+                        bool isFillInAnswer = _fillInAnswerPattern.IsMatch(textRaw);
+                        
+                        if (isFillInAnswer && currentGroup != null && currentGroup.LoaiCauHoi == "DT")
+                        {
+                            // Trích xuất số placeholder từ (<1>)
+                            var placeholderMatch = _fillInPlaceholderPattern.Match(textRaw);
+                            if (placeholderMatch.Success)
+                            {
+                                string placeholderNumber = placeholderMatch.Groups[1].Value;
+                                
+                                // Tạo một câu hỏi con mới cho mỗi placeholder
+                                // Câu hỏi con điền từ KHÔNG có nội dung, chỉ có đáp án
+                                currentQuestion = new QuestionData
+                                {
+                                    MaCauHoi = Guid.NewGuid(),
+                                    MaCauHoiCha = currentGroup.MaCauHoi,
+                                    NoiDung = "", // Câu hỏi con điền từ không có nội dung
+                                    LoaiCauHoi = "DT",
+                                    CLO = currentGroup.CLO // Kế thừa CLO từ nhóm
+                                };
+                                currentGroup.CauHoiCon.Add(currentQuestion);
+                                
+                                // Xử lý đáp án điền từ
+                                ProcessFillInAnswerParagraph(para, doc, sourceMediaFolder, currentQuestion, currentGroup);
+                                
+                                // Reset currentQuestion để đáp án tiếp theo tạo câu hỏi con mới
+                                currentQuestion = null;
+                                continue;
+                            }
+                        }
+                    }
+                    
+                    // Nếu có pattern (<1>) và đang trong context GN (Ghép nối), coi là câu hỏi con
+                    // Format GN: (<1>) Câu hỏi... (câu hỏi và đáp án có thể trên cùng dòng hoặc khác dòng)
+                    // Trong GN, (<1>) là câu hỏi con, không phải đáp án điền từ
+                    // Đáp án sẽ được xử lý ở phần xử lý đáp án thông thường (A., B., C., D.)
+                    // Không cần xử lý đặc biệt ở đây, để logic câu hỏi mới xử lý
+
+                    // --- 4. XỬ LÝ CÂU HỎI (ĐƠN HOẶC CON) ---
 
                     // Kiểm tra xem đây có phải dòng bắt đầu câu hỏi mới không? (VD: (CLO1), (<1>)...)
+                    // Lưu ý: (<1>) đã được xử lý ở trên nếu là đáp án điền từ
                     bool isNewQuestion = _questionPattern.IsMatch(textRaw);
 
                     if (isNewQuestion)
                     {
+                        // Nếu đang trong nhóm DT và đã kết thúc phần nội dung nhóm ([</egc>]),
+                        // thì không tạo câu hỏi mới nữa, chỉ xử lý đáp án điền từ
+                        if (inGroup && !inGroupContent && currentGroup != null && currentGroup.LoaiCauHoi == "DT")
+                        {
+                            // Bỏ qua, đáp án điền từ đã được xử lý ở trên
+                            continue;
+                        }
+                        
+                        // Nếu đang trong nhóm GN và gặp (<1>), đây là câu hỏi con ghép nối
+                        // Cho phép tạo câu hỏi con bình thường (không bỏ qua)
+                        
                         // Nếu đang có câu hỏi dở dang -> lưu lại
                         if (currentQuestion != null)
                         {
@@ -217,22 +373,44 @@ namespace BEQuestionBank.Core.Services
                         }
 
                         // Tạo câu hỏi mới
-                        EnumCLO? clo = ExtractCLO(textRaw);
-                        currentQuestion = new QuestionData
+                        if (inGroup && currentGroup != null)
                         {
-                            MaCauHoi = Guid.NewGuid(),
-                            CLO = clo,
-                            MaCauHoiCha = inGroup && currentGroup != null ? currentGroup.MaCauHoi : null,
-                            NoiDung = ""
-                        };
+                            // Xử lý câu hỏi con trong nhóm
+                            currentQuestion = ProcessGroupSubQuestion(para, doc, sourceMediaFolder, textRaw, currentGroup);
+                        }
+                        else
+                        {
+                            // Xử lý câu hỏi đơn lẻ
+                            EnumCLO? clo = ExtractCLO(textRaw);
+                            string questionType = ExtractQuestionType(textRaw);
+                            
+                            // Kiểm tra xem nội dung có chứa placeholder {<1>} không (câu hỏi điền từ)
+                            QuestionData? tempGroup = null;
+                            string contentHtml = ParagraphToHtml(para, doc, sourceMediaFolder, null, ref tempGroup);
+                            if (_placeholderPattern.IsMatch(contentHtml))
+                            {
+                                questionType = "DT";
+                            }
+                            
+                            currentQuestion = new QuestionData
+                            {
+                                MaCauHoi = Guid.NewGuid(),
+                                CLO = clo,
+                                MaCauHoiCha = null,
+                                NoiDung = "",
+                                LoaiCauHoi = questionType
+                            };
 
-                        // Lấy nội dung HTML của dòng tiêu đề này (bao gồm cả ảnh/audio nếu có)
-                        currentQuestion.NoiDung = ParagraphToHtml(para, doc, sourceMediaFolder, currentQuestion, ref currentGroup);
+                            // Lấy nội dung HTML của dòng tiêu đề này (bao gồm cả ảnh/audio nếu có)
+                            // Xóa prefix (loại câu hỏi, CLO, số thứ tự) khỏi nội dung
+                            currentQuestion.NoiDung = CleanQuestionContent(contentHtml);
+                        }
                         continue;
                     }
 
-                    // --- 4. XỬ LÝ ĐÁP ÁN ---
-                    // Nếu đã có câu hỏi và dòng này bắt đầu bằng A. B. C. D.
+                    // --- 5. XỬ LÝ ĐÁP ÁN THÔNG THƯỜNG ---
+                    
+                    // Nếu đã có câu hỏi và dòng này bắt đầu bằng A. B. C. D. (đáp án thông thường)
                     if (currentQuestion != null && _answerPattern.IsMatch(textRaw))
                     {
                         ProcessAnswerParagraph(para, doc, sourceMediaFolder, currentQuestion, currentGroup);
@@ -244,9 +422,23 @@ namespace BEQuestionBank.Core.Services
                     {
                         // Bỏ qua dòng trống hoàn toàn
                         string html = ParagraphToHtml(para, doc, sourceMediaFolder, currentQuestion, ref currentGroup);
+                        // Xóa tag kết thúc nhóm [</sg>] nếu có trong nội dung
+                        html = Regex.Replace(html, @"\[</sg>\]", "", RegexOptions.IgnoreCase);
+                        
                         if (!string.IsNullOrWhiteSpace(textRaw) || html.Contains("<img") || html.Contains("<audio"))
                         {
                             currentQuestion.NoiDung += "<br/>" + html;
+                            
+                            // Nếu nội dung có chứa placeholder {<1>}, đây là câu hỏi điền từ
+                            // CHỈ áp dụng nếu câu hỏi không phải là câu hỏi con trong nhóm NH (vì trong nhóm NH, placeholder chỉ có trong nội dung nhóm)
+                            bool isSubQuestionInNHGroup = currentGroup != null && 
+                                                          currentGroup.LoaiCauHoi == "NH" && 
+                                                          currentQuestion.MaCauHoiCha.HasValue;
+                            
+                            if (!isSubQuestionInNHGroup && _placeholderPattern.IsMatch(currentQuestion.NoiDung) && currentQuestion.LoaiCauHoi != "DT")
+                            {
+                                currentQuestion.LoaiCauHoi = "DT";
+                            }
                         }
                     }
                 }
@@ -284,7 +476,142 @@ namespace BEQuestionBank.Core.Services
             return null;
         }
 
-        private void ProcessAnswerParagraph(Paragraph para, WordprocessingDocument doc, string sourceMediaFolder,
+        /// <summary>
+        /// Trích xuất loại câu hỏi từ text dựa trên prefix
+        /// TL: Tự luận, NH: Nhóm, TN: Trắc nghiệm 1 đáp án, MN: Nhiều đáp án, GN: Ghép nối, DT: Điền từ
+        /// </summary>
+        private string ExtractQuestionType(string text)
+        {
+            var match = _questionTypePattern.Match(text);
+            if (match.Success)
+            {
+                return match.Groups["type"].Value.ToUpper();
+            }
+            // Mặc định là TN (Trắc nghiệm) nếu không có prefix
+            return "TN";
+        }
+
+        /// <summary>
+        /// Chuyển đổi loại câu hỏi viết tắt sang tên đầy đủ
+        /// </summary>
+        private string GetQuestionTypeName(string? typeCode)
+        {
+            if (string.IsNullOrWhiteSpace(typeCode))
+                return "Câu hỏi con"; // Câu hỏi con trong nhóm NH không có loại
+            
+            return typeCode.ToUpper() switch
+            {
+                "TL" => "Tự luận",
+                "NH" => "Nhóm",
+                "TN" => "Trắc nghiệm",
+                "MN" => "Nhiều đáp án",
+                "GN" => "Ghép nối",
+                "DT" => "Điền từ",
+                _ => "Trắc nghiệm"
+            };
+        }
+
+        /// <summary>
+        /// Xóa các prefix (loại câu hỏi, CLO, số thứ tự) khỏi nội dung câu hỏi
+        /// VD: "(TN)(CLO1) Câu hỏi..." -> "Câu hỏi..."
+        /// Cũng xóa các tag [] và CLO thừa trong nội dung
+        /// Xử lý cả trường hợp tag bị tách do formatting HTML
+        /// Cải thiện: Xóa triệt để các tag rác mà không làm hỏng định dạng HTML (đậm, nghiêng, ảnh)
+        /// </summary>
+        private string CleanQuestionContent(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+                return content;
+            
+            // Bước 1: Xóa prefix ở đầu chuỗi (CLO, số thứ tự, loại câu hỏi)
+            content = _cleanPrefixPattern.Replace(content, "").TrimStart();
+            
+            // Bước 2: Xử lý các tag bị tách do formatting HTML
+            // Strategy: Tạm thời thay thế HTML tags bằng placeholder, xóa pattern, rồi khôi phục
+            var htmlTagPlaceholders = new Dictionary<string, string>();
+            int placeholderIndex = 0;
+            
+            // Thay thế tất cả HTML tags bằng placeholder
+            string contentWithPlaceholders = Regex.Replace(content, @"<[^>]+>", match =>
+            {
+                string placeholder = $"__HTML_TAG_{placeholderIndex}__";
+                htmlTagPlaceholders[placeholder] = match.Value;
+                placeholderIndex++;
+                return placeholder;
+            });
+            
+            // Bước 3: Xóa các pattern rác trong content đã thay thế (không có HTML tags)
+            // Xóa tag loại câu hỏi: [<TN>], [<MN>], etc. (với spacing linh hoạt)
+            contentWithPlaceholders = Regex.Replace(contentWithPlaceholders, @"\[\s*<\s*(?:TL|NH|TN|MN|GN|DT)\s*>\s*\]", "", RegexOptions.IgnoreCase);
+            
+            // Xóa các CLO: (CLO1), (CLO2), etc. (với spacing linh hoạt)
+            contentWithPlaceholders = Regex.Replace(contentWithPlaceholders, @"\(CLO\s*\d+\s*\)", "", RegexOptions.IgnoreCase);
+            
+            // Xóa số thứ tự: (1), (2), (<1>), (<2>), etc. (với spacing linh hoạt)
+            contentWithPlaceholders = Regex.Replace(contentWithPlaceholders, @"\(\s*\d+\s*\)", "", RegexOptions.IgnoreCase);
+            contentWithPlaceholders = Regex.Replace(contentWithPlaceholders, @"\(<\s*\d+\s*>\s*\)", "", RegexOptions.IgnoreCase);
+            
+            // Xóa các dấu ngoặc vuông trống: [], [ ]
+            contentWithPlaceholders = Regex.Replace(contentWithPlaceholders, @"\[\s*\]", "", RegexOptions.IgnoreCase);
+            
+            // Xóa tag kết thúc nhóm: [</sg>]
+            contentWithPlaceholders = Regex.Replace(contentWithPlaceholders, @"\[\s*</\s*sg\s*>\s*\]", "", RegexOptions.IgnoreCase);
+            
+            // Bước 4: Khôi phục HTML tags
+            content = contentWithPlaceholders;
+            foreach (var kvp in htmlTagPlaceholders.OrderByDescending(x => x.Key.Length))
+            {
+                content = content.Replace(kvp.Key, kvp.Value);
+            }
+            
+            // Bước 5: Xóa lại các pattern có thể còn sót (fallback - xử lý trường hợp không bị tách)
+            // Xóa tag loại câu hỏi bình thường (không bị tách)
+            content = _questionTypePattern.Replace(content, "").Trim();
+            
+            // Xóa các CLO trong nội dung
+            content = _cloPattern.Replace(content, "").Trim();
+            
+            // Xóa số thứ tự còn sót
+            content = Regex.Replace(content, @"\(\s*\d+\s*\)", "", RegexOptions.IgnoreCase);
+            content = Regex.Replace(content, @"\(<\s*\d+\s*>\s*\)", "", RegexOptions.IgnoreCase);
+            
+            // Xóa các dấu ngoặc vuông trống
+            content = Regex.Replace(content, @"\[\s*\]", "", RegexOptions.IgnoreCase);
+            
+            // Xóa tag kết thúc nhóm
+            content = Regex.Replace(content, @"\[\s*</\s*sg\s*>\s*\]", "", RegexOptions.IgnoreCase);
+            
+            // Bước 6: Xóa các tag HTML rỗng còn sót lại (nhưng giữ lại các tag quan trọng)
+            // Xóa các tag formatting rỗng: <b></b>, <i></i>, <u></u>
+            content = Regex.Replace(content, @"<b>\s*</b>", "", RegexOptions.IgnoreCase);
+            content = Regex.Replace(content, @"<i>\s*</i>", "", RegexOptions.IgnoreCase);
+            content = Regex.Replace(content, @"<u>\s*</u>", "", RegexOptions.IgnoreCase);
+            
+            // Xóa span rỗng (nhưng KHÔNG xóa nếu chứa img, audio, span con, hoặc text)
+            // Pattern: <span...> chỉ có whitespace </span> (không chứa img, audio, span con, hoặc text)
+            content = Regex.Replace(content, @"<span[^>]*>\s*(?!.*(?:<img|<audio|<span|\[<|math-inline|math-display))</span>", "", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            
+            // Xóa các span rỗng (trừ span chứa math-display hoặc math-inline)
+            content = Regex.Replace(content, @"<span[^>]*>\s*(?!.*(?:math-display|math-inline))</span>", "", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            
+            // Bước 7: LaTeX đã được convert trong ParagraphToHtml, không cần convert lại ở đây
+            // (Đã được xử lý trong ParagraphToHtml trước khi gọi CleanQuestionContent)
+            
+            // Bước 8: Làm sạch khoảng trắng thừa (nhưng giữ lại khoảng trắng trong nội dung)
+            // Xóa khoảng trắng thừa giữa các tag HTML (nhưng không xóa trong text)
+            content = Regex.Replace(content, @">\s+<", "><", RegexOptions.Compiled);
+            
+            // Xóa khoảng trắng ở đầu và cuối
+            content = content.Trim();
+            
+            return content;
+        }
+
+        /// <summary>
+        /// Xử lý đáp án cho câu hỏi Trắc nghiệm (TN) - KHÔNG SỬA GÌ HÀM NÀY
+        /// Logic đã hoạt động đúng, tách riêng để không bị ảnh hưởng khi sửa các loại câu hỏi khác
+        /// </summary>
+        private void ProcessTNAnswerParagraph(Paragraph para, WordprocessingDocument doc, string sourceMediaFolder,
             QuestionData currentQuestion, QuestionData? currentGroup)
         {
             // Convert cả đoạn văn đáp án sang HTML trước để giữ định dạng (đậm, nghiêng, ảnh...)
@@ -299,8 +626,8 @@ namespace BEQuestionBank.Core.Services
             bool isCorrect = false;
             bool isShuffle = true; // Mặc định là có hoán vị
 
-            // Duyệt Runs để check style
-            foreach (var run in para.Descendants<Run>())
+            // Duyệt Runs để check style - chỉ check các run trực tiếp trong paragraph
+            foreach (var run in para.Elements<Run>())
             {
                 if (run.RunProperties != null)
                 {
@@ -313,8 +640,22 @@ namespace BEQuestionBank.Core.Services
                 }
             }
 
-            // Clean nội dung: Xóa "A." ở đầu chuỗi HTML
-            string cleanHtml = Regex.Replace(fullHtml, @"^[A-D]\.\s*", "", RegexOptions.IgnoreCase);
+            // Clean nội dung: Xóa "A. B. C. D." khỏi HTML (có thể nằm trong span hoặc thẻ <u>)
+            string cleanHtml = fullHtml;
+            // Xóa "A. " ở đầu chuỗi nếu có
+            cleanHtml = Regex.Replace(cleanHtml, @"^[A-D]\.\s*", "", RegexOptions.IgnoreCase);
+            // Xóa thẻ <u>A.</u> trong span: <span class='text-content'><u>B.</u></span>
+            cleanHtml = Regex.Replace(cleanHtml, @"(<span[^>]*>)\s*<u>[A-D]\.</u>\s*", "$1", RegexOptions.IgnoreCase);
+            cleanHtml = Regex.Replace(cleanHtml, @"(<span[^>]*>)\s*<b>[A-D]\.</b>\s*", "$1", RegexOptions.IgnoreCase);
+            cleanHtml = Regex.Replace(cleanHtml, @"(<span[^>]*>)\s*<i>[A-D]\.</i>\s*", "$1", RegexOptions.IgnoreCase);
+            // Xóa "A. " trong thẻ span đầu tiên: <span class='text-content'>A. </span> hoặc <span class='text-content'>A. content</span>
+            cleanHtml = Regex.Replace(cleanHtml, @"(<span[^>]*>)\s*[A-D]\.\s+", "$1", RegexOptions.IgnoreCase);
+            // Xóa thẻ <u>A.</u> hoặc <b>A.</b> hoặc <i>A.</i> ở bất kỳ đâu (không trong span)
+            cleanHtml = Regex.Replace(cleanHtml, @"<u>[A-D]\.</u>\s*", "", RegexOptions.IgnoreCase);
+            cleanHtml = Regex.Replace(cleanHtml, @"<b>[A-D]\.</b>\s*", "", RegexOptions.IgnoreCase);
+            cleanHtml = Regex.Replace(cleanHtml, @"<i>[A-D]\.</i>\s*", "", RegexOptions.IgnoreCase);
+            // Xóa thẻ span rỗng sau khi xóa A. B. C. D.
+            cleanHtml = Regex.Replace(cleanHtml, @"<span[^>]*>\s*</span>", "", RegexOptions.IgnoreCase);
 
             currentQuestion.Answers.Add(new AnswerData
             {
@@ -324,6 +665,209 @@ namespace BEQuestionBank.Core.Services
                 HoanVi = isShuffle,
                 MaCauHoi = currentQuestion.MaCauHoi
             });
+        }
+
+        /// <summary>
+        /// Xử lý câu hỏi con trong nhóm (NH, DT, GN)
+        /// Xử lý các câu hỏi con nằm giữa [<egc>] và [</sg>]
+        /// </summary>
+        private QuestionData ProcessGroupSubQuestion(Paragraph para, WordprocessingDocument doc, string sourceMediaFolder,
+            string textRaw, QuestionData currentGroup)
+        {
+            EnumCLO? clo = ExtractCLO(textRaw);
+            string? questionType = null; // Mặc định là null cho câu hỏi con trong nhóm NH
+            
+            // Nếu nhóm có loại câu hỏi, kế thừa loại từ nhóm
+            if (!string.IsNullOrEmpty(currentGroup.LoaiCauHoi))
+            {
+                // Nếu nhóm là DT (Điền từ), câu hỏi con cũng là DT
+                if (currentGroup.LoaiCauHoi == "DT")
+                {
+                    questionType = "DT";
+                }
+                // Nếu nhóm là GN (Ghép nối), câu hỏi con cũng là GN
+                else if (currentGroup.LoaiCauHoi == "GN")
+                {
+                    questionType = "GN";
+                }
+                // Nếu nhóm là NH (Nhóm), câu hỏi con không có loại câu hỏi (null)
+                // Không cần set gì, giữ nguyên null
+            }
+            
+            // Kiểm tra xem nội dung có chứa placeholder {<1>} không (câu hỏi điền từ)
+            // CHỈ kiểm tra nếu nhóm KHÔNG phải là NH (vì trong nhóm NH, placeholder chỉ có trong nội dung nhóm, không phải trong câu hỏi con)
+            QuestionData? tempGroup = currentGroup;
+            string contentHtml = ParagraphToHtml(para, doc, sourceMediaFolder, null, ref tempGroup);
+            
+            // Chỉ kiểm tra placeholder nếu nhóm là DT, không kiểm tra cho nhóm NH hoặc GN
+            if (currentGroup.LoaiCauHoi != "NH" && currentGroup.LoaiCauHoi != "GN" && _placeholderPattern.IsMatch(contentHtml))
+            {
+                questionType = "DT";
+            }
+            
+            var subQuestion = new QuestionData
+            {
+                MaCauHoi = Guid.NewGuid(),
+                CLO = clo ?? currentGroup.CLO, // Kế thừa CLO từ nhóm nếu không có
+                MaCauHoiCha = currentGroup.MaCauHoi,
+                NoiDung = "",
+                LoaiCauHoi = questionType // null cho nhóm NH, "DT" cho nhóm DT, "GN" cho nhóm GN
+            };
+
+            // Lấy nội dung HTML của dòng tiêu đề này (bao gồm cả ảnh/audio nếu có)
+            // Xóa prefix (loại câu hỏi, CLO, số thứ tự) khỏi nội dung
+            subQuestion.NoiDung = CleanQuestionContent(contentHtml);
+            
+            return subQuestion;
+        }
+
+        /// <summary>
+        /// Xử lý nội dung dẫn của nhóm câu hỏi (NH)
+        /// Xử lý phần nội dung giữa [<sg>] và [<egc>]
+        /// </summary>
+        private void ProcessGroupContentParagraph(Paragraph para, WordprocessingDocument doc, string sourceMediaFolder,
+            string textRaw, QuestionData currentGroup)
+        {
+            // Kiểm tra xem có tag loại câu hỏi trong nội dung nhóm không: [<DT>], [<TN>], [<MN>], [<NH>], etc.
+            var typeMatch = _questionTypePattern.Match(textRaw);
+            if (typeMatch.Success)
+            {
+                string extractedType = typeMatch.Groups["type"].Value.ToUpper();
+                // Nếu gặp [<DT>], luôn set thành DT (ưu tiên DT)
+                // Nếu gặp [<NH>], xác định là câu hỏi nhóm (NH)
+                // Nếu chưa có loại câu hỏi, set loại được extract
+                if (extractedType == "DT")
+                {
+                    currentGroup.LoaiCauHoi = "DT";
+                }
+                else if (extractedType == "NH" || string.IsNullOrEmpty(currentGroup.LoaiCauHoi))
+                {
+                    currentGroup.LoaiCauHoi = extractedType;
+                }
+            }
+            
+            // Gộp HTML vào nội dung nhóm
+            QuestionData? tempGroup = currentGroup;
+            string html = ParagraphToHtml(para, doc, sourceMediaFolder, null, ref tempGroup);
+            
+            // Xóa tag loại câu hỏi khỏi nội dung nhóm: [<DT>], [<TN>], etc.
+            html = _questionTypePattern.Replace(html, "").Trim();
+            
+            // Xóa các tag CLO và số thứ tự khỏi nội dung nhóm nếu có
+            html = _cloPattern.Replace(html, "").Trim();
+            html = Regex.Replace(html, @"^\(\d+\)\s*", "", RegexOptions.IgnoreCase);
+            html = Regex.Replace(html, @"^\(<\d+>\)\s*", "", RegexOptions.IgnoreCase);
+            
+            // Xóa các dấu ngoặc vuông trống [] hoặc [ ]
+            html = Regex.Replace(html, @"\[\s*\]", "", RegexOptions.IgnoreCase);
+            
+            // Xóa tag kết thúc nhóm [</sg>] nếu có trong nội dung
+            html = Regex.Replace(html, @"\[</sg>\]", "", RegexOptions.IgnoreCase);
+            
+            // Thêm khoảng trắng nếu cần và gộp vào nội dung nhóm
+            if (!string.IsNullOrWhiteSpace(currentGroup.NoiDungNhom) && !string.IsNullOrWhiteSpace(html))
+            {
+                currentGroup.NoiDungNhom += " " + html;
+            }
+            else
+            {
+                currentGroup.NoiDungNhom += html;
+            }
+        }
+
+        /// <summary>
+        /// Xử lý đáp án cho các loại câu hỏi (routing function)
+        /// </summary>
+        private void ProcessAnswerParagraph(Paragraph para, WordprocessingDocument doc, string sourceMediaFolder,
+            QuestionData currentQuestion, QuestionData? currentGroup)
+        {
+            // Nếu là câu hỏi TN (Trắc nghiệm), dùng hàm riêng đã được tách ra
+            if (currentQuestion.LoaiCauHoi?.ToUpper() == "TN")
+            {
+                ProcessTNAnswerParagraph(para, doc, sourceMediaFolder, currentQuestion, currentGroup);
+                return;
+            }
+
+            // Các loại câu hỏi khác có thể thêm logic ở đây
+            // Hiện tại mặc định dùng logic TN cho các loại khác
+            ProcessTNAnswerParagraph(para, doc, sourceMediaFolder, currentQuestion, currentGroup);
+        }
+
+        /// <summary>
+        /// Xử lý đáp án cho câu hỏi điền từ: (<1>) A. answer
+        /// Tìm placeholder {<1>} trong nội dung và thay thế bằng đáp án đúng
+        /// </summary>
+        private void ProcessFillInAnswerParagraph(Paragraph para, WordprocessingDocument doc, string sourceMediaFolder,
+            QuestionData currentQuestion, QuestionData? currentGroup)
+        {
+            string fullHtml = ParagraphToHtml(para, doc, sourceMediaFolder, currentQuestion, ref currentGroup);
+            string fullText = para.InnerText.Trim();
+
+            // Trích xuất số placeholder từ (<1>)
+            var fillInMatch = _fillInAnswerPattern.Match(fullText);
+            if (!fillInMatch.Success)
+            {
+                _logger.LogWarning($"Không thể trích xuất placeholder từ: {fullText}");
+                return;
+            }
+
+            string placeholderNumber = fillInMatch.Groups[1].Value;
+            string placeholderKey = $"<{placeholderNumber}>";
+
+            // Trích xuất đáp án (phần sau (<1>) A.)
+            string answerText = _fillInAnswerPattern.Replace(fullText, "").Trim();
+            // Xóa "A." ở đầu nếu có
+            answerText = Regex.Replace(answerText, @"^[A-D]\.\s*", "", RegexOptions.IgnoreCase).Trim();
+
+            // Trích xuất HTML của đáp án (bỏ phần (<1>) A.)
+            string answerHtml = Regex.Replace(fullHtml, @"^\(<(\d+)>\)\s*[A-D]\.\s*", "", RegexOptions.IgnoreCase).Trim();
+            // Xóa "A. B. C. D." khỏi HTML nếu còn sót lại (có thể nằm trong span hoặc thẻ <u>)
+            answerHtml = Regex.Replace(answerHtml, @"^[A-D]\.\s*", "", RegexOptions.IgnoreCase);
+            // Xóa thẻ <u>A.</u> trong span: <span class='text-content'><u>B.</u></span>
+            answerHtml = Regex.Replace(answerHtml, @"(<span[^>]*>)\s*<u>[A-D]\.</u>\s*", "$1", RegexOptions.IgnoreCase);
+            answerHtml = Regex.Replace(answerHtml, @"(<span[^>]*>)\s*<b>[A-D]\.</b>\s*", "$1", RegexOptions.IgnoreCase);
+            answerHtml = Regex.Replace(answerHtml, @"(<span[^>]*>)\s*<i>[A-D]\.</i>\s*", "$1", RegexOptions.IgnoreCase);
+            // Xóa "A. " trong thẻ span
+            answerHtml = Regex.Replace(answerHtml, @"(<span[^>]*>)\s*[A-D]\.\s+", "$1", RegexOptions.IgnoreCase);
+            // Xóa thẻ <u>A.</u> hoặc <b>A.</b> hoặc <i>A.</i> ở bất kỳ đâu (không trong span)
+            answerHtml = Regex.Replace(answerHtml, @"<u>[A-D]\.</u>\s*", "", RegexOptions.IgnoreCase);
+            answerHtml = Regex.Replace(answerHtml, @"<b>[A-D]\.</b>\s*", "", RegexOptions.IgnoreCase);
+            answerHtml = Regex.Replace(answerHtml, @"<i>[A-D]\.</i>\s*", "", RegexOptions.IgnoreCase);
+            // Xóa thẻ span rỗng
+            answerHtml = Regex.Replace(answerHtml, @"<span[^>]*>\s*</span>", "", RegexOptions.IgnoreCase).Trim();
+
+            // Kiểm tra đúng/sai (Gạch chân) và hoán vị (In nghiêng)
+            bool isCorrect = false;
+            bool isShuffle = false; // Câu hỏi điền từ thường không hoán vị
+
+            // Duyệt Runs để check style - chỉ check các run trực tiếp trong paragraph
+            foreach (var run in para.Elements<Run>())
+            {
+                if (run.RunProperties != null)
+                {
+                    if (run.RunProperties.Underline != null && run.RunProperties.Underline.Val != UnderlineValues.None)
+                        isCorrect = true;
+                    if (run.RunProperties.Italic != null)
+                        isShuffle = false;
+                }
+            }
+
+            // Câu hỏi con điền từ không có nội dung, chỉ có đáp án
+            // Không cần thay thế placeholder vì câu hỏi con không có nội dung
+
+            // Lưu thông tin đáp án (dùng placeholder number làm thứ tự)
+            if (int.TryParse(placeholderNumber, out int placeholderIndex))
+            {
+                // Lưu đáp án vào câu hỏi hiện tại
+                currentQuestion.Answers.Add(new AnswerData
+                {
+                    NoiDung = answerHtml,
+                    ThuTu = placeholderIndex, // Dùng số placeholder làm thứ tự
+                    LaDapAn = isCorrect,
+                    HoanVi = isShuffle,
+                    MaCauHoi = currentQuestion.MaCauHoi
+                });
+            }
         }
 
         private string ParagraphToHtml(Paragraph para, WordprocessingDocument doc, string sourceMediaFolder,
@@ -337,6 +881,7 @@ namespace BEQuestionBank.Core.Services
                 var text = run.InnerText;
                 if (!string.IsNullOrEmpty(text))
                 {
+                    // Không convert LaTeX ở đây - sẽ convert sau khi merge các span
                     // Apply text formatting
                     if (run.RunProperties != null)
                     {
@@ -346,7 +891,8 @@ namespace BEQuestionBank.Core.Services
                         if (run.RunProperties.Color != null)
                             text = $"<span style='color:#{run.RunProperties.Color.Val}'>{text}</span>";
                     }
-                    sb.Append(text);
+                    // Wrap text trong span để đảm bảo tất cả nội dung đều nằm trong HTML tags
+                    sb.Append($"<span class='text-content'>{text}</span>");
                 }
 
                 // XỬ LÝ ẢNH TRONG RUN
@@ -355,9 +901,24 @@ namespace BEQuestionBank.Core.Services
             }
 
             string html = sb.ToString();
-
-            // --- XỬ LÝ LATEX - CHUYỂN ĐỔI SANG HTML ---
+            
+            // Bước 1: Merge các span liền kề có chứa LaTeX delimiters ($$ hoặc $) để tránh LaTeX bị tách
+            // Pattern: tìm các span liền kề có chứa $$ hoặc $ và merge chúng lại
+            // Ví dụ: <span class='text-content'>$$</span><span class='text-content'>3x^2</span><span class='text-content'>$$</span>
+            // -> <span class='text-content'>$$3x^2$$</span>
+            html = MergeLatexSpans(html);
+            
+            // Bước 2: Convert LaTeX trên toàn bộ HTML (sau khi đã merge)
             html = ConvertLatexToHtml(html);
+            
+            // Xóa các tag HTML rỗng (như <b></b>, <i></i>, etc.) sau khi xử lý
+            // Lưu ý: KHÔNG xóa span rỗng nếu nó có thể chứa ảnh hoặc nội dung quan trọng
+            html = Regex.Replace(html, @"<b>\s*</b>", "", RegexOptions.IgnoreCase);
+            html = Regex.Replace(html, @"<i>\s*</i>", "", RegexOptions.IgnoreCase);
+            html = Regex.Replace(html, @"<u>\s*</u>", "", RegexOptions.IgnoreCase);
+            // Chỉ xóa span rỗng (không chứa nội dung, img, audio, hoặc các phần tử khác)
+            // Pattern: <span...> chỉ có whitespace </span> (không chứa img, audio, span con, hoặc text)
+            html = Regex.Replace(html, @"<span[^>]*>\s*(?!.*(?:<img|<audio|<span|\[<))</span>", "", RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
             // --- XỬ LÝ AUDIO (Regex trên toàn bộ HTML của đoạn văn) ---
             var matches = _audioPattern.Matches(html);
@@ -372,12 +933,12 @@ namespace BEQuestionBank.Core.Services
                 {
                     // Tạo HTML Player - Lưu đường dẫn file
                     string audioPlayerHtml = $@"
-                        <div class='audio-player-wrapper'>
+                        <span class='audio-player-wrapper'>
                             <audio controls>
                                 <source src='/media/{savedFileName}' type='audio/mpeg'>
                                 Your browser does not support the audio element.
                             </audio>
-                        </div>";
+                        </span>";
                     audioSb.Append(audioPlayerHtml);
                 }
 
@@ -390,6 +951,44 @@ namespace BEQuestionBank.Core.Services
         }
 
         /// <summary>
+        /// Merge các span liền kề có chứa LaTeX delimiters để tránh LaTeX bị tách
+        /// </summary>
+        private string MergeLatexSpans(string html)
+        {
+            if (string.IsNullOrEmpty(html))
+                return html;
+
+            // Merge tất cả các span liền kề có class='text-content' lại với nhau
+            // Điều này đảm bảo LaTeX không bị tách thành nhiều span
+            // Lặp lại cho đến khi không còn span nào có thể merge được
+            bool changed = true;
+            int maxIterations = 10;
+            int iteration = 0;
+
+            while (changed && iteration < maxIterations)
+            {
+                iteration++;
+                string previousHtml = html;
+                
+                // Merge các span liền kề có class='text-content'
+                // Pattern: </span><span class='text-content'> -> merge nội dung vào span trước
+                html = Regex.Replace(html,
+                    @"(<span[^>]*class=['""]text-content['""][^>]*>)(.*?)</span>\s*<span[^>]*class=['""]text-content['""][^>]*>(.*?)</span>",
+                    match =>
+                    {
+                        string content1 = match.Groups[2].Value;
+                        string content2 = match.Groups[3].Value;
+                        return $@"{match.Groups[1].Value}{content1}{content2}</span>";
+                    },
+                    RegexOptions.IgnoreCase | RegexOptions.Singleline);
+                
+                changed = (html != previousHtml);
+            }
+
+            return html;
+        }
+
+        /// <summary>
         /// Chuyển đổi LaTeX sang HTML với MathJax/KaTeX support
         /// </summary>
         private string ConvertLatexToHtml(string content)
@@ -397,32 +996,67 @@ namespace BEQuestionBank.Core.Services
             if (string.IsNullOrEmpty(content))
                 return content;
 
-            // Xử lý display math trước ($$...$$)
+            // Xử lý display math ($$...$$) trước
             content = _latexDisplayPattern.Replace(content, match =>
             {
                 string latex = match.Groups[1].Value.Trim();
-                // Wrap với delimiters cho MathJax
-                return $@"<div class='math-display'>\[{latex}\]</div>";
+                return $@"<span class='math-display'>\[{latex}\]</span>";
             });
 
-            // Xử lý display math với \[...\]
+            // Xử lý display math với \[...\] - chỉ convert nếu chưa được wrap trong span math-display
             content = _latexDisplayBracketPattern.Replace(content, match =>
             {
+                // Kiểm tra xem có nằm trong <span class='math-display'> không bằng cách kiểm tra context
+                int matchIndex = match.Index;
+                string beforeMatch = content.Substring(Math.Max(0, matchIndex - 150), Math.Min(150, matchIndex));
+                
+                // Đếm số lượng <span class='math-display'> và </span> trước match
+                int openMathSpans = Regex.Matches(beforeMatch, @"<span[^>]*class=['""]math-display['""][^>]*>", RegexOptions.IgnoreCase).Count;
+                int closeSpans = Regex.Matches(beforeMatch, @"</span>", RegexOptions.IgnoreCase).Count;
+                
+                // Nếu có <span class='math-display'> chưa đóng, đã được convert rồi
+                if (openMathSpans > closeSpans)
+                {
+                    return match.Value; // Đã được convert rồi, giữ nguyên
+                }
+                
                 string latex = match.Groups[1].Value.Trim();
-                return $@"<div class='math-display'>\[{latex}\]</div>";
+                return $@"<span class='math-display'>\[{latex}\]</span>";
             });
 
-            // Xử lý inline math ($...$)
-            content = _latexInlinePattern.Replace(content, match =>
+            // Xử lý inline math với \(...\) trước
+            // Chỉ convert nếu chưa được wrap trong span math-inline
+            content = _latexInlineParenPattern.Replace(content, match =>
             {
+                int matchIndex = match.Index;
+                string beforeMatch = content.Substring(Math.Max(0, matchIndex - 150), Math.Min(150, matchIndex));
+                
+                int openMathSpans = Regex.Matches(beforeMatch, @"<span[^>]*class=['""]math-(?:inline|display)['""][^>]*>", RegexOptions.IgnoreCase).Count;
+                int closeSpans = Regex.Matches(beforeMatch, @"</span>", RegexOptions.IgnoreCase).Count;
+                
+                if (openMathSpans > closeSpans)
+                {
+                    return match.Value; // Đã được convert rồi, giữ nguyên
+                }
+                
                 string latex = match.Groups[1].Value.Trim();
-                // Wrap với delimiters cho MathJax
                 return $@"<span class='math-inline'>\({latex}\)</span>";
             });
 
-            // Xử lý inline math với \(...\)
-            content = _latexInlineParenPattern.Replace(content, match =>
+            // Xử lý inline math ($...$) - chỉ convert nếu chưa được wrap
+            content = _latexInlinePattern.Replace(content, match =>
             {
+                int matchIndex = match.Index;
+                string beforeMatch = content.Substring(Math.Max(0, matchIndex - 150), Math.Min(150, matchIndex));
+                
+                int openMathSpans = Regex.Matches(beforeMatch, @"<span[^>]*class=['""]math-(?:inline|display)['""][^>]*>", RegexOptions.IgnoreCase).Count;
+                int closeSpans = Regex.Matches(beforeMatch, @"</span>", RegexOptions.IgnoreCase).Count;
+                
+                if (openMathSpans > closeSpans)
+                {
+                    return match.Value; // Đã được convert rồi, giữ nguyên
+                }
+                
                 string latex = match.Groups[1].Value.Trim();
                 return $@"<span class='math-inline'>\({latex}\)</span>";
             });
@@ -471,8 +1105,9 @@ namespace BEQuestionBank.Core.Services
                 string contentType = imagePart.ContentType;
 
                 // LƯU ẢNH DƯỚI DẠNG BASE64 NHÚNG TRỰC TIẾP VÀO HTML
-                    string base64 = Convert.ToBase64String(imageBytes);
-                    sb.Append($"<img src=\"data:{contentType};base64,{base64}\" style=\"max-width:100%; height:auto; display:block; margin: 10px 0;\" />");
+                // Wrap ảnh trong span để dễ styling và tránh bị xóa nhầm
+                string base64 = Convert.ToBase64String(imageBytes);
+                sb.Append($"<span class='image-wrapper'><img src=\"data:{contentType};base64,{base64}\" style=\"max-width:100%; height:auto; display:block; margin: 10px 0;\" /></span>");
 
                 // Không cần lưu vào bảng File riêng vì đã nhúng trong NoiDung
             }
@@ -568,7 +1203,7 @@ namespace BEQuestionBank.Core.Services
                         MaCauHoi = qData.MaCauHoi,
                         MaPhan = maPhan,
                         NoiDung = qData.NoiDungNhom,
-                        LoaiCauHoi = "Nhom",
+                        LoaiCauHoi = qData.LoaiCauHoi ?? "NH", // Sử dụng loại câu hỏi từ QuestionData (NH - Nhóm)
                         MaSoCauHoi = currentMaxMaSo,
                         NgayTao = DateTime.UtcNow,
                         MaCauHoiCha = null,
@@ -610,16 +1245,26 @@ namespace BEQuestionBank.Core.Services
 
         private CauHoi CreateCauHoiEntity(QuestionData dto, Guid maPhan, int maSo)
         {
+            // Xác định có hoán vị hay không dựa trên loại câu hỏi
+            // TL (Tự luận), GN (Ghép nối), DT (Điền từ) thường không hoán vị
+            bool hoanVi = dto.LoaiCauHoi?.ToUpper() switch
+            {
+                "TL" => false, // Tự luận không hoán vị
+                "GN" => false, // Ghép nối không hoán vị
+                "DT" => false, // Điền từ không hoán vị
+                _ => true      // TN, MN, NH có thể hoán vị
+            };
+
             var cauHoi = new CauHoi
             {
                 MaCauHoi = dto.MaCauHoi,
                 MaPhan = maPhan,
                 NoiDung = dto.NoiDung,
-                LoaiCauHoi = "TracNghiem",
+                LoaiCauHoi = dto.LoaiCauHoi ?? "TN", // Sử dụng loại câu hỏi từ QuestionData
                 MaSoCauHoi = maSo,
                 CLO = dto.CLO,
                 NgayTao = DateTime.UtcNow,
-                HoanVi = true,
+                HoanVi = hoanVi,
                 TrangThai = true,
                 MaCauHoiCha = dto.MaCauHoiCha,
                 SoLanDuocThi = 0,
@@ -676,6 +1321,13 @@ namespace BEQuestionBank.Core.Services
                         result.ValidCount++;
                     else
                         result.InvalidCount++;
+                    
+                    // Thống kê theo loại câu hỏi
+                    string loaiKey = GetQuestionTypeName(question.LoaiCauHoi);
+                    if (result.StatsByType.ContainsKey(loaiKey))
+                        result.StatsByType[loaiKey]++;
+                    else
+                        result.StatsByType[loaiKey] = 1;
                 }
             }
             catch (Exception ex)
@@ -695,7 +1347,9 @@ namespace BEQuestionBank.Core.Services
                 IsGroup = question.IsGroup,
                 CLO = question.CLO?.ToString(),
                 ContentPreview = GetContentPreview(question),
-                IsValid = true
+                IsValid = true,
+                LoaiCauHoi = question.LoaiCauHoi,
+                LoaiCauHoiDisplay = GetQuestionTypeName(question.LoaiCauHoi)
             };
 
             // Validate nội dung
@@ -753,14 +1407,24 @@ namespace BEQuestionBank.Core.Services
             var result = new QuestionContentValidation
             {
                 Identifier = identifier,
-                IsValid = true
+                IsValid = true,
+                LoaiCauHoi = question.LoaiCauHoi,
+                LoaiCauHoiDisplay = GetQuestionTypeName(question.LoaiCauHoi)
             };
 
+            // Lấy loại câu hỏi để sử dụng trong validation
+            // Câu hỏi con trong nhóm NH có LoaiCauHoi là null, dùng "TN" làm mặc định cho validation
+            string loaiCauHoi = question.LoaiCauHoi?.ToUpper() ?? "TN";
+
             // 1. Validate nội dung câu hỏi
+            // Câu hỏi điền từ (DT) trong nhóm không cần nội dung (nội dung nằm ở nhóm)
             if (string.IsNullOrWhiteSpace(question.NoiDung))
+            {
+                if (loaiCauHoi != "DT")
             {
                 result.Errors.Add($"Câu {identifier}: Không có nội dung câu hỏi");
                 result.IsValid = false;
+                }
             }
             else
             {
@@ -777,53 +1441,76 @@ namespace BEQuestionBank.Core.Services
                     result.HasAudio = true;
             }
 
-            // 2. Validate đáp án
+            // 2. Validate đáp án (khác nhau theo loại câu hỏi)
             result.AnswersCount = question.Answers.Count;
 
-            if (question.Answers.Count == 0)
+            // TL (Tự luận) không cần đáp án
+            if (loaiCauHoi == "TL")
             {
-                result.Errors.Add($"Câu {identifier}: Không có đáp án nào");
-                result.IsValid = false;
+                if (question.Answers.Count > 0)
+                {
+                    result.Warnings.Add($"Câu {identifier} (Tự luận): Có {question.Answers.Count} đáp án (thường không cần)");
+                }
             }
             else
             {
-                // Check số lượng đáp án
-                if (question.Answers.Count < 2)
+                // Các loại khác cần có đáp án
+                if (question.Answers.Count == 0)
                 {
-                    result.Warnings.Add($"Câu {identifier}: Chỉ có {question.Answers.Count} đáp án (khuyến nghị ít nhất 2)");
-                }
-
-                // Check đáp án đúng
-                var correctAnswers = question.Answers.Where(a => a.LaDapAn).ToList();
-                result.CorrectAnswersCount = correctAnswers.Count;
-
-                if (correctAnswers.Count == 0)
-                {
-                    result.Errors.Add($"Câu {identifier}: Không có đáp án đúng nào (cần gạch chân đáp án đúng)");
+                    result.Errors.Add($"Câu {identifier} ({GetQuestionTypeName(loaiCauHoi)}): Không có đáp án nào");
                     result.IsValid = false;
                 }
-                else if (correctAnswers.Count > 1)
+                else
                 {
-                    result.Warnings.Add($"Câu {identifier}: Có {correctAnswers.Count} đáp án đúng (câu hỏi nhiều đáp án đúng)");
-                }
-
-                // Check nội dung đáp án
-                for (int i = 0; i < question.Answers.Count; i++)
-                {
-                    var answer = question.Answers[i];
-                    if (string.IsNullOrWhiteSpace(answer.NoiDung))
+                    // Check số lượng đáp án
+                    // TN (Trắc nghiệm) chỉ cần 1 đáp án là đủ, không cần warning
+                    // MN (Nhiều đáp án) cần ít nhất 2 đáp án (sẽ check ở dưới)
+                    if (question.Answers.Count < 2 && loaiCauHoi != "DT" && loaiCauHoi != "GN" && loaiCauHoi != "TN")
                     {
-                        result.Errors.Add($"Câu {identifier}: Đáp án {(char)('A' + i)} không có nội dung");
+                        result.Warnings.Add($"Câu {identifier}: Chỉ có {question.Answers.Count} đáp án (khuyến nghị ít nhất 2)");
+                    }
+
+                    // Check đáp án đúng
+                    var correctAnswers = question.Answers.Where(a => a.LaDapAn).ToList();
+                    result.CorrectAnswersCount = correctAnswers.Count;
+
+                    if (correctAnswers.Count == 0)
+                    {
+                        result.Errors.Add($"Câu {identifier}: Không có đáp án đúng nào (cần gạch chân đáp án đúng)");
                         result.IsValid = false;
                     }
-                }
+                    else if (loaiCauHoi == "TN" && correctAnswers.Count > 1)
+                    {
+                        // TN (Trắc nghiệm) chỉ có 1 đáp án đúng
+                        result.Warnings.Add($"Câu {identifier} (Trắc nghiệm): Có {correctAnswers.Count} đáp án đúng, nên chỉ có 1");
+                    }
+                    else if (loaiCauHoi == "MN" && correctAnswers.Count < 2)
+                    {
+                        // MN (Nhiều đáp án) cần ít nhất 2 đáp án đúng
+                        result.Warnings.Add($"Câu {identifier} (Nhiều đáp án): Chỉ có {correctAnswers.Count} đáp án đúng, nên có ít nhất 2");
+                    }
 
-                // Check thứ tự đáp án
-                var expectedOrder = question.Answers.OrderBy(a => a.ThuTu).Select(a => a.ThuTu).ToList();
-                var actualOrder = Enumerable.Range(1, question.Answers.Count).ToList();
-                if (!expectedOrder.SequenceEqual(actualOrder))
-                {
-                    result.Warnings.Add($"Câu {identifier}: Thứ tự đáp án không liên tục (có thể thiếu đáp án)");
+                    // Check nội dung đáp án
+                    for (int i = 0; i < question.Answers.Count; i++)
+                    {
+                        var answer = question.Answers[i];
+                        if (string.IsNullOrWhiteSpace(answer.NoiDung))
+                        {
+                            result.Errors.Add($"Câu {identifier}: Đáp án {(char)('A' + i)} không có nội dung");
+                            result.IsValid = false;
+                        }
+                    }
+
+                    // Check thứ tự đáp án (chỉ cho TN, MN)
+                    if (loaiCauHoi == "TN" || loaiCauHoi == "MN")
+                    {
+                        var expectedOrder = question.Answers.OrderBy(a => a.ThuTu).Select(a => a.ThuTu).ToList();
+                        var actualOrder = Enumerable.Range(1, question.Answers.Count).ToList();
+                        if (!expectedOrder.SequenceEqual(actualOrder))
+                        {
+                            result.Warnings.Add($"Câu {identifier}: Thứ tự đáp án không liên tục (có thể thiếu đáp án)");
+                        }
+                    }
                 }
             }
 
@@ -854,14 +1541,43 @@ namespace BEQuestionBank.Core.Services
         {
             string content = question.IsGroup ? question.NoiDungNhom : question.NoiDung;
             
-            // Remove HTML tags for preview
-            content = System.Text.RegularExpressions.Regex.Replace(content, @"<[^>]+>", " ");
-            content = System.Text.RegularExpressions.Regex.Replace(content, @"\s+", " ");
+            if (string.IsNullOrWhiteSpace(content))
+                return string.Empty;
+
+            // Giữ lại HTML để có thể render trên web (đặc biệt là LaTeX)
+            // Chỉ làm sạch các khoảng trắng thừa và giới hạn độ dài
+            // Không xóa HTML tags vì cần để render LaTeX, ảnh, audio, etc.
+            
+            // Loại bỏ các khoảng trắng thừa giữa các tags (nhưng giữ lại trong nội dung)
+            content = Regex.Replace(content, @">\s+<", "><", RegexOptions.Compiled);
+            
+            // Loại bỏ các khoảng trắng ở đầu và cuối
             content = content.Trim();
 
-            // Limit length
-            if (content.Length > 100)
-                content = content.Substring(0, 100) + "...";
+            // Giới hạn độ dài: nếu quá dài, cắt ở vị trí an toàn (không cắt giữa tag)
+            if (content.Length > 200)
+            {
+                // Tìm vị trí cắt an toàn (sau tag đóng hoặc trước tag mở)
+                int cutPosition = 200;
+                
+                // Tìm tag đóng gần nhất trước vị trí cắt
+                int lastCloseTag = content.LastIndexOf('>', cutPosition);
+                if (lastCloseTag > 100) // Đảm bảo không cắt quá sớm
+                {
+                    cutPosition = lastCloseTag + 1;
+                }
+                else
+                {
+                    // Nếu không tìm thấy tag đóng, tìm tag mở gần nhất
+                    int lastOpenTag = content.LastIndexOf('<', cutPosition);
+                    if (lastOpenTag > 100)
+                    {
+                        cutPosition = lastOpenTag;
+                    }
+                }
+                
+                content = content.Substring(0, cutPosition) + "...";
+            }
 
             return content;
         }
@@ -881,11 +1597,23 @@ namespace BEQuestionBank.Core.Services
             public int InvalidCount { get; set; }
             public List<string> Errors { get; set; } = new List<string>();
             public List<QuestionValidationResult> Questions { get; set; } = new List<QuestionValidationResult>();
+            
+            /// <summary>
+            /// Thống kê số lượng theo loại câu hỏi
+            /// </summary>
+            public Dictionary<string, int> StatsByType { get; set; } = new Dictionary<string, int>();
 
             public bool HasErrors => Errors.Any() || InvalidCount > 0;
             public string Summary => HasErrors 
                 ? $"Tìm thấy {TotalQuestionsFound} câu hỏi: {ValidCount} hợp lệ, {InvalidCount} có lỗi"
                 : $"Tìm thấy {TotalQuestionsFound} câu hỏi, tất cả đều hợp lệ";
+            
+            /// <summary>
+            /// Chi tiết thống kê theo loại câu hỏi
+            /// </summary>
+            public string TypeSummary => StatsByType.Any() 
+                ? string.Join(", ", StatsByType.Select(kv => $"{kv.Key}: {kv.Value}"))
+                : "";
         }
 
         public class QuestionValidationResult
@@ -904,9 +1632,19 @@ namespace BEQuestionBank.Core.Services
             public List<string> Errors { get; set; } = new List<string>();
             public List<string> Warnings { get; set; } = new List<string>();
             public List<QuestionContentValidation> SubQuestions { get; set; } = new List<QuestionContentValidation>();
+            
+            /// <summary>
+            /// Loại câu hỏi: TL, NH, TN, MN, GN, DT
+            /// </summary>
+            public string? LoaiCauHoi { get; set; }
+            
+            /// <summary>
+            /// Tên đầy đủ của loại câu hỏi
+            /// </summary>
+            public string? LoaiCauHoiDisplay { get; set; }
 
-            public string Status => IsValid ? "✓ Hợp lệ" : "✗ Có lỗi";
-            public string Type => IsGroup ? "Nhóm" : "Đơn";
+            public string Status => IsValid ? "Hợp lệ" : "Có lỗi";
+            public string Type => LoaiCauHoiDisplay ?? (IsGroup ? "Nhóm" : "Đơn");
         }
 
         public class QuestionContentValidation
@@ -920,6 +1658,16 @@ namespace BEQuestionBank.Core.Services
             public bool HasLatex { get; set; }
             public List<string> Errors { get; set; } = new List<string>();
             public List<string> Warnings { get; set; } = new List<string>();
+            
+            /// <summary>
+            /// Loại câu hỏi: TL, NH, TN, MN, GN, DT
+            /// </summary>
+            public string? LoaiCauHoi { get; set; }
+            
+            /// <summary>
+            /// Tên đầy đủ của loại câu hỏi
+            /// </summary>
+            public string? LoaiCauHoiDisplay { get; set; }
         }
 
         public class QuestionData
@@ -934,6 +1682,12 @@ namespace BEQuestionBank.Core.Services
 
             public Guid? MaCauHoiCha { get; set; }
             public EnumCLO? CLO { get; set; }
+            
+            /// <summary>
+            /// Loại câu hỏi: TL (Tự luận), NH (Nhóm), TN (Trắc nghiệm), MN (Nhiều đáp án), GN (Ghép nối), DT (Điền từ)
+            /// null cho câu hỏi con trong nhóm NH
+            /// </summary>
+            public string? LoaiCauHoi { get; set; } = "TN";
 
             public List<AnswerData> Answers { get; set; } = new List<AnswerData>();
             public List<FileData> Files { get; set; } = new List<FileData>();

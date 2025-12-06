@@ -50,9 +50,7 @@
                     <b>Nội dung đoạn văn / Ngữ cảnh chung:</b>
                 </MudText>
                 <MudDivider Class="mb-3" />
-                <MudText Typo="Typo.body1" Style="white-space: pre-wrap; font-size: 1.05rem; line-height: 1.7; color: #1a1a1a;">
-                    @ParentContent
-                </MudText>
+                <LatexContent Content="@ParentContent" Class="question-latex-preview"/>
             </MudPaper>
 
             <!-- Danh sách câu hỏi con -->
@@ -75,9 +73,9 @@
                             </MudAvatar>
                             <div class="flex-grow-1">
                                 <MudText Typo="Typo.caption" Class="text-secondary">Câu hỏi @questionNumber</MudText>
-                                <MudText Typo="Typo.body1" Class="font-bold" Style="color: #1976d2;">
-                                    @question.Content
-                                </MudText>
+                                <div class="font-bold" style="color: #1976d2;">
+                                    <LatexContent Content="@question.Content"/>
+                                </div>
                                 @if (question.CLO.HasValue)
                                 {
                                     <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Text" Class="mt-1 pl-0">
@@ -105,9 +103,9 @@
                                             @label
                                         </MudAvatar>
 
-                                        <MudText Class="flex-grow-1" Style="@(ans.IsCorrect ? "font-weight: 500;" : "")">
-                                            @ans.Text
-                                        </MudText>
+                                        <div class="flex-grow-1 answer-latex-content" style="@(ans.IsCorrect ? "font-weight: 500;" : "")">
+                                            <LatexContent Content="@ans.Text"/>
+                                        </div>
 
                                         @if (ans.IsCorrect)
                                         {

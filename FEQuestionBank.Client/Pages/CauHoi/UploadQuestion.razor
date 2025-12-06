@@ -376,14 +376,12 @@
                                             @if (!question.IsGroup)
                                             {
                                                 <!-- Nội dung câu hỏi đầy đủ -->
-                                                <div class="question-content-display">
+                                                <div class="question-content-display question-latex-preview">
                                                     <MudText Typo="Typo.subtitle1" Class="fw-bold mb-3" Style="color: #495057; font-size: 16px;">
                                                         <MudIcon Icon="@Icons.Material.Filled.QuestionAnswer" Size="Size.Small" Class="me-1"/>
                                                         Nội dung câu hỏi:
                                                     </MudText>
-                                                    <MudText Typo="Typo.body1" Style="line-height: 1.8; color: #333;">
-                                                        @((MarkupString)question.Preview)
-                                                    </MudText>
+                                                    <LatexContent Content="@question.Preview" Class="question-text"/>
                                                 </div>
 
                                                 <!-- Danh sách đáp án -->
@@ -401,8 +399,8 @@
                                                                     <span class="answer-label @(answer.IsCorrect ? "correct" : "")">
                                                                         @answer.Label
                                                                     </span>
-                                                                    <div style="flex: 1; line-height: 1.6;">
-                                                                        @((MarkupString)answer.Content)
+                                                                    <div class="answer-latex-content">
+                                                                        <LatexContent Content="@answer.Content"/>
                                                                     </div>
                                                                     @if (answer.IsCorrect)
                                                                     {

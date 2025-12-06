@@ -189,7 +189,7 @@ public partial class UploadQuestion : ComponentBase
                 return Task.CompletedTask;
             }
 
-            Snackbar.Add($"Đã chọn: {WordFile.Name}", Severity.Success);
+            Snackbar.Add($"✓ Đã chọn: {WordFile.Name}", Severity.Success);
             CurrentStep = 2;
         }
 
