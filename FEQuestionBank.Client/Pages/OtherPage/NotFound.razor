@@ -1,7 +1,8 @@
-﻿@page "/notfound";
+﻿@page "/notfound"
+;
 
 <div class="notfound-container">
-    <!-- Animated background elements -->
+    <!-- Các yếu tố nền được hoạt hình -->
     <div class="background-elements">
         <div class="floating-orb orb-1"></div>
         <div class="floating-orb orb-2"></div>
@@ -9,9 +10,9 @@
         <div class="animated-lines"></div>
     </div>
 
-    <!-- Main content -->
+    <!-- Nội dung chính -->
     <div class="notfound-content">
-        <!-- Animated 404 with interactive glow -->
+        <!-- Mã lỗi 404 hoạt hình với hiệu ứng ánh sáng tương tác -->
         <div class="error-code-wrapper">
             <h1 class="error-code">
                 <span class="digit" style="animation-delay: 0s;">4</span>
@@ -20,22 +21,22 @@
             </h1>
         </div>
 
-        <!-- Animated title -->
-        <h2 class="error-title">Something's missing.</h2>
-        
+        <!-- Tiêu đề hoạt hình -->
+        <h2 class="error-title">Có gì đó sai sai.</h2>
+
         <p class="error-message">
-            Sorry, we can't find that page. You'll find lots to explore on the home page.
+            Xin lỗi, chúng tôi không tìm thấy trang này. Bạn vẫn có thể khám phá nhiều thứ trên trang chủ.
         </p>
 
-        <!-- Interactive button with hover effects -->
+        <!-- Nút tương tác với hiệu ứng hover -->
         <a href="/" class="home-button">
-            <span class="button-text">Back to Homepage</span>
+            <span class="button-text">Quay lại Trang Chủ</span>
             <span class="button-icon">→</span>
         </a>
 
-        <!-- Alternative suggestion -->
+        <!-- Gợi ý thay thế -->
         <p class="suggestion-text">
-            Or explore our <a href="/" class="suggestion-link">main site</a>
+            Hoặc khám phá <a href="/" class="suggestion-link">trang chính</a> của chúng tôi
         </p>
     </div>
 </div>
@@ -59,7 +60,7 @@
         font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
     }
 
-    /* Background animated elements */
+    /* Các yếu tố nền hoạt hình */
     .background-elements {
         position: absolute;
         top: 0;
@@ -104,13 +105,21 @@
     }
 
     @@keyframes float {
-        0%, 100% { transform: translate(0, 0) rotate(0deg); }
-        25% { transform: translate(30px, -30px) rotate(90deg); }
-        50% { transform: translate(0, -50px) rotate(180deg); }
-        75% { transform: translate(-30px, -30px) rotate(270deg); }
+        0%, 100% {
+            transform: translate(0, 0) rotate(0deg);
+        }
+        25% {
+            transform: translate(30px, -30px) rotate(90deg);
+        }
+        50% {
+            transform: translate(0, -50px) rotate(180deg);
+        }
+        75% {
+            transform: translate(-30px, -30px) rotate(270deg);
+        }
     }
 
-    /* Main content */
+    /* Nội dung chính */
     .notfound-content {
         text-align: center;
         max-width: 600px;
@@ -118,7 +127,7 @@
         position: relative;
     }
 
-    /* Animated 404 code */
+    /* Mã lỗi 404 hoạt hình */
     .error-code-wrapper {
         perspective: 1000px;
         margin-bottom: 20px;
@@ -131,7 +140,7 @@
         margin: 0;
         line-height: 1;
         text-shadow: 0 10px 30px rgba(0, 0, 0, 0.3),
-                     0 0 40px rgba(255, 255, 255, 0.2);
+        0 0 40px rgba(255, 255, 255, 0.2);
         letter-spacing: -5px;
         display: flex;
         justify-content: center;
@@ -179,7 +188,7 @@
         }
     }
 
-    /* Interactive button */
+    /* Nút tương tác */
     .home-button {
         display: inline-flex;
         align-items: center;
@@ -219,7 +228,7 @@
         transform: translateX(5px);
     }
 
-    /* Suggestion text */
+    /* Văn bản gợi ý */
     .suggestion-text {
         margin-top: 30px;
         font-size: 14px;
@@ -238,7 +247,7 @@
         color: white;
     }
 
-    /* Responsive design */
+    /* Thiết kế đáp ứng */
     @@media (max-width: 768px) {
         .error-code {
             font-size: 90px;
@@ -284,6 +293,7 @@
         }
     }
 </style>
+
 @code {
     [CascadingParameter] public Action<bool> SetHideLayout { get; set; }
 
@@ -291,4 +301,5 @@
     {
         SetHideLayout?.Invoke(true);
     }
+
 }

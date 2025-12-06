@@ -1,0 +1,71 @@
+﻿@using MudBlazor
+
+<!-- Enhanced InfoCard component with better styling, borders, and visual hierarchy -->
+<MudPaper Elevation="0"
+          Class="pa-6 info-card"
+          Style="@($"background: {BackgroundColor}; border: 2px solid {BorderColor};" +
+                 $" border-radius: 12px; min-height: 140px; display: flex; flex-direction: column;" +
+                 $" justify-content: space-between; cursor: pointer; transition: all 0.3s ease;")">
+
+    <div class="d-flex justify-space-between align-start">
+        <div class="flex-grow-1">
+            <MudText Typo="Typo.caption"
+                     Style="color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                @Title
+            </MudText>
+            <MudText Typo="Typo.h4" Class="mt-3 font-weight-bold value-text"
+                     Style="@($"color: {GetColorHex(IconColor)}; transition: all 0.3s ease;")">
+                @Value
+            </MudText>
+        </div>
+        <MudAvatar Color="@IconColor" Variant="Variant.Filled" Size="Size.Large" Class="flex-shrink-0">
+            <MudIcon Icon="@Icon" Size="Size.Large"/>
+        </MudAvatar>
+    </div>
+
+    <div class="mt-4">
+        <MudLinearProgress Value="75" Color="@IconColor" Size="Size.Small" Class="rounded"/>
+    </div>
+</MudPaper>
+
+<style>
+    .info-card {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .info-card:hover .value-text {
+        color: #2563eb; /* Màu sáng hơn một chút khi hover */
+    }
+</style>
+
+@code {
+    [Parameter] public string Icon { get; set; } = "";
+
+    [Parameter] public Color IconColor { get; set; } = Color.Primary;
+
+    [Parameter] public string Title { get; set; } = "";
+
+    [Parameter] public string Value { get; set; } = "0";
+
+    [Parameter] public string BackgroundColor { get; set; } = "#f0f7ff";
+
+    [Parameter] public string BorderColor { get; set; } = "#3b82f6";
+
+    private bool IsHovered = false;
+
+    private string GetColorHex(Color color)
+    {
+        return color switch
+        {
+            Color.Primary => "#3b82f6",
+            Color.Info => "#0ea5e9",
+            Color.Success => "#10b981",
+            Color.Warning => "#f59e0b",
+            Color.Error => "#ef4444",
+            Color.Secondary => "#8b5cf6",
+            _ => "#6b7280"
+        };
+    }
+
+}

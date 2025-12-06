@@ -12,4 +12,7 @@ public class CauHoiWithCauTraLoiDto : CauHoiDto
 {
     [JsonPropertyOrder(99)] 
     public List<CauTraLoiDto> CauTraLois { get; set; } = new List<CauTraLoiDto>();
+
+    public List<GhepNoiDto>? GhepNoiPairs { get; set; }
+
 }
