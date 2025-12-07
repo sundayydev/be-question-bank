@@ -58,7 +58,6 @@ namespace FEQuestionBank.Client.Pages
                 Snackbar.Add($"Lỗi khi tải số liệu: {ex.Message}", Severity.Error);
             }
         }
-
         
         protected async Task<TableData<NguoiDungDto>> LoadServerData(TableState state, CancellationToken cancellationToken)
         {
@@ -157,8 +156,7 @@ namespace FEQuestionBank.Client.Pages
             }
 
         }
-
-
+        
         protected async Task OnToggleLock(NguoiDungDto user)
         {
             var action = user.BiKhoa ? "mở khóa" : "khóa";
@@ -252,8 +250,6 @@ namespace FEQuestionBank.Client.Pages
                 Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
             }
         }
-
-
-
+        
     }
 }

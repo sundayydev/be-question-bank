@@ -249,6 +249,7 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
             MaSoCauHoi = c.MaSoCauHoi,
             NoiDung = c.NoiDung,
             NgayTao = c.NgayTao,
+            SoLanDung = c.SoLanDung,
             CLO = c.CLO,
             CauHoiCons = c.CauHoiCons.Select(cc => new CauHoiDto
             {
@@ -301,6 +302,7 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
             HoanVi = c.HoanVi,
             CapDo = c.CapDo,
             SoCauHoiCon = c.SoCauHoiCon,
+            SoLanDung = c.SoLanDung,
             DoPhanCach = c.DoPhanCach,
             XoaTam = c.XoaTam,
             NgayTao = c.NgayTao,
@@ -359,6 +361,7 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
             HoanVi = c.HoanVi,
             CapDo = c.CapDo,
             LoaiCauHoi = c.LoaiCauHoi,
+            SoLanDung = c.SoLanDung,
             CLO = c.CLO,
             NgayTao = c.NgayTao,
             CauTraLois = c.CauTraLois.Select(ct => new CauTraLoiDto
@@ -405,6 +408,7 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
             MaSoCauHoi = c.MaSoCauHoi,
             NoiDung = c.NoiDung,
             HoanVi = c.HoanVi,
+            SoLanDung = c.SoLanDung,
             CapDo = c.CapDo,
             SoCauHoiCon = c.SoCauHoiCon,
             DoPhanCach = c.DoPhanCach,
@@ -462,6 +466,7 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
             MaSoCauHoi = c.MaSoCauHoi,
             NoiDung = c.NoiDung,
             HoanVi = c.HoanVi,
+            SoLanDung = c.SoLanDung,
             CapDo = c.CapDo,
             SoCauHoiCon = c.SoCauHoiCon,
             DoPhanCach = c.DoPhanCach,
@@ -519,6 +524,7 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
             TenPhan = c.Phan.TenPhan,
             MaSoCauHoi = c.MaSoCauHoi,
             NoiDung = c.NoiDung,
+            SoLanDung = c.SoLanDung,
             HoanVi = c.HoanVi,
             CapDo = c.CapDo,
             LoaiCauHoi = c.LoaiCauHoi,

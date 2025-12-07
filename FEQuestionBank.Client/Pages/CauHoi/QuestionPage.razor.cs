@@ -1,4 +1,5 @@
-﻿using BeQuestionBank.Shared.DTOs.CauHoi;
+﻿using System.Text.RegularExpressions;
+using BeQuestionBank.Shared.DTOs.CauHoi;
 using BeQuestionBank.Shared.DTOs.Common;
 using FEQuestionBank.Client.Services.Interface;
 using Microsoft.AspNetCore.Components;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 using BeQuestionBank.Shared.DTOs.Khoa;
 using BeQuestionBank.Shared.DTOs.MonHoc;
 using BeQuestionBank.Shared.DTOs.Phan;
+using FEQuestionBank.Client.Component;
 using FEQuestionBank.Client.Services;
 
 namespace FEQuestionBank.Client.Pages
@@ -362,6 +364,40 @@ namespace FEQuestionBank.Client.Pages
             Snackbar.Add("Chức năng tạo câu hỏi đang phát triển", Severity.Info);
         }
 
+        protected async Task OnDeleteQuestionAsync(Guid id, string noiDung)
+        {
+            // 1. Truyền tham số vào Dialog tùy chỉnh vừa tạo
+            var parameters = new DialogParameters
+            {
+                ["Message"] = "Bạn có chắc chắn muốn xóa câu hỏi này?",
+                ["NoiDung"] = noiDung // Truyền nội dung để render Latex
+            };
+
+            var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+            // 2. Gọi Dialog tùy chỉnh (ConfirmDeleteDialog)
+            var dialog = DialogService.Show<ConfirmDeleteDialog>("Xác nhận xóa", parameters, options);
+            var result = await dialog.Result;
+
+            // 3. Kiểm tra kết quả (Nếu không bấm Hủy)
+            if (!result.Canceled)
+            {
+                // Gọi API xóa
+                var response = await CauHoiClient.DeleteQuestionAsync(id);
+
+                if (response.Success)
+                {
+                    Snackbar.Add("Xóa câu hỏi thành công!", Severity.Success);
+                    await ReloadBothTables();
+                    await LoadCountsAsync();
+                }
+                else
+                {
+                    Snackbar.Add($"Xóa thất bại: {response.Message}", Severity.Error);
+                }
+            }
+        }
+
         // protected void ViewDetail(CauHoiDto cauHoi)
         // {
         //     var parameters = new DialogParameters { ["CauHoi"] = cauHoi };
@@ -374,6 +410,7 @@ namespace FEQuestionBank.Client.Pages
             <= 4 => Color.Warning,
             _ => Color.Error
         };
+        
     }
 
     public static class StringExtensions
@@ -381,4 +418,6 @@ namespace FEQuestionBank.Client.Pages
         public static string Truncate(this string? value, int maxLength)
             => string.IsNullOrEmpty(value) ? "" : value.Length <= maxLength ? value : value[..maxLength] + "...";
     }
+
+    
 }
