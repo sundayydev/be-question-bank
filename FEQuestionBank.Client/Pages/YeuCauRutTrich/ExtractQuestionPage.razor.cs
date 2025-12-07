@@ -1,4 +1,4 @@
-﻿using BeQuestionBank.Shared.DTOs.Common;
+using BeQuestionBank.Shared.DTOs.Common;
 using BeQuestionBank.Shared.DTOs.MonHoc;
 using BeQuestionBank.Shared.DTOs.YeuCauRutTrich;
 using FEQuestionBank.Client.Services;
@@ -324,24 +324,41 @@ namespace FEQuestionBank.Client.Pages.DeThi
                     errorMessage = "Tổng số câu hỏi phải lớn hơn 0";
                     return false;
                 }
-                if (_maTran.CloPerPart)
-                    _maTran.TotalQuestions = CalculatedTotalQuestions();
 
-                var sumClo = _maTran.Clos.Sum(c => c.Num);
-                var sumType = _maTran.QuestionTypes.Sum(q => q.Num);
-                if (sumClo != _maTran.TotalQuestions) { errorMessage = $"Tổng CLO ({sumClo}) phải bằng tổng câu ({_maTran.TotalQuestions})"; return false; }
-                if (sumType != _maTran.TotalQuestions) { errorMessage = $"Tổng loại câu ({sumType}) phải bằng tổng câu ({_maTran.TotalQuestions})"; return false; }
-
-                if (sumClo != _maTran.TotalQuestions)
+                if (!_maTran.Clos.Any())
                 {
-                    errorMessage = $"Tổng số câu theo CLO ({sumClo}) phải bằng tổng số câu ({_maTran.TotalQuestions})";
+                    errorMessage = "Vui lòng thêm ít nhất một CLO";
                     return false;
                 }
 
-                if (sumType != _maTran.TotalQuestions)
+                if (!_maTran.QuestionTypes.Any())
                 {
-                    errorMessage = $"Tổng số câu theo loại ({sumType}) phải bằng tổng số câu ({_maTran.TotalQuestions})";
+                    errorMessage = "Vui lòng thêm ít nhất một loại câu hỏi";
                     return false;
+                }
+
+                // Kiểm tra mỗi CLO và loại câu hỏi có giá trị hợp lệ
+                foreach (var clo in _maTran.Clos)
+                {
+                    if (clo.Clo < 1 || clo.Clo > 5)
+                    {
+                        errorMessage = $"CLO phải từ 1 đến 5";
+                        return false;
+                    }
+                    if (clo.Num <= 0)
+                    {
+                        errorMessage = $"Số câu hỏi cho CLO {clo.Clo} phải lớn hơn 0";
+                        return false;
+                    }
+                }
+
+                foreach (var qt in _maTran.QuestionTypes)
+                {
+                    if (qt.Num <= 0)
+                    {
+                        errorMessage = $"Số câu hỏi cho loại {qt.Loai} phải lớn hơn 0";
+                        return false;
+                    }
                 }
             }
             else
@@ -353,34 +370,106 @@ namespace FEQuestionBank.Client.Pages.DeThi
                     return false;
                 }
 
+                if (_maTran.TotalQuestions <= 0)
+                {
+                    errorMessage = "Tổng số câu hỏi phải lớn hơn 0";
+                    return false;
+                }
+
                 foreach (var part in _maTran.Parts)
                 {
-                    var sumClo = part.Clos.Sum(c => c.Num);
-                    var sumType = part.QuestionTypes.Sum(q => q.Num);
-
                     if (part.NumQuestions <= 0)
                     {
                         errorMessage = $"Số câu hỏi của phần phải lớn hơn 0";
                         return false;
                     }
-                    if (sumClo != part.NumQuestions) { errorMessage = $"Tổng CLO ({sumClo}) phải bằng số câu phần ({part.NumQuestions})"; return false; }
-                    if (sumType != part.NumQuestions) { errorMessage = $"Tổng loại câu ({sumType}) phải bằng số câu phần ({part.NumQuestions})"; return false; }
 
-                    if (sumClo != part.NumQuestions)
+                    if (!part.Clos.Any())
                     {
-                        errorMessage = $"Tổng CLO ({sumClo}) phải bằng số câu của phần ({part.NumQuestions})";
+                        errorMessage = $"Phần phải có ít nhất một CLO";
                         return false;
                     }
 
-                    if (sumType != part.NumQuestions)
+                    if (!part.QuestionTypes.Any())
                     {
-                        errorMessage = $"Tổng loại câu ({sumType}) phải bằng số câu của phần ({part.NumQuestions})";
+                        errorMessage = $"Phần phải có ít nhất một loại câu hỏi";
                         return false;
+                    }
+
+                    // Kiểm tra mỗi CLO và loại câu hỏi trong phần
+                    foreach (var clo in part.Clos)
+                    {
+                        if (clo.Clo < 1 || clo.Clo > 5)
+                        {
+                            errorMessage = $"CLO phải từ 1 đến 5";
+                            return false;
+                        }
+                        if (clo.Num <= 0)
+                        {
+                            errorMessage = $"Số câu hỏi cho CLO {clo.Clo} trong phần phải lớn hơn 0";
+                            return false;
+                        }
+                    }
+
+                    foreach (var qt in part.QuestionTypes)
+                    {
+                        if (qt.Num <= 0)
+                        {
+                            errorMessage = $"Số câu hỏi cho loại {qt.Loai} trong phần phải lớn hơn 0";
+                            return false;
+                        }
                     }
                 }
             }
 
             return true;
+        }
+        
+        protected string GetQuestionTypeLabel(string loai)
+        {
+            return loai switch
+            {
+                "TN" => "Số câu hỏi cha",
+                "MN" => "Số câu hỏi cha",
+                "DT" => "Số câu hỏi cha",
+                "GN" => "Số câu hỏi cha",
+                "TL" => "Số câu hỏi con",
+                "NH" => "Số câu hỏi con",
+                _ => "Số câu"
+            };
+        }
+        
+        protected string GetQuestionTypeHelperText(string loai)
+        {
+            return loai switch
+            {
+                "TN" => "Đếm số câu hỏi cha (tự động lấy tất cả câu con)",
+                "MN" => "Đếm số câu hỏi cha (tự động lấy tất cả câu con)",
+                "DT" => "Đếm số câu hỏi cha (tự động lấy tất cả câu con)",
+                "GN" => "Đếm số câu hỏi cha (tự động lấy tất cả câu con)",
+                "TL" => "⚠ Đếm số CÂU HỎI CON (không phải câu cha). Hệ thống sẽ kiểm tra số câu hỏi con có sẵn.",
+                "NH" => "⚠ Đếm số CÂU HỎI CON (không phải câu cha). Hệ thống sẽ kiểm tra số câu hỏi con có sẵn.",
+                _ => ""
+            };
+        }
+        
+        protected string GetQuestionTypeTooltip(string loai)
+        {
+            return loai switch
+            {
+                "TN" => "Trắc nghiệm: Đếm số câu hỏi cha. Khi chọn câu hỏi cha, tất cả câu hỏi con sẽ tự động được thêm vào đề thi.",
+                "MN" => "Nhiều đáp án: Đếm số câu hỏi cha. Khi chọn câu hỏi cha, tất cả câu hỏi con sẽ tự động được thêm vào đề thi.",
+                "DT" => "Điền từ: Đếm số câu hỏi cha. Khi chọn câu hỏi cha, tất cả câu hỏi con sẽ tự động được thêm vào đề thi.",
+                "GN" => "Ghép nối: Đếm số câu hỏi cha. Khi chọn câu hỏi cha, tất cả câu hỏi con sẽ tự động được thêm vào đề thi.",
+                "TL" => "Tự luận: ⚠ QUAN TRỌNG - Đếm TỔNG SỐ CÂU HỎI CON trong các câu hỏi cha TL (KHÔNG đếm câu hỏi cha). Hệ thống sẽ kiểm tra số câu hỏi con có sẵn trước khi rút trích. Khi chọn câu hỏi cha, tất cả câu hỏi con sẽ tự động được thêm vào đề thi.",
+                "NH" => "Nhóm: ⚠ QUAN TRỌNG - Đếm TỔNG SỐ CÂU HỎI CON trong các câu hỏi cha NH (KHÔNG đếm câu hỏi cha). Hệ thống sẽ kiểm tra số câu hỏi con có sẵn trước khi rút trích. Khi chọn câu hỏi cha, tất cả câu hỏi con sẽ tự động được thêm vào đề thi.",
+                _ => ""
+            };
+        }
+        
+        protected Color GetQuestionTypeHelperColor(string loai)
+        {
+            return (loai == "TL" || loai == "NH") ? Color.Warning : Color.Default;
         }
 
         // Bước 6: Rút trích đề thi (chỉ khi đã validate thành công)

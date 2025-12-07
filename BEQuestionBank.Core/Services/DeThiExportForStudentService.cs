@@ -108,6 +108,12 @@ namespace BEQuestionBank.Core.Services
 
                 string html = line;
 
+                // Xử lý audio trước: Thay thế thẻ <audio> bằng text đánh dấu
+                html = Regex.Replace(html, 
+                    @"<audio[^>]*>.*?</audio>", 
+                    " [CÓ AUDIO] ", 
+                    RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
                 // Regex cập nhật: match cả <span class='image-wrapper'> và <img> trực tiếp
                 var regex = new Regex(
                     @"(<span\s+class\s*=\s*['""]image-wrapper['""][^>]*>.*?<img[^>]+src\s*=\s*""data:image/[^;]+;base64,([^""]+)""[^>]*style\s*=\s*""([^""]*)""[^>]*>.*?</span>)|" +
@@ -207,6 +213,12 @@ namespace BEQuestionBank.Core.Services
         {
             if (string.IsNullOrWhiteSpace(html)) return string.Empty;
 
+            // Xử lý audio: Thay thế thẻ <audio> bằng text đánh dấu
+            html = Regex.Replace(html, 
+                @"<audio[^>]*>.*?</audio>", 
+                " [CÓ AUDIO] ", 
+                RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
             // Xóa span như cũ
             html = Regex.Replace(html, @"<span.*?>|</span>", "", RegexOptions.IgnoreCase);
 
@@ -239,7 +251,7 @@ namespace BEQuestionBank.Core.Services
             var lines = new List<string>();
             int stt = 1;
             var groups = deThi.ChiTietDeThis?
-                .Where(x => x.CauHoi != null)
+                .Where(x => x.CauHoi != null && x.CauHoi.MaCauHoiCha == null) // Chỉ lấy câu hỏi cha
                 .OrderBy(x => x.ThuTu)
                 .GroupBy(x => x.Phan)
                 .OrderBy(g => g.First().Phan?.ThuTu ?? 0);
@@ -261,22 +273,90 @@ namespace BEQuestionBank.Core.Services
                 foreach (var ct in g.OrderBy(x => x.ThuTu))
                 {
                     var ch = ct.CauHoi!;
-                    lines.Add($"{stt:D2}. {ch.NoiDung}");
-
-                    var answers = ch.CauTraLois?
-                        .GroupBy(a => a.MaCauTraLoi)
-                        .Select(g => g.First())
-                        .ToList() ?? new List<CauTraLoi>();
-
-                    if (hoanVi) Shuffle(answers);
-
-                    for (int i = 0; i < answers.Count; i++)
+                    
+                    // Xử lý câu hỏi NH (Nhóm)
+                    if (ch.LoaiCauHoi == "NH" && ch.CauHoiCons != null && ch.CauHoiCons.Any())
                     {
-                        char label = (char)('A' + i);
-                        lines.Add($" {label}. {answers[i].NoiDung}");
+                        var children = ch.CauHoiCons
+                            .Where(c => c.XoaTam != true)
+                            .OrderBy(c => c.MaSoCauHoi)
+                            .ThenBy(c => c.NgayTao)
+                            .ToList();
+                        
+                        int childCount = children.Count;
+                        int startNum = stt;
+                        int endNum = stt + childCount - 1;
+                        
+                        // Đánh số trước câu hỏi cha: "1-3"
+                        lines.Add($"{startNum}-{endNum}. {ch.NoiDung}");
+                        lines.Add("");
+                        
+                        // Đánh số và hiển thị các câu hỏi con: 1, 2, 3
+                        int childStt = 1;
+                        foreach (var child in children)
+                        {
+                            lines.Add($"{stt:D2}. {child.NoiDung}");
+                            
+                            var answers = child.CauTraLois?
+                                .GroupBy(a => a.MaCauTraLoi)
+                                .Select(gr => gr.First())
+                                .ToList() ?? new List<CauTraLoi>();
+                            
+                            if (hoanVi) Shuffle(answers);
+                            
+                            for (int i = 0; i < answers.Count; i++)
+                            {
+                                char label = (char)('A' + i);
+                                lines.Add($" {label}. {answers[i].NoiDung}");
+                            }
+                            lines.Add("");
+                            stt++;
+                            childStt++;
+                        }
                     }
-                    lines.Add("");
-                    stt++;
+                    // Xử lý câu hỏi TL (Tự luận) - hiển thị như bình thường
+                    else if (ch.LoaiCauHoi == "TL")
+                    {
+                        lines.Add($"{stt:D2}. {ch.NoiDung}");
+                        
+                        // Câu hỏi TL có thể có câu hỏi con (câu hỏi phụ)
+                        if (ch.CauHoiCons != null && ch.CauHoiCons.Any())
+                        {
+                            var children = ch.CauHoiCons
+                                .Where(c => c.XoaTam != true)
+                                .OrderBy(c => c.MaSoCauHoi)
+                                .ThenBy(c => c.NgayTao)
+                                .ToList();
+                            
+                            foreach (var child in children)
+                            {
+                                lines.Add($"   {child.NoiDung}");
+                            }
+                        }
+                        
+                        lines.Add("");
+                        stt++;
+                    }
+                    // Xử lý các loại câu hỏi khác (TN, MN, DT, GN)
+                    else
+                    {
+                        lines.Add($"{stt:D2}. {ch.NoiDung}");
+
+                        var answers = ch.CauTraLois?
+                            .GroupBy(a => a.MaCauTraLoi)
+                            .Select(gr => gr.First())
+                            .ToList() ?? new List<CauTraLoi>();
+
+                        if (hoanVi) Shuffle(answers);
+
+                        for (int i = 0; i < answers.Count; i++)
+                        {
+                            char label = (char)('A' + i);
+                            lines.Add($" {label}. {answers[i].NoiDung}");
+                        }
+                        lines.Add("");
+                        stt++;
+                    }
                 }
             }
             return lines;
