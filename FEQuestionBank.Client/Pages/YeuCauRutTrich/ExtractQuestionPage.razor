@@ -1,4 +1,4 @@
-﻿@page "/tools/exam-extract"
+@page "/tools/exam-extract"
 @using BEQuestionBank.Shared.DTOs.MaTran
 @using BeQuestionBank.Shared.DTOs.YeuCauRutTrich
 @using BeQuestionBank.Shared.DTOs.MonHoc
@@ -182,7 +182,7 @@
                                                Min="1"
                                                Variant="Variant.Outlined"
                                                Required="true"
-                                               HelperText="Nhập tổng số câu hỏi mong muốn cho toàn đề"
+                                               HelperText="@(_maTran.CloPerPart ? "Tổng số câu hỏi mong muốn cho toàn đề" : "Nhập tổng số câu hỏi mong muốn cho toàn đề")"
                                                Adornment="Adornment.Start"
                                                AdornmentIcon="@Icons.Material.Filled.Numbers"
                                                Style="max-width:350px;"
@@ -191,10 +191,20 @@
                     @if (_maTran.CloPerPart)
                     {
                         <MudChip T="int" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Medium">
-                            Tổng bạn chọn câu hỏi theo các phần: @CalculatedTotalQuestions() câu
+                            Tổng số câu hỏi theo các phần: @CalculatedTotalQuestions() câu
                         </MudChip>
                     }
                 </div>
+                
+                <MudAlert Severity="Severity.Info" Dense="true" Class="mb-4">
+                    <MudText Typo="Typo.body2">
+                        <strong>Lưu ý:</strong> Rút trích được thực hiện theo <strong>Phần → CLO → Loại câu hỏi</strong>.
+                        <br/>
+                        • <strong>TN, MN, DT, GN:</strong> Đếm số <strong>câu hỏi cha</strong>. Khi chọn câu hỏi cha, tất cả câu hỏi con sẽ tự động được thêm vào.
+                        <br/>
+                        • <strong>TL, NH:</strong> ⚠ Đếm số <strong>CÂU HỎI CON</strong> (KHÔNG đếm câu hỏi cha). Hệ thống sẽ kiểm tra số câu hỏi con có sẵn trước khi rút trích. Khi chọn câu hỏi cha, tất cả câu hỏi con sẽ tự động được thêm vào.
+                    </MudText>
+                </MudAlert>
                 </MudPaper>
 
                     @* Chế độ toàn đề *@
@@ -285,21 +295,26 @@
                                                                
                                                                Style="width: 150px;">
                                                         <MudSelectItem Value="@("TN")">Trắc nghiệm (1 đáp án)</MudSelectItem>
-                                                        <MudSelectItem Value="@("MN")">Trắc nghiệm nhiều đáp án
-                                                        </MudSelectItem>
+                                                        <MudSelectItem Value="@("MN")">Trắc nghiệm nhiều đáp án</MudSelectItem>
                                                         <MudSelectItem Value="@("TL")">Tự luận</MudSelectItem>
                                                         <MudSelectItem Value="@("GN")">Ghép nối</MudSelectItem>
                                                         <MudSelectItem Value="@("DT")">Điền từ</MudSelectItem>
-                                                        <MudSelectItem Value="@("NH")">Câu hỏi nhóm (có câu con)
-                                                        </MudSelectItem>
+                                                        <MudSelectItem Value="@("NH")">Câu hỏi nhóm</MudSelectItem>
                                                     </MudSelect>
                                                     <MudNumericField @bind-Value="@qt.Num"
-                                                                     Label="Số câu"
+                                                                     Label="@GetQuestionTypeLabel(qt.Loai)"
                                                                      Min="0"
                                                                      Variant="Variant.Outlined"
                                                                      Margin="Margin.Dense"
-                                                                     
+                                                                     HelperText="@GetQuestionTypeHelperText(qt.Loai)"
+                                                                     HelperTextColor="@GetQuestionTypeHelperColor(qt.Loai)"
                                                                      Style="flex: 1;"/>
+                                                    <MudTooltip Text="@GetQuestionTypeTooltip(qt.Loai)">
+                                                        <MudIcon Icon="@Icons.Material.Filled.Info" 
+                                                                 Size="Size.Small" 
+                                                                 Color="@((qt.Loai == "TL" || qt.Loai == "NH") ? Color.Warning : Color.Info)" 
+                                                                 Style="cursor: help;"/>
+                                                    </MudTooltip>
                                                     <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                                                    Color="Color.Error"
                                                                    Size="Size.Small"
@@ -417,22 +432,26 @@
                                                                                    
                                                                                    Style="width: 130px;">
                                                                             <MudSelectItem Value="@("TN")">Trắc nghiệm (1 đáp án)</MudSelectItem>
-                                                                            <MudSelectItem Value="@("MN")">Trắc nghiệm
-                                                                                nhiều đáp án
-                                                                            </MudSelectItem>
+                                                                            <MudSelectItem Value="@("MN")">Trắc nghiệm nhiều đáp án</MudSelectItem>
                                                                             <MudSelectItem Value="@("TL")">Tự luận</MudSelectItem>
                                                                             <MudSelectItem Value="@("GN")">Ghép nối</MudSelectItem>
                                                                             <MudSelectItem Value="@("DT")">Điền từ</MudSelectItem>
-                                                                            <MudSelectItem Value="@("NH")">Câu hỏi nhóm
-                                                                                (có câu con)
-                                                                            </MudSelectItem>
+                                                                            <MudSelectItem Value="@("NH")">Câu hỏi nhóm</MudSelectItem>
                                                                         </MudSelect>
                                                                         <MudNumericField @bind-Value="@qt.Num"
+                                                                                         Label="@GetQuestionTypeLabel(qt.Loai)"
                                                                                          Min="0"
                                                                                          Margin="Margin.Dense"
                                                                                          Variant="Variant.Outlined"
-                                                                                         
+                                                                                         HelperText="@GetQuestionTypeHelperText(qt.Loai)"
+                                                                                         HelperTextColor="@GetQuestionTypeHelperColor(qt.Loai)"
                                                                                          Style="flex: 1;"/>
+                                                                        <MudTooltip Text="@GetQuestionTypeTooltip(qt.Loai)">
+                                                                            <MudIcon Icon="@Icons.Material.Filled.Info" 
+                                                                                     Size="Size.Small" 
+                                                                                     Color="@((qt.Loai == "TL" || qt.Loai == "NH") ? Color.Warning : Color.Info)" 
+                                                                                     Style="cursor: help;"/>
+                                                                        </MudTooltip>
                                                                         <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                                                                        Size="Size.Small"
                                                                                        Color="Color.Error"
