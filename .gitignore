@@ -408,3 +408,15 @@ appsettings.json
 # End of https://www.toptal.com/developers/gitignore/api/csharp
 /BeQuestionBank.API/appsettings.json
 BeQuestionBank.API/appsettings.json
+
+# Media files (Audio, Images)
+wwwroot/media/
+wwwroot/TempUploads/
+wwwroot/TempExtract/
+*.mp3
+*.wav
+*.ogg
+*.m4a
+*.aac
+*.flac
+*.wma
