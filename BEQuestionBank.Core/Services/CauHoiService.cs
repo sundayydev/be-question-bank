@@ -1,18 +1,10 @@
 using BeQuestionBank.Domain.Interfaces.IRepositories;
 using BeQuestionBank.Domain.Models;
 using BeQuestionBank.Shared.DTOs.CauHoi;
-using BeQuestionBank.Shared.Enums;
-using DocumentFormat.OpenXml.Drawing.Charts;
-using MathNet.Numerics.Distributions;
-using NPOI.SS.Formula.Functions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using BeQuestionBank.Shared.DTOs.CauHoi.Create;
 using BeQuestionBank.Shared.DTOs.CauTraLoi;
+using BeQuestionBank.Shared.DTOs.Pagination;
 using Microsoft.Extensions.Caching.Memory;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace BEQuestionBank.Core.Services
 {
@@ -20,8 +12,7 @@ namespace BEQuestionBank.Core.Services
     {
         private readonly ICauHoiRepository _cauHoiRepository;
         private readonly IMemoryCache _cache;
-
-        // Inject Repository qua Constructor
+        
         public CauHoiService(ICauHoiRepository cauHoiRepository, IMemoryCache cache)
         {
             _cauHoiRepository = cauHoiRepository;
@@ -974,6 +965,95 @@ namespace BEQuestionBank.Core.Services
         }
 
         /// <summary>
+        /// Tạo câu hỏi tự luận (Essay / Open-ended)
+        /// </summary>
+        public async Task<CauHoi> CreateEssayQuestionAsync(CreateCauHoiTuLuanDto dto, Guid userId)
+        {
+            // Validate: Nội dung câu hỏi không được để trống
+            if (string.IsNullOrWhiteSpace(dto.NoiDung))
+                throw new ArgumentException("Nội dung câu hỏi tự luận không được để trống.");
+
+            //  Tạo Parent
+            var parentQuestion = new CauHoi
+            {
+                MaCauHoi = Guid.NewGuid(),
+                MaPhan = dto.MaPhan,
+                MaSoCauHoi = dto.MaSoCauHoi,
+                NoiDung = $"<span>{dto.NoiDung}</span>",
+                HoanVi = dto.HoanVi,
+                CapDo = dto.CapDo,
+                SoCauHoiCon = dto.CauHoiCons.Count,
+                MaCauHoiCha = null,
+                TrangThai = true,
+                NgayTao = DateTime.Now,
+                NguoiTao = userId,
+                CLO = dto.CLO,
+                LoaiCauHoi = "TL",
+                XoaTam = false,
+                CauHoiCons = new List<CauHoi>()
+            };
+
+            //  Tạo Child
+            foreach (var childDto in dto.CauHoiCons)
+            {
+                var childQuestion = new CauHoi
+                {
+                    MaCauHoi = Guid.NewGuid(),
+                    MaCauHoiCha = parentQuestion.MaCauHoi,
+                    MaPhan = parentQuestion.MaPhan,
+                    NoiDung = $"<span>{childDto.NoiDung}</span>",
+                    HoanVi = childDto.HoanVi,
+                    CapDo = childDto.CapDo,
+                    TrangThai = true,
+                    NgayTao = DateTime.Now,
+                    NguoiTao = userId,
+                    CLO = childDto.CLO ?? dto.CLO, // lấy của parent nếu null
+                    LoaiCauHoi = null, // child không cần LoaiCauHoi
+                    XoaTam = false,
+                    CauTraLois = new List<CauTraLoi>()
+                };
+
+                parentQuestion.CauHoiCons.Add(childQuestion);
+            }
+
+            //  Lưu vào DB
+            await _cauHoiRepository.AddWithAnswersAsync(parentQuestion);
+            _cache.Remove("EssayQuestions");
+
+            return parentQuestion;
+        }
+
+        /// <summary>
+        /// Lấy toàn bộ câu hỏi tự luận (không phân trang)
+        /// </summary>
+        public async Task<List<CauHoiDto>> GetAllEssayQuestionsAsync()
+        {
+            var entities = await _cauHoiRepository.GetAllWithAnswersAsync();
+
+            var query = entities
+                .Where(q => q.LoaiCauHoi == "TL" &&
+                            q.MaCauHoiCha == null &&
+                            !q.XoaTam.GetValueOrDefault());
+
+            return query
+                .OrderByDescending(q => q.NgayTao)
+                .Select(q => new CauHoiDto
+                {
+                    MaCauHoi = q.MaCauHoi,
+                    MaPhan = q.MaPhan,
+                    TenPhan = q.Phan != null ? q.Phan.TenPhan : null,
+                    MaSoCauHoi = q.MaSoCauHoi,
+                    NoiDung = q.NoiDung,
+                    CapDo = q.CapDo,
+                    CLO = q.CLO,
+                    LoaiCauHoi = "TL",
+                    NgayTao = q.NgayTao,
+                    CauTraLois = new List<CauTraLoiDto>()
+                })
+                .ToList();
+        }
+
+        /// <summary>
         /// Thống kê số lượng câu hỏi theo loại
         /// </summary>
         public async Task<object> GetStatisticsAsync(Guid? khoaId = null, Guid? monHocId = null, Guid? phanId = null)
@@ -1089,5 +1169,37 @@ namespace BEQuestionBank.Core.Services
                 _ => type
             };
         }
+
+        // Thêm 5 cái này vào CauHoiService
+        public async Task<PagedResult<CauHoiDto>> GetEssayPagedAsync(int page, int pageSize, string? sort,
+            string? search,
+            Guid? khoaId, Guid? monHocId, Guid? phanId)
+            => await _cauHoiRepository.GetEssayPagedAsync(page, pageSize, sort, search, khoaId, monHocId, phanId);
+
+        public async Task<PagedResult<CauHoiDto>> GetGroupPagedAsync(int page, int pageSize, string? sort,
+            string? search,
+            Guid? khoaId, Guid? monHocId, Guid? phanId)
+            => await _cauHoiRepository.GetGroupPagedAsync(page, pageSize, sort, search, khoaId, monHocId, phanId);
+
+        public async Task<PagedResult<CauHoiDto>> GetSinglePagedAsync(int page, int pageSize, string? sort,
+            string? search,
+            Guid? khoaId, Guid? monHocId, Guid? phanId)
+            => await _cauHoiRepository.GetSinglePagedAsync(page, pageSize, sort, search, khoaId, monHocId, phanId);
+
+        public async Task<PagedResult<CauHoiDto>> GetFillBlankPagedAsync(int page, int pageSize, string? sort,
+            string? search,
+            Guid? khoaId, Guid? monHocId, Guid? phanId)
+            => await _cauHoiRepository.GetFillBlankPagedAsync(page, pageSize, sort, search, khoaId, monHocId, phanId);
+
+        public async Task<PagedResult<CauHoiDto>> GetPairingPagedAsync(int page, int pageSize, string? sort,
+            string? search,
+            Guid? khoaId, Guid? monHocId, Guid? phanId)
+            => await _cauHoiRepository.GetPairingPagedAsync(page, pageSize, sort, search, khoaId, monHocId, phanId);
+
+        public async Task<PagedResult<CauHoiDto>> GetMultipleChoicePagedAsync(int page, int pageSize, string? sort,
+            string? search,
+            Guid? khoaId, Guid? monHocId, Guid? phanId)
+            => await _cauHoiRepository.GetMultipleChoicePagedAsync(page, pageSize, sort, search, khoaId, monHocId,
+                phanId);
     }
 }

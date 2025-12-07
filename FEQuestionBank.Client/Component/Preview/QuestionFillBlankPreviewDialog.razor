@@ -1,0 +1,105 @@
+﻿@using System.Text.RegularExpressions
+@using BeQuestionBank.Shared.DTOs.CauHoi
+
+<MudDialog>
+    <DialogContent>
+        <MudContainer Style="max-height: 85vh; overflow-y: auto;" Class="pa-0">
+
+            <!-- Header: Thông tin phân loại -->
+            <MudPaper Elevation="2" Class="pa-4 mb-4 rounded-lg" Style="background: #6b21a8; color: white;">
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6"><strong>Khoa:</strong> @TenKhoa</MudItem>
+                    <MudItem xs="12" sm="6"><strong>Môn:</strong> @TenMon</MudItem>
+                    <MudItem xs="12" sm="6"><strong>Chương:</strong> @TenPhan</MudItem>
+                    <MudItem xs="12" sm="6">
+                        <strong>CLO:</strong>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled"
+                                 Class="ml-2">
+                            @CloName
+                        </MudChip>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+
+            <!-- Nội dung câu hỏi với ô điền đẹp -->
+            <MudPaper Elevation="1" Class="pa-5 mb-5 rounded-lg"
+                      Style="border-left: 6px solid #a855f7; background: #faf5ff;">
+                <MudText Typo="Typo.h6" Class="mb-4 font-bold d-flex align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.EditNote" Color="Color.Primary" Class="mr-2"/>
+                    Xem trước câu hỏi điền từ
+                </MudText>
+
+                <div class="pa-4 bg-white rounded-lg"
+                     style="border: 1px solid #e9d5ff; font-size: 1.15rem; line-height: 2.2rem;">
+                    @((MarkupString)RenderQuestionWithInputs())
+                </div>
+            </MudPaper>
+
+            <!-- Danh sách đáp án đúng (ẩn trong thi, chỉ hiện ở preview) -->
+            <MudText Typo="Typo.subtitle1" Class="mb-3 font-bold d-flex align-center">
+                <MudIcon Icon="@Icons.Material.Filled.Key" Color="Color.Success" Class="mr-2"/>
+                Đáp án đúng (@BlankAnswers.Count chỗ trống)
+            </MudText>
+
+            <div class="d-flex flex-column gap-3">
+                @foreach (var (answer, index) in BlankAnswers.Select((a, i) => (a, i)))
+                {
+                    <MudPaper Elevation="2" Class="pa-4 rounded-lg d-flex align-center gap-4"
+                              Style="background: #f0fdf4; border-left: 5px solid #22c55e;">
+                        <MudAvatar Color="Color.Success" Size="Size.Large" Class="font-bold">
+                            @(index + 1)
+                        </MudAvatar>
+                        <div>
+                            <MudText Typo="Typo.body1" Class="font-bold" Color="Color.Success">
+                                @answer.NoiDung.Trim()
+                            </MudText>
+                        </div>
+                    </MudPaper>
+                }
+            </div>
+            <MudAlert Severity="Severity.Info" Class="mt-5" Variant="Variant.Filled">
+                Câu hỏi điền từ • Có <strong>@BlankAnswers.Count chỗ trống</strong> • Không phân biệt hoa thường
+            </MudAlert>
+        </MudContainer>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text" Color="Color.Dark">
+            Sửa lại
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="Submit"
+                   StartIcon="@Icons.Material.Filled.SaveAlt">
+            Xác nhận lưu
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public string QuestionContent { get; set; } = "";
+    [Parameter] public List<CreateCauTraLoiDienTuDto> BlankAnswers { get; set; } = new();
+
+    [Parameter] public string TenKhoa { get; set; } = "Chưa chọn";
+    [Parameter] public string TenMon { get; set; } = "Chưa chọn";
+    [Parameter] public string TenPhan { get; set; } = "Chưa chọn phần";
+    [Parameter] public string CloName { get; set; } = "N/A";
+
+    private string RenderQuestionWithInputs()
+    {
+        var text = QuestionContent ?? "";
+        var matches = Regex.Matches(text, @"\(\d+\)").Cast<Match>().OrderByDescending(m => m.Index);
+        foreach (var m in matches)
+        {
+            var num = m.Value.Trim('(', ')');
+            text = text.Remove(m.Index, m.Length)
+                .Insert(m.Index,
+                    $"<span style='display:inline-block; font-weight:bold; color:#6b21a8;'>({num})</span>");
+        }
+
+        return text.Replace("\n", "<br/>");
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+}

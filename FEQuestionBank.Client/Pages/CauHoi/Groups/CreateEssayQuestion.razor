@@ -1,0 +1,253 @@
+﻿@page "/create-question/create-essay"
+@inherits CreateEssayQuestionBase
+@using BeQuestionBank.Shared.Enums
+@using MudBlazor
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudBreadcrumbs Items="_breadcrumbs"/>
+
+    <!-- Header giống hệt Pairing -->
+    <div class="question-header">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <MudIcon Icon="@Icons.Material.Filled.EditNote" Size="Size.Large" Style="color: white;"/>
+            <div>
+                <h1>Tạo câu hỏi tự luận</h1>
+                <p>Nhập đoạn văn chung và tạo nhiều câu hỏi tự luận liên quan</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vùng nhập thông tin chung (giống Pairing) -->
+    <MudPaper Class="p-4 mb-4 rounded-4" Elevation="2" Style="background: #fafafa;">
+        <MudGrid Spacing="4">
+            <MudItem xs="12">
+                <MudTextField @bind-Value="NoiDung"
+                              Label="Nội dung lớn (đoạn văn làm ngữ cảnh)"
+                              Placeholder="VD: Dựa vào đoạn văn sau, trả lời các câu hỏi..."
+                              Variant="Variant.Outlined"
+                              Lines="4"
+                              Class="rounded-lg w-100"/>
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudSelect T="short" @bind-Value="CapDo" Label="Cấp độ câu hỏi" Variant="Variant.Outlined">
+                    <MudSelectItem Value="@((short)1)">1 - Nhận biết</MudSelectItem>
+                    <MudSelectItem Value="@((short)2)">2 - Thông hiểu</MudSelectItem>
+                    <MudSelectItem Value="@((short)3)">3 - Vận dụng</MudSelectItem>
+                    <MudSelectItem Value="@((short)4)">4 - Vận dụng cao</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" Class="d-flex align-center">
+                <MudCheckBox @bind-Value="HoanVi"
+                             Label="Cho phép hoán vị thứ tự câu hỏi con"
+                             Color="Color.Primary"/>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudGrid Spacing="6">
+        <!-- DANH SÁCH CÂU HỎI CON -->
+        <MudItem xs="12" lg="8">
+            <MudPaper Class="pa-6 rounded-4">
+                <div class="d-flex justify-space-between align-center mb-4">
+                    <MudText Typo="Typo.h6" Class="font-weight-bold">
+                        Các câu hỏi tự luận
+                        <MudChip T="short" Color="Color.Primary" Size="Size.Small" Class="ml-2">
+                            @Questions.Count câu
+                        </MudChip>
+                    </MudText>
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="AddQuestion">
+                        Thêm câu hỏi
+                    </MudButton>
+                </div>
+
+                @if (Questions.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info" Class="text-center py-8 rounded-lg">
+                        Chưa có câu hỏi nào. Nhấn <strong>Thêm câu hỏi</strong> để bắt đầu!
+                    </MudAlert>
+                }
+
+                <div class="d-flex flex-column gap-4">
+                    @foreach (var (q, index) in Questions.Select((x, i) => (x, i)))
+                    {
+                        var color = EssayColors[index % EssayColors.Length];
+
+                        <MudPaper Class="essay-card p-4" Elevation="2" Style="@($"border-left: 5px solid {color};")">
+                            <div class="d-flex align-center justify-space-between mb-3">
+                                <!-- Bên trái: số câu + tên câu -->
+                                <div class="d-flex align-center gap-3">
+                                    <div class="essay-number" style="@($"background: {color};")">
+                                        @(index + 1)
+                                    </div>
+                                    <MudText Typo="Typo.subtitle1" Class="font-weight-bold">
+                                        Câu @(index + 1)
+                                    </MudText>
+                                </div>
+
+                                <!-- Bên phải: Hoán vị + Xóa -->
+                                <div class="d-flex align-center gap-2">
+                                    <MudCheckBox
+                                        @bind-Value="q.HoanVi"
+                                        Color="Color.Primary"
+                                        Label="Hoán vị"
+                                    />
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                                   OnClick="() => RemoveQuestion(index)"/>
+                                </div>
+                            </div>
+
+
+                            <MudTextField @bind-Value="q.NoiDung"
+                                          Placeholder="VD: Theo đoạn văn, tác giả muốn nhấn mạnh điều gì?"
+                                          Variant="Variant.Outlined"
+                                          Lines="4"
+                                          FullWidth/>
+
+                        </MudPaper>
+                    }
+                </div>
+
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-6">
+                    Tối thiểu <strong>1 câu hỏi</strong>. Khi thi, học sinh sẽ trả lời bằng văn bản.
+                </MudAlert>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="4">
+            <MudPaper Class="p-5 rounded-xl shadow-sm position-sticky" Style="top: 55px; background:#fff;">
+                <MudText Typo="Typo.h6" Class="mb-4 font-bold" Color="Color.Dark">Cấu hình</MudText>
+
+                <MudStack Spacing="3">
+                    <div>
+                        <MudText Typo="Typo.caption" Class="mb-1">Khoa quản lý</MudText>
+                        <MudSelect T="Guid ?" Value="SelectedKhoaId" ValueChanged="OnKhoaChanged"
+                                   Placeholder="-- Chọn khoa --" Variant="Variant.Outlined"
+                                   AnchorOrigin="Origin.BottomCenter">
+                            @foreach (var item in Khoas)
+                            {
+                                <MudSelectItem Value="@((Guid?)item.MaKhoa)">@item.TenKhoa</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </div>
+
+                    <div>
+                        <MudText Typo="Typo.caption" Class="mb-1">Môn học</MudText>
+                        <MudSelect T="Guid ?" Value="SelectedMonHocId" ValueChanged="OnMonHocChanged"
+                                   Placeholder="-- Chọn môn --" Variant="Variant.Outlined"
+                                   Disabled="@(SelectedKhoaId == null)" AnchorOrigin="Origin.BottomCenter">
+                            @foreach (var item in MonHocs)
+                            {
+                                <MudSelectItem Value="@((Guid?)item.MaMonHoc)">@item.TenMonHoc</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </div>
+
+                    <div>
+                        <MudText Typo="Typo.caption" Class="mb-1">Chương / Phần</MudText>
+                        <MudSelect T="Guid ?" @bind-Value="SelectedPhanId"
+                                   Placeholder="-- Chọn chương --" Variant="Variant.Outlined"
+                                   Disabled="@(SelectedMonHocId == null)" AnchorOrigin="Origin.BottomCenter">
+                            @foreach (var item in Phans)
+                            {
+                                <MudSelectItem Value="@((Guid?)item.MaPhan)">@item.TenPhan</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </div>
+
+                    <div>
+                        <MudText Typo="Typo.caption" Class="mb-1">Chuẩn đầu ra (CLO)</MudText>
+                        <MudSelect T="EnumCLO" @bind-Value="SelectedCLO" Variant="Variant.Outlined"
+                                   AnchorOrigin="Origin.BottomCenter">
+                            @foreach (var clo in CLOs)
+                            {
+                                <MudSelectItem Value="@clo">@clo</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </div>
+                </MudStack>
+
+                <MudDivider Class="my-5"/>
+
+                <MudStack Row="true" Spacing="2">
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               OnClick="PreviewQuestion"
+                               FullWidth="true"
+                               StartIcon="@Icons.Material.Filled.Visibility">
+                        Xem trước
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               OnClick="SaveQuestion"
+                               FullWidth="true"
+                               StartIcon="@Icons.Material.Filled.Save">
+                        Lưu
+                    </MudButton>
+                </MudStack>
+
+                <div class="mt-3 d-flex justify-center">
+                    <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="GoBack" Size="Size.Small">Hủy bỏ &
+                        Quay lại
+                    </MudButton>
+                </div>
+
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+<style>
+    .question-header {
+        background: #6b46c1;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 5px;
+        box-shadow: 0 4px 20px rgba(30, 64, 175, 0.15);
+    }
+
+    .question-header h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+        color: white;
+    }
+
+    .question-header p {
+        margin: 0.5rem 0 0 0;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 14px;
+    }
+
+    .essay-card {
+        border-radius: 12px;
+        background: white;
+        transition: all 0.3s ease;
+    }
+
+    .essay-number {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+</style>
+
+@code {
+
+    private readonly string[] EssayColors = new[]
+    {
+        "#667eea", "#764ba2", "#f093fb", "#4facfe", "#43e97b", "#fa709a", "#fee140", "#00f2fe"
+    };
+
+}

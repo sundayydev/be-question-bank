@@ -73,14 +73,7 @@ namespace FEQuestionBank.Client.Pages.YeuCau
                 string sort = !string.IsNullOrEmpty(state.SortLabel)
                     ? $"{state.SortLabel},{(state.SortDirection == SortDirection.Ascending ? "asc" : "desc")}"
                     : "NgayYeuCau,desc";
-
-                // var url = $"api/YeuCauRutTrich/paged?page={page}&pageSize={pageSize}&sort={sort}";
-                //
-                // if (!string.IsNullOrWhiteSpace(_searchTerm))
-                //     url += $"&search={Uri.EscapeDataString(_searchTerm)}";
-                //
-                // if (_filterTrangThai.HasValue)
-                //     url += $"&daXuLy={_filterTrangThai.Value}";
+                
 
                 var response = await YeuCauApi.GetYeuCauPagedAsync(page, pageSize, sort, _searchTerm, _filterTrangThai);
 

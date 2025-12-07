@@ -1,0 +1,269 @@
+﻿@page "/create-question/create-pairing"
+@inherits CreatePairingQuestionBase
+@using BeQuestionBank.Shared.DTOs.CauHoi
+@using BeQuestionBank.Shared.Enums
+@using MudBlazor
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+    <MudBreadcrumbs Items="_breadcrumbs"/>
+    <div class="question-header">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <MudIcon Icon="@Icons.Material.Filled.CompareArrows" Size="Size.Large" Style="color: white;"/>
+            <div>
+                <h1>Tạo câu hỏi ghép nối</h1>
+                <p>Nhập nội dung câu hỏi, chọn phân loại, và xác định cặp đáp án</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vùng nhập thông tin chung -->
+    <MudPaper Class="p-4 mb-2 rounded-4" Elevation="2" Style="background: #fafafa;">
+        <MudGrid Spacing="4">
+            <MudItem xs="12">
+                <MudTextField @bind-Value="HuongDanChung"
+                              Label="Hướng dẫn chung"
+                              Placeholder="VD: Ghép các khái niệm ở cột trái với định nghĩa tương ứng..."
+                              Variant="Variant.Outlined"
+                              Lines="3"
+                              Class="rounded-lg w-100"/>
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudSelect T="short" @bind-Value="CapDo" Label="Cấp độ câu hỏi" Variant="Variant.Outlined">
+                    <MudSelectItem Value="@((short)1)">1 - Nhận biết</MudSelectItem>
+                    <MudSelectItem Value="@((short)2)">2 - Thông hiểu</MudSelectItem>
+                    <MudSelectItem Value="@((short)3)">3 - Vận dụng</MudSelectItem>
+                    <MudSelectItem Value="@((short)4)">4 - Vận dụng cao</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" Class="d-flex align-center">
+                <MudCheckBox @bind-Value="HoanVi"
+                             Label="Cho phép hoán vị"
+                             Color="Color.Primary"
+                             Class="mt-2"/>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudGrid Spacing="6">
+        <!-- DANH SÁCH CẶP -->
+        <MudItem xs="12" lg="8">
+            <MudPaper Class="pa-6 rounded-4">
+                <div class="d-flex justify-space-between align-center mb-4">
+                    <MudText Typo="Typo.h6" Class="font-weight-bold">
+                        Các cặp ghép nối
+                        <MudChip T="int" Color="Color.Primary" Size="Size.Small" Class="ml-2">
+                            @Pairs.Count
+                        </MudChip>
+                    </MudText>
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="AddPair">
+                        Thêm cặp
+                    </MudButton>
+                </div>
+
+                @if (Pairs.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info" Class="text-center py-8 rounded-lg">
+                        Chưa có cặp nào. Nhấn <strong>Thêm cặp</strong> để bắt đầu!
+                    </MudAlert>
+                }
+
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var (pair, index) in Pairs.Select((p, i) => (p, i)))
+                    {
+                        var color = PairColors[index % PairColors.Length];
+
+                        <MudPaper Class="pair-card p-4" Elevation="0" Style="@($"border-left-color: {color};")">
+                            <div class="d-flex align-start gap-3">
+                                <div class="pair-number" Style="@($"background: {color};")">
+                                    @(index + 1)
+                                </div>
+
+                                <div class="pair-inputs">
+                                    <div class="mb-3">
+                                        <span class="pair-input-label">Cột A (Trái)</span>
+                                        <MudTextField @bind-Value="pair.Question"
+                                                      Placeholder="VD: Thủ đô Việt Nam"
+                                                      Variant="Variant.Outlined"
+                                                      FullWidth="true"
+                                                      Density="Density.Compact"
+                                                      HelperText="Khái niệm hoặc câu hỏi"/>
+                                    </div>
+
+                                    <div>
+                                        <span class="pair-input-label">Cột B (Phải)</span>
+                                        <MudTextField @bind-Value="pair.Answer"
+                                                      Placeholder="VD: Hà Nội"
+                                                      Variant="Variant.Outlined"
+                                                      FullWidth="true"
+                                                      Density="Density.Compact"
+                                                      HelperText="Đáp án tương ứng"/>
+                                    </div>
+                                </div>
+
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Color="Color.Error"
+                                               Size="Size.Small"
+                                               OnClick="() => RemovePair(index)"
+                                               Disabled="@(Pairs.Count <= 2)"
+                                               Class="mt-1"/>
+                            </div>
+                        </MudPaper>
+                    }
+                </div>
+
+
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-6 rounded-lg">
+                    Tối thiểu <strong>2 cặp</strong>. Khi thi, đáp án sẽ được tự động xáo trộn.
+                </MudAlert>
+            </MudPaper>
+        </MudItem>
+
+        <!-- CẤU HÌNH PHẢI -->
+        <MudItem xs="12" md="4">
+            <MudPaper Class="p-5 rounded-xl shadow-sm position-sticky" Style="top: 55px; background:#fff;">
+                <MudText Typo="Typo.h6" Class="mb-4 font-bold">Cấu hình câu hỏi</MudText>
+
+                <MudStack Spacing="3">
+                    <div>
+                        <MudText Typo="Typo.caption">Khoa quản lý</MudText>
+                        <MudSelect T="Guid?" Value="SelectedKhoaId" ValueChanged="OnKhoaChanged"
+                                   Variant="Variant.Outlined" Placeholder="-- Chọn khoa --">
+                            @foreach (var x in Khoas)
+                            {
+                                <MudSelectItem Value="@((Guid?)x.MaKhoa)">@x.TenKhoa</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </div>
+
+                    <div>
+                        <MudText Typo="Typo.caption">Môn học</MudText>
+                        <MudSelect T="Guid?" Value="SelectedMonHocId" ValueChanged="OnMonHocChanged"
+                                   Variant="Variant.Outlined" Disabled="@(SelectedKhoaId == null)"
+                                   Placeholder="-- Chọn môn --">
+                            @foreach (var x in MonHocs)
+                            {
+                                <MudSelectItem Value="@((Guid?)x.MaMonHoc)">@x.TenMonHoc</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </div>
+
+                    <div>
+                        <MudText Typo="Typo.caption">Chương / Phần</MudText>
+                        <MudSelect T="Guid?" @bind-Value="SelectedPhanId" Variant="Variant.Outlined"
+                                   Disabled="@(SelectedMonHocId == null)" Placeholder="-- Chọn chương --">
+                            @foreach (var x in Phans)
+                            {
+                                <MudSelectItem Value="@((Guid?)x.MaPhan)">@x.TenPhan</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </div>
+
+                    <div>
+                        <MudText Typo="Typo.caption">CLO</MudText>
+                        <MudSelect T="EnumCLO" @bind-Value="SelectedCLO" Variant="Variant.Outlined">
+                            @foreach (var clo in CLOs)
+                            {
+                                <MudSelectItem Value="@clo">@clo</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </div>
+                </MudStack>
+
+                <MudDivider Class="my-4"/>
+
+                <MudStack Row="true" Spacing="2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true"
+                               StartIcon="@Icons.Material.Filled.Visibility" OnClick="PreviewQuestion">
+                        Xem trước
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                               StartIcon="@Icons.Material.Filled.Save" OnClick="SaveQuestion">
+                        Lưu
+                    </MudButton>
+                </MudStack>
+
+                <div class="mt-3 d-flex justify-center">
+                    <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" OnClick="GoBack">Hủy & Quay
+                        lại
+                    </MudButton>
+                </div>
+
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+<style>
+    .question-header {
+        background: #0d47a1;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 5px;
+        box-shadow: 0 4px 20px rgba(30, 64, 175, 0.15);
+    }
+
+    .question-header h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+        color: white;
+    }
+
+    .question-header p {
+        margin: 0.5rem 0 0 0;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 14px;
+    }
+
+    .pair-card {
+        border-left: 5px solid;
+        border-radius: 10px;
+        background: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .pair-number {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .pair-inputs {
+        flex-grow: 1;
+    }
+
+    .pair-input-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: #667eea;
+        display: block;
+        margin-bottom: 0.3rem;
+    }
+
+</style>
+
+
+
+@code {
+
+    private readonly string[] PairColors = new[]
+    {
+        "#667eea", "#764ba2", "#f093fb", "#4facfe",
+        "#00f2fe", "#43e97b", "#fa709a", "#fee140"
+    };
+
+}

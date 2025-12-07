@@ -1,7 +1,4 @@
-﻿@* QuestionMultipleChoicePreviewDialog.razor - Optimized UI *@
-@using BeQuestionBank.Shared.DTOs.CauTraLoi
-@using FEQuestionBank.Client.Pages.CauHoi
-@using MudBlazor
+﻿@using BeQuestionBank.Shared.DTOs.CauTraLoi
 
 <MudDialog>
     <DialogContent>
@@ -162,7 +159,7 @@
     [Parameter] public string TenMon { get; set; } = "Chưa chọn";
     [Parameter] public string TenPhan { get; set; } = "Chưa chọn";
     [Parameter] public string CloName { get; set; } = "N/A";
-    [Parameter] public int CapDo { get; set; } = 1;
+    [Parameter] public int CapDo { get; set; } 
 
     private void Cancel() => MudDialog.Cancel();
     private void Submit() => MudDialog.Close(DialogResult.Ok(true));

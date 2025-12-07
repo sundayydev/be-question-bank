@@ -5,6 +5,8 @@ using BeQuestionBank.Shared.DTOs.MonHoc;
 using BeQuestionBank.Shared.DTOs.Phan;
 using BeQuestionBank.Shared.Enums;
 using FEQuestionBank.Client.Component;
+using FEQuestionBank.Client.Component.Preview;
+using FEQuestionBank.Client.Implementation;
 using FEQuestionBank.Client.Services;
 using FEQuestionBank.Client.Services.Interface;
 using Microsoft.AspNetCore.Components;
@@ -23,6 +25,7 @@ namespace FEQuestionBank.Client.Pages.CauHoi
         [Inject] protected NavigationManager Navigation { get; set; } = default!;
         [Inject] protected ISnackbar Snackbar { get; set; } = default!;
         [Inject] protected IDialogService DialogService { get; set; } = default!;
+        [Inject] CustomAuthStateProvider AuthStateProvider { get; set; } = default!;
 
         // 2. Các biến dữ liệu Dropdown
         protected List<KhoaDto> Khoas { get; set; } = new();
@@ -94,6 +97,9 @@ namespace FEQuestionBank.Client.Pages.CauHoi
 
         protected async Task SaveQuestion()
         {
+            var userIdString = await AuthStateProvider.GetUserIdAsync();
+            var userId = Guid.Parse(userIdString);
+            Console.WriteLine(userId);
             if (string.IsNullOrWhiteSpace(QuestionContent))
             {
                 Snackbar.Add("Vui lòng nhập nội dung câu hỏi", Severity.Error);

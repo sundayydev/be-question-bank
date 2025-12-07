@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using BeQuestionBank.Shared.DTOs.CauHoi.Create;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace BeQuestionBank.API.Controllers
@@ -131,7 +132,7 @@ namespace BeQuestionBank.API.Controllers
         /// <summary>
         /// Tạo câu hỏi điền từ (Fill in the blank) - DT
         /// </summary>
-        [HttpPost("dientu")]
+        [HttpPost("fillblank")]
         [SwaggerOperation(
             Summary = "Tạo câu hỏi điền từ",
             Description = "Tạo câu hỏi dạng điền từ, các đáp án đều đúng và thứ tự cực kỳ quan trọng."
@@ -154,6 +155,89 @@ namespace BeQuestionBank.API.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Lỗi khi tạo câu hỏi điền từ");
+                return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Tạo câu hỏi tự luận
+        /// </summary>
+        [HttpPost("essay")]
+        [SwaggerOperation(
+            Summary = "Tạo câu hỏi Tự luận TL"
+        )]
+        public async Task<IActionResult> CreateTuLuan([FromBody] CreateCauHoiTuLuanDto request)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var result = await _cauHoiService.CreateEssayQuestionAsync(request, userId);
+                return Ok(ApiResponseFactory.Success(result, "Tạo câu hỏi tự luận thành công"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi tạo câu hỏi tự luận");
+                return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
+            }
+        }
+
+        // <summary>
+        /// Tạo câu hỏi Multiple Choice (MN)
+        /// </summary>
+        [HttpPost("multiplechoice")]
+        [SwaggerOperation(
+            Summary = "Tạo câu hỏi MN",
+            Description = "Tạo 1 câu hỏi Multiple Choice với ít nhất 3 đáp án và ít nhất 2 đáp án đúng."
+        )]
+        public async Task<IActionResult> CreateMultipleChoice([FromBody] CreateCauHoiMultipleChoiceDto request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ", ModelState));
+
+            try
+            {
+                var userId = GetCurrentUserId();
+
+                var result = await _cauHoiService.CreateMultipleChoiceQuestionAsync(request, userId);
+
+                if (result != null)
+                    return Ok(ApiResponseFactory.Success(result, "Tạo câu hỏi Multiple Choice thành công"));
+
+                return BadRequest(ApiResponseFactory.Error<object>(400, "Tạo câu hỏi thất bại"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi tạo câu hỏi Multiple Choice");
+                return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Tạo câu hỏi ghép nối (Matching) - GN
+        /// </summary>
+        [HttpPost("pairing")]
+        [SwaggerOperation(
+            Summary = "Tạo câu hỏi ghép nối",
+            Description = "Tạo một nhóm câu hỏi ghép nối (có câu cha làm tiêu đề và các cặp Trái - Phải)."
+        )]
+        public async Task<IActionResult> CreateGhepNoi([FromBody] CreateCauHoiGhepNoiDto request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ", ModelState));
+
+            try
+            {
+                var userId = GetCurrentUserId();
+                var result = await _cauHoiService.CreateGhepNoiQuestionAsync(request, userId);
+
+                if (result != null)
+                    return Ok(ApiResponseFactory.Success(result, "Tạo câu hỏi ghép nối thành công"));
+
+                return BadRequest(ApiResponseFactory.Error<object>(400, "Tạo thất bại"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi tạo câu hỏi ghép nối");
                 return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
             }
         }
@@ -213,7 +297,9 @@ namespace BeQuestionBank.API.Controllers
         // Helper để lấy ID người dùng từ Token JWT
         private Guid GetCurrentUserId()
         {
-            var idClaim = User.FindFirst("Id") ?? User.FindFirst(ClaimTypes.NameIdentifier);
+            var idClaim = User.FindFirst("sub")
+                          ?? User.FindFirst("id")
+                          ?? User.FindFirst(ClaimTypes.NameIdentifier);
             if (idClaim != null && Guid.TryParse(idClaim.Value, out Guid userId))
             {
                 return userId;
@@ -429,68 +515,145 @@ namespace BeQuestionBank.API.Controllers
             }
         }
 
-
-      
+       
 
         /// <summary>
-        /// Tạo câu hỏi ghép nối (Matching) - GN
+        /// Lấy tất cả câu hỏi tự luận (không phân trang)
         /// </summary>
-        [HttpPost("ghepnoi")]
-        [SwaggerOperation(
-            Summary = "Tạo câu hỏi ghép nối",
-            Description = "Tạo một nhóm câu hỏi ghép nối (có câu cha làm tiêu đề và các cặp Trái - Phải)."
-        )]
-        public async Task<IActionResult> CreateGhepNoi([FromBody] CreateCauHoiGhepNoiDto request)
+        [HttpGet("essay")]
+        public async Task<IActionResult> GetAllTuLuan()
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ", ModelState));
-
             try
             {
-                var userId = GetCurrentUserId();
-                var result = await _cauHoiService.CreateGhepNoiQuestionAsync(request, userId);
-
-                if (result != null)
-                    return Ok(ApiResponseFactory.Success(result, "Tạo câu hỏi ghép nối thành công"));
-
-                return BadRequest(ApiResponseFactory.Error<object>(400, "Tạo thất bại"));
+                var result = await _cauHoiService.GetAllEssayQuestionsAsync();
+                return Ok(ApiResponseFactory.Success(result));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi tạo câu hỏi ghép nối");
+                _logger.LogError(ex, "Lỗi lấy danh sách câu hỏi tự luận");
                 return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
             }
         }
 
-        // <summary>
-        /// Tạo câu hỏi Multiple Choice (MN)
+        /// <summary>
+        /// Lấy danh sách câu hỏi TỰ LUẬN (TL) - có phân trang, tìm kiếm, lọc
         /// </summary>
-        [HttpPost("multiplechoice")]
-        [SwaggerOperation(
-            Summary = "Tạo câu hỏi MN",
-            Description = "Tạo 1 câu hỏi Multiple Choice với ít nhất 3 đáp án và ít nhất 2 đáp án đúng."
-        )]
-        public async Task<IActionResult> CreateMultipleChoice([FromBody] CreateCauHoiMultipleChoiceDto request)
+        [HttpGet("essay/paged")]
+        [SwaggerOperation(Summary = "Danh sách câu hỏi tự luận (phân trang)",
+            Description = "Lọc theo khoa, môn, phần, từ khóa")]
+        public async Task<IActionResult> GetEssayPagedAsync(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? sort = null,
+            [FromQuery] string? search = null,
+            [FromQuery] Guid? khoaId = null,
+            [FromQuery] Guid? monHocId = null,
+            [FromQuery] Guid? phanId = null)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ", ModelState));
-
-            try
-            {
-                var userId = GetCurrentUserId();
-
-                var result = await _cauHoiService.CreateMultipleChoiceQuestionAsync(request, userId);
-
-                if (result != null)
-                    return Ok(ApiResponseFactory.Success(result, "Tạo câu hỏi Multiple Choice thành công"));
-
-                return BadRequest(ApiResponseFactory.Error<object>(400, "Tạo câu hỏi thất bại"));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi tạo câu hỏi Multiple Choice");
-                return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
-            }
+            var result =
+                await _cauHoiService.GetEssayPagedAsync(page, pageSize, sort, search, khoaId, monHocId, phanId);
+            return Ok(ApiResponseFactory.Success(result, "Lấy danh sách câu hỏi tự luận thành công"));
         }
+
+        /// <summary>
+        /// Lấy danh sách câu hỏi NHÓM (Reading / Chùm) - có phân trang, tìm kiếm
+        /// </summary>
+        [HttpGet("group/paged")]
+        [SwaggerOperation(Summary = "Danh sách câu hỏi nhóm (phân trang)",
+            Description = "Câu hỏi có đoạn văn + nhiều câu con")]
+        public async Task<IActionResult> GetGroupPagedAsync(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? sort = null,
+            [FromQuery] string? search = null,
+            [FromQuery] Guid? khoaId = null,
+            [FromQuery] Guid? monHocId = null,
+            [FromQuery] Guid? phanId = null)
+        {
+            var result =
+                await _cauHoiService.GetGroupPagedAsync(page, pageSize, sort, search, khoaId, monHocId, phanId);
+            return Ok(ApiResponseFactory.Success(result, "Lấy danh sách câu hỏi nhóm thành công"));
+        }
+
+        /// <summary>
+        /// Lấy danh sách câu hỏi ĐƠN (Single Choice) - có phân trang, tìm kiếm
+        /// </summary>
+        [HttpGet("single/paged")]
+        [SwaggerOperation(Summary = "Danh sách câu hỏi đơn (phân trang)",
+            Description = "Câu trắc nghiệm chọn 1 đáp án đúng")]
+        public async Task<IActionResult> GetSinglePagedAsync(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? sort = null,
+            [FromQuery] string? search = null,
+            [FromQuery] Guid? khoaId = null,
+            [FromQuery] Guid? monHocId = null,
+            [FromQuery] Guid? phanId = null)
+        {
+            var result =
+                await _cauHoiService.GetSinglePagedAsync(page, pageSize, sort, search, khoaId, monHocId, phanId);
+            return Ok(ApiResponseFactory.Success(result, "Lấy danh sách câu hỏi đơn thành công"));
+        }
+
+        /// <summary>
+        /// Lấy danh sách câu hỏi ĐIỀN TỪ (Fill in the blank) - có phân trang
+        /// </summary>
+        [HttpGet("fillblank/paged")]
+        [SwaggerOperation(Summary = "Danh sách câu hỏi điền từ (phân trang)")]
+        public async Task<IActionResult> GetFillBlankPagedAsync(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? sort = null,
+            [FromQuery] string? search = null,
+            [FromQuery] Guid? khoaId = null,
+            [FromQuery] Guid? monHocId = null,
+            [FromQuery] Guid? phanId = null)
+        {
+            var result =
+                await _cauHoiService.GetFillBlankPagedAsync(page, pageSize, sort, search, khoaId, monHocId, phanId);
+            return Ok(ApiResponseFactory.Success(result, "Lấy danh sách câu hỏi điền từ thành công"));
+        }
+
+        /// <summary>
+        /// Lấy danh sách câu hỏi GHÉP NỐI (Matching) - có phân trang
+        /// </summary>
+        [HttpGet("pairing/paged")]
+        [SwaggerOperation(Summary = "Danh sách câu hỏi ghép nối (phân trang)")]
+        public async Task<IActionResult> GetPairingPagedAsync(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? sort = null,
+            [FromQuery] string? search = null,
+            [FromQuery] Guid? khoaId = null,
+            [FromQuery] Guid? monHocId = null,
+            [FromQuery] Guid? phanId = null)
+        {
+            var result =
+                await _cauHoiService.GetPairingPagedAsync(page, pageSize, sort, search, khoaId, monHocId, phanId);
+            return Ok(ApiResponseFactory.Success(result, "Lấy danh sách câu hỏi ghép nối thành công"));
+        }
+
+        /// <summary>
+        /// Lấy danh sách câu hỏi GHÉP NỐI (Matching) - có phân trang
+        /// </summary>
+        [HttpGet("multiplechoice/paged")]
+        [SwaggerOperation(Summary = "Danh sách câu hỏi ghép nối (phân trang)")]
+        public async Task<IActionResult> GetMultipleChoicePagedAsync(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? sort = null,
+            [FromQuery] string? search = null,
+            [FromQuery] Guid? khoaId = null,
+            [FromQuery] Guid? monHocId = null,
+            [FromQuery] Guid? phanId = null)
+        {
+            var result =
+                await _cauHoiService.GetMultipleChoicePagedAsync(page, pageSize, sort, search, khoaId, monHocId,
+                    phanId);
+            return Ok(ApiResponseFactory.Success(result, "Lấy danh sách câu hỏi ghép nối thành công"));
+        }
+       
+
+      
     }
 }

@@ -14,4 +14,10 @@ public interface IKhoaRepository : IRepository<Khoa>
     Task<Khoa?> GetByTenKhoaAsync(string tenKhoa);
     Task<Khoa?> GetByIdKhoaAsync(Guid id);
     Task<PagedResult<KhoaDto>> GetTrashedAsync(int page = 1, int pageSize = 10);
+
+    Task<PagedResult<KhoaDto>> GetPagedKhoasAsync(
+        int page,
+        int pageSize,
+        string? search = null,
+        string? sort = null);
 }

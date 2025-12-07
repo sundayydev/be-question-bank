@@ -224,7 +224,7 @@ public class KhoaController(KhoaService service, ILogger<KhoaController> logger)
     
     // GET: api/Khoa/paged
     [HttpGet("paged")]
-    [SwaggerOperation("Lấy danh sách Khoa có phân trang, filter, sort")]
+    [SwaggerOperation(Summary = "Lấy danh sách Khoa phân trang, tìm kiếm, sắp xếp")]
     public async Task<IActionResult> GetPagedAsync(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
@@ -233,66 +233,14 @@ public class KhoaController(KhoaService service, ILogger<KhoaController> logger)
     {
         try
         {
-            var query = await _service.GetAllKhoasAsync(); 
+            var result = await _service.GetPagedKhoasAsync(page, pageSize, sort, search);
 
-            query = query.Where(k => k.XoaTam == false);
-            
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                query = query.Where(k => k.TenKhoa.Contains(search, StringComparison.OrdinalIgnoreCase));
-            }
-
-            // Sorting
-            if (!string.IsNullOrWhiteSpace(sort))
-            {
-                var parts = sort.Split(',');
-                var column = parts[0];
-                var direction = parts.Length > 1 ? parts[1] : "asc";
-
-                query = column switch
-                {
-                    "TenKhoa" when direction == "asc" => query.OrderBy(k => k.TenKhoa),
-                    "TenKhoa" when direction == "desc" => query.OrderByDescending(k => k.TenKhoa),
-                    _ => query.OrderBy(k => k.TenKhoa)
-                };
-            }
-
-            var totalCount = query.Count();
-
-            var items = query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(k => new KhoaDto
-                {
-                    MaKhoa = k.MaKhoa,
-                    TenKhoa = k.TenKhoa,
-                    XoaTam = k.XoaTam,
-                    MoTa = k.MoTa,
-                    DanhSachMonHoc = k.MonHocs?.Select(m => new MonHocDto
-                    {
-                        MaSoMonHoc = m.MaSoMonHoc,
-                        MaMonHoc = m.MaMonHoc,
-                        TenMonHoc = m.TenMonHoc,
-                        SoTinChi = m.SoTinChi
-                    }).ToList() ?? new()
-                })
-                .ToList();
-
-            var result = new PagedResult<KhoaDto>
-            {
-                Items = items,
-                TotalCount = totalCount,
-                Page = page,
-                PageSize = pageSize
-            };
-
-            return Ok(ApiResponseFactory.Success(result, "Lấy danh sách Khoa có phân trang thành công"));
+            return Ok(ApiResponseFactory.Success(result, "Lấy danh sách khoa thành công"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Lỗi khi lấy danh sách Khoa có phân trang");
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                ApiResponseFactory.ServerError("Đã xảy ra lỗi khi xử lý."));
+            _logger.LogError(ex, "Lỗi khi lấy danh sách Khoa phân trang");
+            return StatusCode(500, ApiResponseFactory.ServerError("Đã xảy ra lỗi hệ thống"));
         }
     }
     [HttpGet("trashed")]

@@ -1,6 +1,4 @@
-@using BeQuestionBank.Shared.DTOs.CauHoi
 @using FEQuestionBank.Client.Pages.CauHoi
-@using MudBlazor
 
 <MudDialog>
     <DialogContent>
@@ -8,28 +6,28 @@
             <!-- Thông tin phân loại -->
             <MudPaper Elevation="0" Class="mb-4 p-3 bg-grey-lighten-4 rounded-lg border-1 border-grey-lighten-2">
                 <MudText Typo="Typo.subtitle2" Class="mb-2 font-bold text-uppercase text-secondary">
-                    <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-1" />
+                    <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-1"/>
                     Thông tin phân loại
                 </MudText>
                 <MudStack Row="true" Spacing="1" Style="flex-wrap: wrap; gap: 8px;">
                     @if (!string.IsNullOrEmpty(TenKhoa))
                     {
                         <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">
-                            <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" Class="mr-1" />
+                            <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" Class="mr-1"/>
                             @TenKhoa
                         </MudChip>
                     }
                     @if (!string.IsNullOrEmpty(TenMon))
                     {
                         <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">
-                            <MudIcon Icon="@Icons.Material.Filled.MenuBook" Size="Size.Small" Class="mr-1" />
+                            <MudIcon Icon="@Icons.Material.Filled.MenuBook" Size="Size.Small" Class="mr-1"/>
                             @TenMon
                         </MudChip>
                     }
                     @if (!string.IsNullOrEmpty(TenPhan))
                     {
                         <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">
-                            <MudIcon Icon="@Icons.Material.Filled.Folder" Size="Size.Small" Class="mr-1" />
+                            <MudIcon Icon="@Icons.Material.Filled.Folder" Size="Size.Small" Class="mr-1"/>
                             @TenPhan
                         </MudChip>
                     }
@@ -37,7 +35,7 @@
                         CLO: @CloName
                     </MudChip>
                     <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Filled">
-                        <MudIcon Icon="@Icons.Material.Filled.FormatListNumbered" Size="Size.Small" Class="mr-1" />
+                        <MudIcon Icon="@Icons.Material.Filled.FormatListNumbered" Size="Size.Small" Class="mr-1"/>
                         @ChildQuestions.Count câu hỏi con
                     </MudChip>
                 </MudStack>
@@ -46,16 +44,17 @@
             <!-- Nội dung đoạn văn cha -->
             <MudPaper Elevation="0" Class="p-4 mb-4 bg-blue-lighten-5 rounded-lg border-l-4 border-primary">
                 <MudText Typo="Typo.subtitle1" Color="Color.Primary" Class="mb-1 d-flex align-center">
-                    <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Small" Class="mr-2" />
+                    <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Small" Class="mr-2"/>
                     <b>Nội dung đoạn văn / Ngữ cảnh chung:</b>
                 </MudText>
-                <MudDivider Class="mb-3" />
+                <MudDivider Class="mb-3"/>
                 <LatexContent Content="@ParentContent" Class="question-latex-preview"/>
             </MudPaper>
 
             <!-- Danh sách câu hỏi con -->
             <MudText Typo="Typo.h6" Class="mb-3 ml-1 font-bold d-flex align-center">
-                <MudIcon Icon="@Icons.Material.Filled.QuestionAnswer" Size="Size.Medium" Class="mr-2" Color="Color.Primary" />
+                <MudIcon Icon="@Icons.Material.Filled.QuestionAnswer" Size="Size.Medium" Class="mr-2"
+                         Color="Color.Primary"/>
                 Các câu hỏi con:
             </MudText>
 
@@ -78,7 +77,8 @@
                                 </div>
                                 @if (question.CLO.HasValue)
                                 {
-                                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Text" Class="mt-1 pl-0">
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Text"
+                                             Class="mt-1 pl-0">
                                         CLO riêng: @question.CLO.Value.ToString()
                                     </MudChip>
                                 }
@@ -94,8 +94,9 @@
                                 var label = (char)('A' + aIndex);
 
                                 <MudItem xs="12" sm="6">
-                                    <MudPaper Class="@($"p-3 d-flex align-center transition-all {(ans.IsCorrect ? "answer-correct" : "answer-normal")}")"
-                                              Elevation="0">
+                                    <MudPaper
+                                        Class="@($"p-3 d-flex align-center transition-all {(ans.IsCorrect ? "answer-correct" : "answer-normal")}")"
+                                        Elevation="0">
                                         <MudAvatar Color="@(ans.IsCorrect ? Color.Success : Color.Default)"
                                                    Variant="@(ans.IsCorrect ? Variant.Filled : Variant.Outlined)"
                                                    Size="Size.Medium"
@@ -103,14 +104,16 @@
                                             @label
                                         </MudAvatar>
 
-                                        <div class="flex-grow-1 answer-latex-content" style="@(ans.IsCorrect ? "font-weight: 500;" : "")">
+                                        <div class="flex-grow-1 answer-latex-content"
+                                             style="@(ans.IsCorrect ? "font-weight: 500;" : "")">
                                             <LatexContent Content="@ans.Text"/>
                                         </div>
 
                                         @if (ans.IsCorrect)
                                         {
-                                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Class="ml-2">
-                                                <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" />
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Success"
+                                                     Variant="Variant.Filled" Class="ml-2">
+                                                <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small"/>
                                             </MudChip>
                                         }
                                     </MudPaper>
@@ -131,10 +134,11 @@
     </DialogContent>
     <DialogActions>
         <MudButton Variant="Variant.Text" OnClick="Cancel" Color="Color.Secondary">
-            <MudIcon Icon="@Icons.Material.Filled.Close" Size="Size.Small" Class="mr-1" />
+            <MudIcon Icon="@Icons.Material.Filled.Close" Size="Size.Small" Class="mr-1"/>
             Đóng
         </MudButton>
-        <MudButton Variant="Variant.Filled" OnClick="Submit" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save">
+        <MudButton Variant="Variant.Filled" OnClick="Submit" Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Save">
             Lưu ngay
         </MudButton>
     </DialogActions>
@@ -142,9 +146,9 @@
 
 <style>
     .answer-correct {
-        background-color: #e6ffed;      /* xanh lá nhạt */
-        border: 1px solid #4caf50;      /* xanh lá đậm */
-        color: #2e7d32;                 /* chữ xanh đậm */
+        background-color: #e6ffed; /* xanh lá nhạt */
+        border: 1px solid #4caf50; /* xanh lá đậm */
+        color: #2e7d32; /* chữ xanh đậm */
         border-radius: 8px;
         box-shadow: 0px 2px 4px rgba(76, 175, 80, 0.15);
     }
@@ -155,9 +159,9 @@
         background-color: #fafafa;
     }
 
-        .answer-normal:hover {
-            background-color: #f5f5f5;
-        }
+    .answer-normal:hover {
+        background-color: #f5f5f5;
+    }
 
     .transition-all {
         transition: all 0.3s ease;
@@ -169,10 +173,10 @@
         transition: all 0.2s ease;
     }
 
-        .question-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-        }
+    .question-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
 
     .border-bottom-1 {
         border-bottom: 1px solid;

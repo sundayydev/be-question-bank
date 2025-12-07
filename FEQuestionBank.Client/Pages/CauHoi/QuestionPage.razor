@@ -1,5 +1,336 @@
-﻿<h3>QuestionPage</h3>
+﻿@page "/question/list"
+@inherits QuestionPageBase
 
-@code {
-    
-}
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+    <MudBreadcrumbs Items="_breadcrumbs"/>
+
+    <!-- Info Cards -->
+    <MudGrid Spacing="3" Class="mb-4">
+        <MudItem xs="12" sm="6" md="3">
+            <InfoCard Icon="@Icons.Material.Filled.QuestionAnswer" IconColor="Color.Primary" Title="Tổng câu hỏi"
+                      Value="@TotalQuestions.ToString()"/>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <InfoCard Icon="@Icons.Material.Filled.Description" IconColor="Color.Success" Title="Tự luận"
+                      Value="@EssayCount.ToString()"/>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <InfoCard Icon="@Icons.Material.Filled.CheckBox" IconColor="Color.Info" Title="Trắc nghiệm đơn"
+                      Value="@SingleCount.ToString()"/>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <InfoCard Icon="@Icons.Material.Filled.TextFields" IconColor="Color.Warning" Title="Điền từ"
+                      Value="@FillCount.ToString()"/>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Search + Create Button -->
+    <div class="d-flex flex-wrap gap-3 mb-4 align-items-center">
+        <div class="flex-grow-1" style="max-width: 500px;">
+            <MudTextField @bind-Value="_searchTerm"
+                          Placeholder="Tìm kiếm nội dung câu hỏi..."
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Margin="Margin.Dense"
+                          Variant="Variant.Outlined"
+                          Immediate="true"
+                          DebounceInterval="600"
+                          Clearable="true"
+                          OnKeyDown="@(async (e) =>
+                                     {
+                                         if (e.Key == "Enter") await ForceSearchNow();
+                                     })"
+                          Class="rounded-lg"/>
+        </div>
+
+        <MudButton Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   Color="Color.Primary"
+                   Size="Size.Medium"
+                   OnClick="OpenCreateDialog">
+            Thêm câu hỏi mới
+        </MudButton>
+    </div>
+    <!-- Thêm ngay sau MudTextField tìm kiếm, trước nút Thêm câu hỏi -->
+    <div class="d-flex flex-wrap gap-3 align-center">
+        <MudSelect T="Guid?"
+                   Label="Khoa"
+                   Value="SelectedKhoaId"
+                   ValueChanged="OnKhoaChanged"
+                   Placeholder="Tất cả khoa"
+                   Dense="true"
+                   Margin="Margin.Dense"
+                   Variant="Variant.Outlined"
+                   Clearable="true"
+                   Class="min-width-200">
+            @foreach (var khoa in Khoas)
+            {
+                <MudSelectItem Value="@((Guid?)khoa.MaKhoa)">@khoa.TenKhoa</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudSelect T="Guid?"
+                   Label="Môn học"
+                   Value="SelectedMonHocId" ValueChanged="OnMonHocChanged"
+                   Placeholder="@(SelectedKhoaId == null ? "Chọn khoa trước" : "Tất cả môn")"
+                   Disabled="!SelectedKhoaId.HasValue"
+                   Dense="true"
+                   Margin="Margin.Dense"
+                   Variant="Variant.Outlined"
+                   Clearable="true"
+                   Class="min-width-200">
+            @foreach (var mon in MonHocs)
+            {
+                <MudSelectItem Value="@((Guid?)mon.MaMonHoc)">@mon.TenMonHoc</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudSelect T="Guid?"
+                   Label="Phần"
+                   Value="SelectedPhanId"
+                   ValueChanged="OnPhanChanged"
+                   Placeholder="@(SelectedMonHocId == null ? "Chọn môn trước" : "Tất cả phần")"
+                   Disabled="!SelectedMonHocId.HasValue"
+                   Dense="true"
+                   Margin="Margin.Dense"
+                   Variant="Variant.Outlined"
+                   Clearable="true"
+                   Class="min-width-200">
+            @foreach (var phan in Phans)
+            {
+                <MudSelectItem Value="@((Guid?)phan.MaPhan)">@phan.TenPhan</MudSelectItem>
+            }
+        </MudSelect>
+    </div>
+
+    <!-- Tabs + bắt sự kiện chuyển tab -->
+    <MudTabs Elevation="2"
+             Rounded="true"
+             ApplyEffectsToContainer="true"
+             PanelClass="pa-4"
+             ActivePanelIndexChanged="@OnTabChanged">
+
+        <!-- TAB TỰ LUẬN -->
+        <MudTabPanel Text="@($"Tự luận")" BadgeColor="Color.Success" BadgeData="@EssayCount">
+            <ChildContent>
+                <MudTable ServerData="LoadEssayData"
+                          @ref="essayTable"
+                          Hover="true" Striped="true" Dense="true"
+                          Loading="@LoadingEssay"
+                          LoadingProgressColor="Color.Info">
+                    <HeaderContent>
+                        <MudTh>
+                            <MudTableSortLabel T="string" SortLabel="NoiDung">Nội dung</MudTableSortLabel>
+                        </MudTh>
+                        <MudTh>Cấp độ</MudTh>
+                        <MudTh>Clo</MudTh>
+                        <MudTh>Ngày tạo</MudTh>
+                        <MudTh Style="text-align:center">Thao tác</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Nội dung">@((MarkupString)context.NoiDung?.Truncate(80))</MudTd>
+
+                        <MudTd>
+                            <MudChip T="short" Size="Size.Small" Color="@GetLevelColor(context.CapDo)">
+                                Cấp @context.CapDo</MudChip>
+                        </MudTd>
+                        <MudTd>
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="Color.Secondary">@(context.CLO)</MudChip>
+                        </MudTd>
+                        <MudTd>@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
+                        <MudTd></MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body1" Color="Color.Warning">Không có câu hỏi tự luận nào</MudText>
+                    </NoRecordsContent>
+                    <PagerContent>
+                        <MudTablePager RowsPerPageString="Hàng mỗi trang"
+                                       InfoFormat="Hiển thị {first_item}-{last_item} của {all_items} mục"/>
+                    </PagerContent>
+                </MudTable>
+            </ChildContent>
+        </MudTabPanel>
+
+        <!-- TAB TRẮC NGHIỆM ĐƠN -->
+        <MudTabPanel Text="@($"Câu đơn")" BadgeColor="Color.Info" BadgeData="@SingleCount">
+            <ChildContent>
+                <MudTable ServerData="LoadSingleData"
+                          @ref="singleTable"
+                          Hover="true" Striped="true" Dense="true"
+                          Loading="@LoadingSingle">
+                    <HeaderContent>
+                        <MudTh>Nội dung</MudTh>
+                        <MudTh>Cấp độ</MudTh>
+                        <MudTh>Clo</MudTh>
+                        <MudTh>Ngày tạo</MudTh>
+                        <MudTh>Thao tác</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@((MarkupString)context.NoiDung?.Truncate(80))</MudTd>
+                        <MudTd>
+                            <MudChip T="short" Size="Size.Small" Color="@GetLevelColor(context.CapDo)">
+                                Cấp @context.CapDo</MudChip>
+                        </MudTd>
+                        <MudTd>
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="Color.Secondary">@(context.CLO)</MudChip>
+                        </MudTd>
+                        <MudTd>@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
+                        <MudTd></MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body1" Color="Color.Warning">Không có câu trắc nghiệm nào</MudText>
+                    </NoRecordsContent>
+                    <PagerContent>
+                        <MudTablePager RowsPerPageString="Hàng mỗi trang"/>
+                    </PagerContent>
+                </MudTable>
+            </ChildContent>
+        </MudTabPanel>
+        <!-- TAB TRẮC NGHIỆM nhiu dap án -->
+        <MudTabPanel Text="@($"MultipleChoice")" BadgeColor="Color.Info" BadgeData="@MultipleChoiceCount">
+            <ChildContent>
+                <MudTable ServerData="LoadMultipeChoiceData"
+                          @ref="multipleTable"
+                          Hover="true" Striped="true" Dense="true"
+                          Loading="@LoadingMultiple">
+                    <HeaderContent>
+                        <MudTh>Nội dung</MudTh>
+                        <MudTh>Cấp độ</MudTh>
+                        <MudTh>Clo</MudTh>
+                        <MudTh>Ngày tạo</MudTh>
+                        <MudTh>Thao tác</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@((MarkupString)context.NoiDung?.Truncate(80))</MudTd>
+                        <MudTd>
+                            <MudChip T="short" Size="Size.Small" Color="@GetLevelColor(context.CapDo)">
+                                Cấp @context.CapDo</MudChip>
+                        </MudTd>
+                        <MudTd>
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="Color.Secondary">@(context.CLO)</MudChip>
+                        </MudTd>
+                        <MudTd>@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
+                        <MudTd></MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body1" Color="Color.Warning">Không có câu trắc nghiệm nào</MudText>
+                    </NoRecordsContent>
+                    <PagerContent>
+                        <MudTablePager RowsPerPageString="Hàng mỗi trang"/>
+                    </PagerContent>
+                </MudTable>
+            </ChildContent>
+        </MudTabPanel>
+        <!-- TAB TRẮC NGHIỆM đien tu -->
+        <MudTabPanel Text="@($"Điền từ")" BadgeColor="Color.Info" BadgeData="@FillCount">
+            <ChildContent>
+                <MudTable ServerData="LoadFillingData"
+                          @ref="fillblankTable"
+                          Hover="true" Striped="true" Dense="true"
+                          Loading="@LoadingFillBlink">
+                    <HeaderContent>
+                        <MudTh>Nội dung</MudTh>
+                        <MudTh>Cấp độ</MudTh>
+                        <MudTh>Số đáp án</MudTh>
+                        <MudTh>Ngày tạo</MudTh>
+                        <MudTh>Thao tác</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@((MarkupString)context.NoiDung?.Truncate(80))</MudTd>
+                        <MudTd>
+                            <MudChip T="short" Size="Size.Small" Color="@GetLevelColor(context.CapDo)">
+                                Cấp @context.CapDo</MudChip>
+                        </MudTd>
+                        <MudTd>
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="Color.Secondary">@(context.SoCauHoiCon)</MudChip>
+                        </MudTd>
+                        <MudTd>@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
+                        <MudTd></MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body1" Color="Color.Warning">Không có câu trắc nghiệm nào</MudText>
+                    </NoRecordsContent>
+                    <PagerContent>
+                        <MudTablePager RowsPerPageString="Hàng mỗi trang"/>
+                    </PagerContent>
+                </MudTable>
+            </ChildContent>
+        </MudTabPanel>
+        <!-- TAB TRẮC NGHIỆM nhóm -->
+        <MudTabPanel Text="@($"Câu Nhóm")" BadgeColor="Color.Info" BadgeData="@GroupCount">
+            <ChildContent>
+                <MudTable ServerData="LoadGroupData"
+                          @ref="groupTable"
+                          Hover="true" Striped="true" Dense="true"
+                          Loading="@LoadingGroup">
+                    <HeaderContent>
+                        <MudTh>Nội dung</MudTh>
+                        <MudTh>Cấp độ</MudTh>
+                        <MudTh>Số câu con</MudTh>
+                        <MudTh>Ngày tạo</MudTh>
+                        <MudTh>Thao tác</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@((MarkupString)context.NoiDung?.Truncate(80))</MudTd>
+                        <MudTd>
+                            <MudChip T="short" Size="Size.Small" Color="@GetLevelColor(context.CapDo)">
+                                Cấp @context.CapDo</MudChip>
+                        </MudTd>
+                        <MudTd>
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="Color.Secondary">@(context.SoCauHoiCon)</MudChip>
+                        </MudTd>
+                        <MudTd>@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
+                        <MudTd></MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body1" Color="Color.Warning">Không có câu trắc nghiệm nào</MudText>
+                    </NoRecordsContent>
+                    <PagerContent>
+                        <MudTablePager RowsPerPageString="Hàng mỗi trang"/>
+                    </PagerContent>
+                </MudTable>
+            </ChildContent>
+        </MudTabPanel>
+        <!-- TAB TRẮC NGHIỆM ghép nối -->
+        <MudTabPanel Text="@($"Ghép nối")" BadgeColor="Color.Info" BadgeData="@PairingCount">
+            <ChildContent>
+                <MudTable ServerData="LoadPairingData"
+                          @ref="pairingTable"
+                          Hover="true" Striped="true" Dense="true"
+                          Loading="@LoadingPairing">
+                    <HeaderContent>
+                        <MudTh>Nội dung</MudTh>
+                        <MudTh>Cấp độ</MudTh>
+                        <MudTh>Số câu ghép nối</MudTh>
+                        <MudTh>Ngày tạo</MudTh>
+                        <MudTh>Thao tác</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@((MarkupString)context.NoiDung?.Truncate(80))</MudTd>
+                        <MudTd>
+                            <MudChip T="short" Size="Size.Small" Color="@GetLevelColor(context.CapDo)">
+                                Cấp @context.CapDo</MudChip>
+                        </MudTd>
+                        <MudTd>
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="Color.Secondary">@(context.SoCauHoiCon)</MudChip>
+                        </MudTd>
+                        <MudTd>@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
+                        <MudTd></MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body1" Color="Color.Warning">Không có câu trắc nghiệm nào</MudText>
+                    </NoRecordsContent>
+                    <PagerContent>
+                        <MudTablePager RowsPerPageString="Hàng mỗi trang"/>
+                    </PagerContent>
+                </MudTable>
+            </ChildContent>
+        </MudTabPanel>
+    </MudTabs>
+</MudContainer>
