@@ -25,7 +25,7 @@
     </MudGrid>
 
     <!-- Search + Create Button -->
-    <div class="d-flex flex-wrap gap-3 mb-4 align-items-center">
+    <div class="d-flex flex-wrap gap-3 mb-2 align-items-center">
         <div class="flex-grow-1" style="max-width: 500px;">
             <MudTextField @bind-Value="_searchTerm"
                           Placeholder="Tìm kiếm nội dung câu hỏi..."
@@ -52,7 +52,7 @@
         </MudButton>
     </div>
     <!-- Thêm ngay sau MudTextField tìm kiếm, trước nút Thêm câu hỏi -->
-    <div class="d-flex flex-wrap gap-3 align-center">
+    <div class="d-flex flex-wrap gap-3 align-center mb-2">
         <MudSelect T="Guid?"
                    Label="Khoa"
                    Value="SelectedKhoaId"
@@ -124,11 +124,14 @@
                         </MudTh>
                         <MudTh>Cấp độ</MudTh>
                         <MudTh>Clo</MudTh>
+                        <MudTh>Đã dùng</MudTh>
                         <MudTh>Ngày tạo</MudTh>
                         <MudTh Style="text-align:center">Thao tác</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd DataLabel="Nội dung">@((MarkupString)context.NoiDung?.Truncate(80))</MudTd>
+                        <MudTd DataLabel="Nội dung">
+                            <LatexContent Content="@context.NoiDung.Truncate(80)"/>
+                        </MudTd>
 
                         <MudTd>
                             <MudChip T="short" Size="Size.Small" Color="@GetLevelColor(context.CapDo)">
@@ -138,8 +141,19 @@
                             <MudChip T="string" Size="Size.Small"
                                      Color="Color.Secondary">@(context.CLO)</MudChip>
                         </MudTd>
+                        <MudTd>@context.SoLanDung</MudTd>
                         <MudTd>@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
-                        <MudTd></MudTd>
+                        <MudTd Style="text-align:center">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           OnClick="@(() => Snackbar.Add("Chức năng sửa đang làm", Severity.Info))"/>
+
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           OnClick="@(() => OnDeleteQuestionAsync(context.MaCauHoi, context.NoiDung))"/>
+                        </MudTd>
                     </RowTemplate>
                     <NoRecordsContent>
                         <MudText Typo="Typo.body1" Color="Color.Warning">Không có câu hỏi tự luận nào</MudText>
@@ -163,7 +177,8 @@
                         <MudTh>Nội dung</MudTh>
                         <MudTh>Cấp độ</MudTh>
                         <MudTh>Clo</MudTh>
-                        <MudTh>Ngày tạo</MudTh>
+                        <MudTh>Đã dùng</MudTh>
+                        >
                         <MudTh>Thao tác</MudTh>
                     </HeaderContent>
                     <RowTemplate>
@@ -176,6 +191,7 @@
                             <MudChip T="string" Size="Size.Small"
                                      Color="Color.Secondary">@(context.CLO)</MudChip>
                         </MudTd>
+                        <MudTd>@context.SoLanDung</MudTd>
                         <MudTd>@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
                         <MudTd></MudTd>
                     </RowTemplate>
@@ -199,6 +215,7 @@
                         <MudTh>Nội dung</MudTh>
                         <MudTh>Cấp độ</MudTh>
                         <MudTh>Clo</MudTh>
+                        <MudTh>Đã dùng</MudTh>
                         <MudTh>Ngày tạo</MudTh>
                         <MudTh>Thao tác</MudTh>
                     </HeaderContent>
@@ -212,6 +229,7 @@
                             <MudChip T="string" Size="Size.Small"
                                      Color="Color.Secondary">@(context.CLO)</MudChip>
                         </MudTd>
+                        <MudTd>@context.SoLanDung</MudTd>
                         <MudTd>@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
                         <MudTd></MudTd>
                     </RowTemplate>
@@ -235,6 +253,7 @@
                         <MudTh>Nội dung</MudTh>
                         <MudTh>Cấp độ</MudTh>
                         <MudTh>Số đáp án</MudTh>
+                        <MudTh>Đã dùng</MudTh>
                         <MudTh>Ngày tạo</MudTh>
                         <MudTh>Thao tác</MudTh>
                     </HeaderContent>
@@ -248,6 +267,7 @@
                             <MudChip T="string" Size="Size.Small"
                                      Color="Color.Secondary">@(context.SoCauHoiCon)</MudChip>
                         </MudTd>
+                        <MudTd>@context.SoLanDung</MudTd>
                         <MudTd>@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
                         <MudTd></MudTd>
                     </RowTemplate>
@@ -271,6 +291,7 @@
                         <MudTh>Nội dung</MudTh>
                         <MudTh>Cấp độ</MudTh>
                         <MudTh>Số câu con</MudTh>
+                        <MudTh>Đã dùng</MudTh>
                         <MudTh>Ngày tạo</MudTh>
                         <MudTh>Thao tác</MudTh>
                     </HeaderContent>
@@ -284,6 +305,7 @@
                             <MudChip T="string" Size="Size.Small"
                                      Color="Color.Secondary">@(context.SoCauHoiCon)</MudChip>
                         </MudTd>
+                        <MudTd>@context.SoLanDung</MudTd>
                         <MudTd>@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
                         <MudTd></MudTd>
                     </RowTemplate>
@@ -307,6 +329,7 @@
                         <MudTh>Nội dung</MudTh>
                         <MudTh>Cấp độ</MudTh>
                         <MudTh>Số câu ghép nối</MudTh>
+                        <MudTh>Đã dùng</MudTh>
                         <MudTh>Ngày tạo</MudTh>
                         <MudTh>Thao tác</MudTh>
                     </HeaderContent>
@@ -320,6 +343,7 @@
                             <MudChip T="string" Size="Size.Small"
                                      Color="Color.Secondary">@(context.SoCauHoiCon)</MudChip>
                         </MudTd>
+                        <MudTd>@context.SoLanDung</MudTd>
                         <MudTd>@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
                         <MudTd></MudTd>
                     </RowTemplate>
