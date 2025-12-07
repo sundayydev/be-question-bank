@@ -1,113 +1,105 @@
-﻿@page "/create-question/create-multiple-choice"
-@inherits CreateMultipleChoiceQuestionBase
+﻿@page "/create-question/create-fill-blank"
+@inherits CreateFillBlankQuestionBase
 @using BeQuestionBank.Shared.Enums
-
+@using BeQuestionBank.Shared.DTOs.CauHoi
 
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge">
     <MudBreadcrumbs Items="_breadcrumbs"/>
-
     <div class="question-header">
         <div style="display: flex; align-items: center; gap: 1rem;">
-            <MudIcon Icon="@Icons.Material.Filled.Checklist" Size="Size.Large" Style="color: white;"/>
+            <MudIcon Icon="@Icons.Material.Filled.FormatQuote" Size="Size.Large" Style="color: white;"/>
             <div>
-                <h1>Tạo câu hỏi Multiple Choice</h1>
-                <p>Nhập nội dung câu hỏi, chọn phân loại, và đánh dấu nhiều đáp án đúng (ít nhất 2)</p>
+                <h1>Tạo câu hỏi điền từ</h1>
+                <p> Dùng <code>(1)</code>, <code>(2)</code>... để đánh dấu chỗ trống</p>
             </div>
         </div>
     </div>
 
+
     <MudGrid>
-        <MudItem xs="12" md="8" Style="display: flex; flex-direction: column;">
-            <MudPaper Class="p-5 rounded-lg shadow-sm h-100" Style="position: relative;">
-
-                <MudText Typo="Typo.subtitle1" Class="font-bold mb-1 d-flex align-center">
-                    <MudIcon Icon="@Icons.Material.Filled.Article" Size="Size.Small" Class="mr-1"/>
-                    Nội dung câu hỏi <span class="text-error ml-1">*</span>
+        <!-- Cột trái: Nội dung + Đáp án -->
+        <MudItem xs="12" md="8">
+            <MudPaper Class="pa-6 rounded-xl" Elevation="3">
+                <!-- Nội dung câu hỏi -->
+                <MudText Typo="Typo.subtitle1" Class="mb-2 font-weight-bold">
+                    Nội dung câu hỏi
+                    <MudText Color="Color.Error">*</MudText>
                 </MudText>
-
                 <MudTextField @bind-Value="QuestionContent"
-                              Placeholder="Nhập nội dung câu hỏi..."
-                              Lines="4"
-                              FullWidth="true"
+                              Placeholder="VD: Thủ đô của Việt Nam là (1)_____. Nước ta có (2)____ tỉnh thành trực thuộc trung ương."
+                              Lines="6"
                               Variant="Variant.Outlined"
-                              Class="mb-4 bg-white"/>
+                              Class="mb-6"
+                              Immediate="true"
+                              DebounceInterval="400"/>
 
-                <MudDivider Class="my-4"/>
+                <!-- Xem trước -->
+                @if (!string.IsNullOrWhiteSpace(QuestionContent))
+                {
+                    <MudPaper Class="pa-4 blank-preview mb-6">
+                        <strong>Xem trước:</strong><br/>
+                        @((MarkupString)RenderPreview())
+                    </MudPaper>
+                }
 
-                <div class="d-flex justify-space-between align-center mb-3">
-                    <MudText Typo="Typo.subtitle1" Class="font-bold d-flex align-center">
-                        <MudIcon Icon="@Icons.Material.Filled.List" Size="Size.Small" Class="mr-1"/>
-                        Danh sách đáp án
-                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Class="ml-2">@Answers.Count câu
-                        </MudChip>
+                <MudDivider Class="my-8"/>
+
+                <!-- Danh sách đáp án cho từng chỗ trống -->
+                <div class="d-flex justify-space-between align-center mb-4">
+                    <MudText Typo="Typo.h6">
+                        Đáp án cho các chỗ trống
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small">@DetectedBlanks.Count chỗ</MudChip>
                     </MudText>
-
-                    <MudTooltip Text="Thêm lựa chọn mới">
-                        <MudIconButton Icon="@Icons.Material.Filled.AddCircle" Color="Color.Primary"
-                                       OnClick="AddAnswer"/>
-                    </MudTooltip>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SyncBlanks">
+                        Đồng bộ tự động
+                    </MudButton>
                 </div>
 
-                <MudPaper Elevation="0" Style="max-height:450px; overflow-y:auto; padding:4px;"
-                          Class="d-flex flex-column gap-2">
+                @if (DetectedBlanks.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Warning" Class="mb-4">
+                        Chưa phát hiện chỗ trống nào. Hãy dùng <code>(1)</code>, <code>(2)</code>... trong nội dung.
+                    </MudAlert>
+                }
 
-                    @foreach (var item in Answers.Select((a, i) => new { Answer = a, Index = i }))
-                    {
-                        var answer = item.Answer;
-                        var index = item.Index;
-                        var label = (char)('A' + index);
+                @foreach (var answer in BlankAnswers)
+                {
+                    var index = BlankAnswers.IndexOf(answer) + 1;
+                    <MudPaper Class="pa-2 mb-4 rounded-lg" Elevation="2" Style="border-left: 5px solid #8e24aa;">
+                        <div class="d-flex align-center gap-4">
+                            <MudAvatar Color="Color.Primary" Size="Size.Medium" Class="font-weight-bold">
+                                @index
+                            </MudAvatar>
 
-                        <MudPaper @key="answer"
-                                  Class="d-flex align-center p-3 rounded-lg answer-row mb-2"
-                                  Elevation="1"
-                                  Style="@(answer.LaDapAn ? "border-left: 4px solid #4caf50;" : "")">
-
-                            <MudAvatar Size="Size.Medium" Class="font-bold mr-3">@label</MudAvatar>
-
-                            <MudTextField @bind-Value="answer.NoiDung"
-                                          Variant="Variant.Outlined"
-                                          Class="flex-grow-1 mr-3"
-
-                                          Placeholder="Nhập nội dung đáp án..."/>
-
-                            <div class="d-flex align-center gap-3">
-
-                                <!-- ĐÁP ÁN ĐÚNG -->
-                                <MudCheckBox
-                                    @bind-Value="answer.LaDapAn"
-                                    Color="Color.Success"
-                                    Label="Đúng"
-                                />
-
-                                <!-- HOÁN VỊ -->
-                                <MudCheckBox
-                                    @bind-Value="answer.HoanVi "
-                                    Color="Color.Primary"
-                                    Label="Hoán vị"
-                                />
-
-                                <!-- XÓA -->
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                               Size="Size.Small"
-                                               Color="Color.Error"
-                                               OnClick="() => RemoveAnswer(answer)"
-                                               Disabled="@(Answers.Count <= 3)"/>
+                            <div class="flex-grow-1">
+                                <MudTextField @bind-Value="answer.NoiDung"
+                                              Label="@($"Đáp án đúng cho chỗ trống ({index})")"
+                                              Placeholder="VD: Hà Nội"
+                                              Variant="Variant.Outlined"
+                                              Required="true"
+                                              Style="max-height: 50px"
+                                              Class="mb-3"/>
                             </div>
-                        </MudPaper>
-                    }
-                </MudPaper>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error"
+                                           OnClick="() => BlankAnswers.Remove(answer)"
+                                           Disabled="@(BlankAnswers.Count <= 1)"/>
+                        </div>
+                    </MudPaper>
+                }
 
-
-                <MudButton Variant="Variant.Text"
-                           Color="Color.Primary"
-                           StartIcon="@Icons.Material.Filled.Add"
-                           OnClick="AddAnswer"
-                           Class="mt-2 full-width">
-                    Thêm câu trả lời khác
+                <MudButton StartIcon="@Icons.Material.Filled.AddCircle"
+                           Color="Color.Success"
+                           Variant="Variant.Outlined"
+                           OnClick="() => BlankAnswers.Add(new CreateCauTraLoiDienTuDto())">
+                    Thêm chỗ trống thủ công
                 </MudButton>
-
+                <MudAlert Severity="Severity.Info" Class="mb-4 mt-5">
+                    Câu hỏi điền từ mặc định sẽ hoán vị
+                </MudAlert>
             </MudPaper>
+
         </MudItem>
 
         <MudItem xs="12" md="4">
@@ -193,19 +185,19 @@
         </MudItem>
     </MudGrid>
 </MudContainer>
-<style>
-    .answer-row {
-        transition: all 0.2s;
-        border: 1px solid transparent;
-    }
 
-    .answer-row:hover {
-        background-color: #f5f5f5 !important;
-        border-color: #e0e0e0;
+<style>
+    .blank-preview {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border-left: 5px solid #8e24aa;
+        font-size: 1.1rem;
+        line-height: 2rem;
     }
 
     .question-header {
-        background: #0d47a1;
+        background: #0a53be;
         padding: 2rem;
         border-radius: 12px;
         margin-bottom: 5px;

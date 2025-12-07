@@ -1,0 +1,164 @@
+﻿@using FEQuestionBank.Client.Pages.CauHoi
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.EditNote" Class="mr-2" Color="Color.Success"/>
+            Xem trước câu hỏi tự luận
+        </MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <MudContainer Style="max-height:80vh; overflow-y:auto;" Class="py-4">
+
+            <!-- HEADER: Đoạn văn chung + Thông tin phân loại -->
+            <MudPaper Class="pa-5 mb-6 rounded-xl" Elevation="4"
+                      Style="background: #94a3b8; color: white;">
+                <MudGrid Spacing="3" AlignItems="Center">
+                    <MudItem xs="12" sm="3">
+                        <MudText><strong>Chương:</strong> @TenPhan</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="3">
+                        <MudText>
+                            <strong>CLO:</strong>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled"
+                                     Class="ml-2">
+                                @CloName
+                            </MudChip>
+                        </MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="3">
+                        <MudText><strong>Cấp độ:</strong> @CapDoText</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="3">
+                        <MudText><strong>Hoán vị:</strong> @(HoanVi ? "Có" : "Không")</MudText>
+                    </MudItem>
+                </MudGrid>
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <strong>Đoạn văn </strong>
+                </MudText>
+                <MudText Typo="Typo.body1" Class="mb-4" Style="line-height: 1.8;">
+                    @(string.IsNullOrWhiteSpace(Passage) ? "Chưa có nội dung" : Passage)
+                </MudText>
+            </MudPaper>
+
+            <!-- DANH SÁCH CÂU HỎI CON -->
+            <MudText Typo="Typo.h6" Class="mb-4 font-bold" Color="Color.Dark">
+                <MudIcon Icon="@Icons.Material.Filled.FormatQuote" Class="mr-2"/>
+                Các câu hỏi tự luận (@Questions.Count câu)
+            </MudText>
+
+            @if (!Questions.Any())
+            {
+                <MudAlert Severity="Severity.Warning" Class="mb-4">
+                    Không có câu hỏi con nào được tạo!
+                </MudAlert>
+            }
+            <MudGrid Spacing="4">
+                @foreach (var (question, index) in Questions.Select((q, i) => (q, i)))
+                {
+                    var color = EssayColors[index % EssayColors.Length];
+                    var canShuffle = question.HoanVi;
+
+                    <MudItem xs="12">
+                        <MudPaper Class="pa-5 rounded-xl" Elevation="3"
+                                  Style="@($"border-left: 6px solid {color}; background: {color}18;")">
+                            <div class="d-flex align-center justify-space-between mb-3">
+                                <div class="d-flex align-center gap-3">
+                                    <MudText Typo="Typo.subtitle1" Class="font-bold">
+                                        Câu @(index + 1):
+                                    </MudText>
+                                    <MudText Typo="Typo.body1">
+                                        @question.NoiDung
+                                    </MudText>
+                                </div>
+
+                                <div>
+                                    @if (canShuffle)
+                                    {
+                                        <MudTooltip Text="Hoán vị" Placement="Placement.Top">
+                                            <MudIcon Icon="@Icons.Material.Filled.Shuffle" Color="Color.Primary"
+                                                     Size="Size.Small"/>
+                                        </MudTooltip>
+                                    }
+                                    else
+                                    {
+                                        <MudTooltip Text="Cố định" Placement="Placement.Top">
+                                            <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Warning"
+                                                     Size="Size.Small"/>
+                                        </MudTooltip>
+                                    }
+                                </div>
+                            </div>
+                        </MudPaper>
+                    </MudItem>
+                }
+            </MudGrid>
+
+
+            <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mt-6">
+                <strong>@Questions.Count câu hỏi tự luận</strong> • Học sinh sẽ trả lời bằng văn bản, giáo viên chấm tay
+            </MudAlert>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text" Color="Color.Dark">
+            Sửa lại
+        </MudButton>
+        <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="Submit"
+                   StartIcon="@Icons.Material.Filled.SaveAlt">
+            Xác nhận lưu
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public string Passage { get; set; } = string.Empty;
+    [Parameter] public List<CreateEssayQuestionBase.EssayQuestionItem> Questions { get; set; } = new();
+    [Parameter] public string TenPhan { get; set; } = "Chưa chọn";
+    [Parameter] public string CloName { get; set; } = "N/A";
+    [Parameter] public short CapDo { get; set; }
+    [Parameter] public bool HoanVi { get; set; } = true;
+
+    private string CapDoText => CapDo switch
+    {
+        1 => "1 - Nhận biết",
+        2 => "2 - Thông hiểu",
+        3 => "3 - Vận dụng",
+        4 => "4 - Vận dụng cao",
+        _ => "Chưa xác định"
+    };
+
+    private readonly string[] EssayColors = new[]
+    {
+        "#667eea", "#764ba2", "#f093fb", "#4facfe", "#43e97b", "#fa709a", "#fee140", "#00f2fe"
+    };
+
+
+    private void Cancel() => MudDialog.Cancel();
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+
+}
+
+<style>
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #9f7aea;
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #7c5ac2;
+    }
+</style>

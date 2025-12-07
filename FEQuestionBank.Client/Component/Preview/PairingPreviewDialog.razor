@@ -1,0 +1,159 @@
+﻿
+@using FEQuestionBank.Client.Pages.CauHoi
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Link" Class="mr-2" Color="Color.Success"/>
+            Xem trước câu hỏi ghép nối
+        </MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <MudContainer Style="max-height:80vh; " Class="py-4">
+            <!-- HEADER: Hướng dẫn + Thông tin phân loại -->
+            <MudPaper Class="pa-5 mb-6 rounded-xl" Elevation="4"
+                      Style="background: linear-gradient(135deg, #6b21a8, #8b3ac7); color: white;">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <strong>Nội dung:</strong>
+                </MudText>
+                <MudText Typo="Typo.body1" Class="mb-4">
+                    @HuongDanChung
+                </MudText>
+
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" sm="6">
+                        <MudText><strong>Chương:</strong> @TenPhan</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <strong>CLO:</strong>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled"
+                                 Class="ml-2">
+                            @CloName
+                        </MudChip>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudText><strong>Cấp độ:</strong> @CapDoText</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudText><strong>Hoán vị:</strong> @(HoanVi ? "Có" : "Không")</MudText>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+            <div class="preview-info-alert">
+                <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-2"
+                         Style="vertical-align: middle;"/>
+                Các thẻ cùng màu và số sẽ khớp với nhau
+            </div>
+
+            <!-- 2 CỘT GHÉP NỐI -->
+            <MudPaper Class="pa-2 rounded-1 mb-4 mt-2" Elevation="3" Style="background:#ffffff;">
+                <MudGrid Spacing="6" Class="mt-2">
+
+                    <!-- CỘT TRÁI -->
+                    <MudItem xs="12" md="6">
+                        <MudPaper Class="pa-4 rounded-lg mb-4" Elevation="2" Style="background:#f8f9fa;">
+                            <MudText Typo="Typo.subtitle1"
+                                     Class="text-center mb-4 font-monospace text-primary fw-bold">
+                                CỘT A
+                            </MudText>
+                        </MudPaper>
+
+                        @foreach (var (pair, i) in Pairs.Select((p, idx) => (p, idx)))
+                        {
+                            var color = Colors[i % Colors.Length];
+                            <MudPaper Class="pa-5 mb-4 text-center rounded-xl shadow-sm"
+                                      Style="@($"background:{color}18; border: 3px solid {color};")">
+                                <MudText Typo="Typo.body1" Class="font-bold" Style="@($"color:{color}")">
+                                    @(i + 1). @pair.Question
+                                </MudText>
+                            </MudPaper>
+                        }
+                    </MudItem>
+
+                    <!-- CỘT PHẢI -->
+                    <MudItem xs="12" md="6">
+                        <MudPaper Class="pa-4 rounded-lg mb-4" Elevation="2" Style="background:#f8f9fa;">
+                            <MudText Typo="Typo.subtitle1"
+                                     Class="text-center mb-4 font-monospace text-success fw-bold">
+                                CỘT B
+                            </MudText>
+                        </MudPaper>
+
+                        @foreach (var (pair, i) in Pairs.Select((p, idx) => (p, idx)))
+                        {
+                            var color = Colors[i % Colors.Length];
+                            <MudPaper Class="pa-5 mb-4 text-center rounded-xl shadow-sm"
+                                      Style="@($"background:{color}18; border: 3px solid {color};")">
+                                <MudText Typo="Typo.body1" Class="font-bold" Style="@($"color:{color}")">
+                                    @(Char.ConvertFromUtf32(65 + i)) @pair.Answer
+                                </MudText>
+                            </MudPaper>
+                        }
+                    </MudItem>
+
+                </MudGrid>
+            </MudPaper>
+
+
+            <!-- THÔNG BÁO -->
+            <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mt-6">
+                <strong>@Pairs.Count cặp ghép nối</strong> • Khi thi, đáp án sẽ được <strong>xáo trộn ngẫu
+                    nhiên</strong>
+            </MudAlert>
+        </MudContainer>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text" Color="Color.Dark">
+            Sửa lại
+        </MudButton>
+        <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="Submit"
+                   StartIcon="@Icons.Material.Filled.SaveAlt">
+            Xác nhận lưu
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public List<CreatePairingQuestionBase.PairItem> Pairs { get; set; } = new();
+    [Parameter] public string HuongDanChung { get; set; }
+    [Parameter] public string TenPhan { get; set; } = "Chưa chọn";
+    [Parameter] public string CloName { get; set; } = "N/A";
+    [Parameter] public short CapDo { get; set; } = 2;
+    [Parameter] public bool HoanVi { get; set; } = true;
+
+    private string CapDoText => CapDo switch
+    {
+        1 => "1 - Nhận biết",
+        2 => "2 - Thông hiểu",
+        3 => "3 - Vận dụng",
+        4 => "4 - Vận dụng cao",
+        _ => "Chưa xác định"
+    };
+
+    private readonly string[] Colors = new[]
+    {
+        "#0d47a1", "#6f42c1", "#0a3622", "#3b82f6",
+        "#2196f3", "#00bcd4", "#009688", "#4caf50",
+    };
+
+    private void Cancel() => MudDialog.Cancel();
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+}
+
+<style>
+
+    .preview-info-alert {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+        border: 2px solid rgba(102, 126, 234, 0.3);
+        border-radius: 10px;
+        padding: 1.25rem;
+        color: #667eea;
+        font-weight: 500;
+        margin-top: 1.5rem;
+    }
+
+
+</style>

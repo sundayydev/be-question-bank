@@ -94,5 +94,15 @@ namespace FEQuestionBank.Client.Implementation
 
         private static AuthenticationState Anonymous() =>
             new(new ClaimsPrincipal(new ClaimsIdentity()));
+
+        public async Task<string?> GetUserIdAsync()
+        {
+            var authState = await GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            return user.FindFirst("sub")?.Value
+                   ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        }
+
     }
 }

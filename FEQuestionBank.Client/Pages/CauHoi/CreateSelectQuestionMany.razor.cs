@@ -23,13 +23,13 @@ public partial class CreateSelectQuestionManyBase : ComponentBase
                 Navigation.NavigateTo("/create-question/group");
                 break;
             case "essay":
-                Navigation.NavigateTo("/create-question/essay");
+                Navigation.NavigateTo("/create-question/create-essay");
                 break;
             case "filling":
-                Navigation.NavigateTo("/create-question/filling");
+                Navigation.NavigateTo("/create-question/create-fill-blank");
                 break;
             case "pairing":
-                Navigation.NavigateTo("/create-question/pairing");
+                Navigation.NavigateTo("/create-question/create-pairing");
                 break;
         }
     }

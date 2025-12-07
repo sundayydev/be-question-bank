@@ -7,6 +7,8 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using BeQuestionBank.Shared.DTOs.CauHoi;
+using BeQuestionBank.Shared.DTOs.Pagination;
 
 namespace BeQuestionBank.Domain.Interfaces.IRepositories;
 
@@ -43,4 +45,23 @@ public interface ICauHoiRepository : IRepository<CauHoi>
     Task<int> CountAsync(Expression<Func<CauHoi, bool>> predicate);
     Task AddRangeAsync(IEnumerable<CauHoi> cauHois);
     Task<int> GetMaxMaSoCauHoiAsync();
+
+    // Thêm 5 method này vào ICauHoiRepository
+    Task<PagedResult<CauHoiDto>> GetEssayPagedAsync(int page, int pageSize, string? sort, string? search,
+        Guid? khoaId, Guid? monHocId, Guid? phanId);
+
+    Task<PagedResult<CauHoiDto>> GetGroupPagedAsync(int page, int pageSize, string? sort, string? search,
+        Guid? khoaId, Guid? monHocId, Guid? phanId);
+
+    Task<PagedResult<CauHoiDto>> GetSinglePagedAsync(int page, int pageSize, string? sort, string? search,
+        Guid? khoaId, Guid? monHocId, Guid? phanId);
+
+    Task<PagedResult<CauHoiDto>> GetFillBlankPagedAsync(int page, int pageSize, string? sort, string? search,
+        Guid? khoaId, Guid? monHocId, Guid? phanId);
+
+    Task<PagedResult<CauHoiDto>> GetPairingPagedAsync(int page, int pageSize, string? sort, string? search,
+        Guid? khoaId, Guid? monHocId, Guid? phanId);
+
+    Task<PagedResult<CauHoiDto>> GetMultipleChoicePagedAsync(int page, int pageSize, string? sort, string? search,
+        Guid? khoaId, Guid? monHocId, Guid? phanId);
 }   

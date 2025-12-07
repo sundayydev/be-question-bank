@@ -54,6 +54,12 @@ public class KhoaService(IKhoaRepository khoaRepository)
     {
         return await _khoaRepository.GetTrashedAsync(page, pageSize);
     }
+
+    public async Task<PagedResult<KhoaDto>> GetPagedKhoasAsync(
+        int page, int pageSize, string? search = null, string? sort = null)
+    {
+        return await _khoaRepository.GetPagedKhoasAsync(page, pageSize, search, sort);
+    }
 }
 
 
