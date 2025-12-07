@@ -57,5 +57,11 @@ public class KhoaRepository(AppDbContext context) : GenericRepository<Khoa>(cont
             PageSize = pageSize
         };
     }
+    public async Task<Khoa?> GetByIdKhoaAsync(Guid id)
+    {
+        return await _context.Khoas
+            .AsNoTracking()
+            .FirstOrDefaultAsync(k => k.MaKhoa == id && (k.XoaTam == false || k.XoaTam == null));
+    }
 }
 

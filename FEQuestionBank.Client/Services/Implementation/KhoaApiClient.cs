@@ -11,7 +11,8 @@ namespace FEQuestionBank.Client.Services
 
         public Task<ApiResponse<List<KhoaDto>>> GetAllKhoasAsync()
             => GetListAsync<KhoaDto>("api/khoa");
-
+        public Task<ApiResponse<KhoaDto>> GetByIdKhoaAsync(Guid id)
+            => GetAsync<KhoaDto>($"api/khoa/{id}");
         public Task<ApiResponse<PagedResult<KhoaDto>>> GetKhoasPagedAsync
             (int page = 1, int pageSize = 10, string? sort = null, string? search = null)
             => GetPagedAsync<KhoaDto>("api/khoa/paged", page, pageSize, sort, search: search);

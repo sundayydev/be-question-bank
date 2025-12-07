@@ -1,9 +1,10 @@
-﻿using System.Net.Http.Json;
-using BeQuestionBank.Shared.DTOs.Common;
+﻿using BeQuestionBank.Shared.DTOs.Common;
 using BeQuestionBank.Shared.DTOs.DeThi;
-using BEQuestionBank.Shared.DTOs.DeThi;
 using BeQuestionBank.Shared.DTOs.Pagination;
 using BeQuestionBank.Shared.DTOs.YeuCauRutTrich;
+using BEQuestionBank.Shared.DTOs.DeThi;
+using MudBlazor;
+using System.Net.Http.Json;
 
 namespace FEQuestionBank.Client.Services;
 
@@ -78,5 +79,21 @@ public class DeThiApiClient : BaseApiClient, IDeThiApiClient
             Message = "Thành công",
             Data = data
         };
+    }
+    public async Task<byte[]> ExportAsync(Guid id, YeuCauXuatDeThiDto request)
+    {
+        var response = await _httpClient.PostAsJsonAsync($"api/dethi/{id}/export", request);
+
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadAsByteArrayAsync();
+    }
+    public async Task<byte[]> ExportEzpAsync(Guid id, string password = "matkhau123")
+    {
+        // Gọi endpoint export-ezp
+        var url = $"api/dethi/{id}/export-ezp?password={Uri.EscapeDataString(password)}";
+        var response = await _httpClient.PostAsync(url, null);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsByteArrayAsync();
     }
 }

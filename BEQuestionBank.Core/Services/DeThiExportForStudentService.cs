@@ -2,6 +2,7 @@ using BeQuestionBank.Domain.Interfaces.IRepositories;
 using BeQuestionBank.Domain.Models;
 using BeQuestionBank.Shared.DTOs.DeThi;
 using BeQuestionBank.Shared.Helpers;
+using BEQuestionBank.Core.Repositories;
 using Microsoft.Extensions.Logging;
 using Syncfusion.DocIO;
 using Syncfusion.DocIO.DLS;
@@ -11,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -20,14 +22,16 @@ namespace BEQuestionBank.Core.Services
     public class DeThiExportForStudentService
     {
         private readonly IDeThiRepository _deThiRepository;
+        private readonly IKhoaRepository _khoaRepository;
         private readonly ILogger<DeThiExportForStudentService> _logger;
         private static readonly Random _rnd = new Random();
         private const string EmbeddedTemplatePath =
             "BeQuestionBank.Shared.Templates.Exam.Word.TemplateHutech_Chuan_2025.dotx";
 
-        public DeThiExportForStudentService(IDeThiRepository deThiRepository, ILogger<DeThiExportForStudentService> logger)
+        public DeThiExportForStudentService(IDeThiRepository deThiRepository, IKhoaRepository khoaRepository, ILogger<DeThiExportForStudentService> logger)
         {
             _deThiRepository = deThiRepository;
+            _khoaRepository = khoaRepository;
             _logger = logger;
         }
 
@@ -45,7 +49,7 @@ namespace BEQuestionBank.Core.Services
             using var document = new WordDocument(ms, FormatType.Dotx);
 
             string maDe = request.MaDeThi.ToString("N")[..8].ToUpper();
-            ReplacePlaceholders(document, request, deThi, maDe);
+            await ReplacePlaceholders(document, request, deThi, maDe);
             InsertQuestions(document, deThi, request.HoanViDapAn);
 
             using var output = new MemoryStream();
@@ -53,26 +57,38 @@ namespace BEQuestionBank.Core.Services
             return output.ToArray();
         }
 
-        private void ReplacePlaceholders(WordDocument doc, YeuCauXuatDeThiDto request, DeThi deThi, string maDe)
+        private async Task ReplacePlaceholders(WordDocument doc, YeuCauXuatDeThiDto request, DeThi deThi, string maDe)
         {
-            doc.Replace("{{TenTruong}}", "TRƯỜNG ĐẠI HỌC CÔNG NGHỆ TP.HCM (HUTECH)", false, false);
-            doc.Replace("{{DeThiHocKy}}", !string.IsNullOrEmpty(request.HocKy)
-                ? $"ĐỀ THI HỌC KỲ {request.HocKy}"
-                : "ĐỀ THI KẾT THÚC HỌC PHẦN", false, false);
-            doc.Replace("{{NamHoc}}", request.NamHoc ?? $"{DateTime.Now.Year}-{DateTime.Now.Year + 1}", false, false);
-            doc.Replace("{{KhoaLop}}", request.Lop ?? "", false, false);
+            doc.Replace("{{Ky}}", !string.IsNullOrEmpty(request.HocKy)
+                ? $"{request.HocKy}.."
+                : "", false, false);
+            doc.Replace("{{NamHoc}}", request.NamHoc ?? $"..{DateTime.Now.Year}-{DateTime.Now.Year + 1}", false, false);
+            string tenKhoa = await GetTenKhoaAsync(request.MaKhoa);
+            doc.Replace("{{KhoaLop}}", tenKhoa, false, false);
             doc.Replace("{{MonThi}}", deThi.MonHoc?.TenMonHoc ?? "", false, false);
             doc.Replace("{{MaMonHoc}}", deThi.MonHoc?.MaSoMonHoc ?? "", false, false);
             doc.Replace("{{SoTC}}", deThi.MonHoc?.SoTinChi?.ToString() ?? "3", false, false);
             doc.Replace("{{NgayThi}}", request.NgayThi?.ToString("dd/MM/yyyy") ?? DateTime.Today.ToString("dd/MM/yyyy"), false, false);
             doc.Replace("{{ThoiGianLamBai}}", request.ThoiLuong.HasValue ? $"{request.ThoiLuong} phút" : "90 phút", false, false);
             doc.Replace("{{MaDe}}", maDe, false, false);
+
+            // === THÊM DÒNG NÀY ===
+            doc.Replace("{{HinhThucThi}}",
+                !string.IsNullOrWhiteSpace(request.HinhThucThi)
+                    ? request.HinhThucThi
+                    : "Trắc nghiệm", false, false);
+        }
+        private async Task<string> GetTenKhoaAsync(Guid? maKhoa)
+        {
+            if (!maKhoa.HasValue || maKhoa == Guid.Empty)
+                return "Chưa xác định";
+
+            var khoa = await _khoaRepository.GetByIdAsync(maKhoa.Value);
+            return string.IsNullOrWhiteSpace(khoa?.TenKhoa)
+                ? "Chưa xác định"
+                : khoa.TenKhoa.Trim();
         }
 
-        /// <summary>
-        /// ẢNH NẰM ĐÚNG VỊ TRÍ TRONG NỘI DUNG – DÙNG INLINE WITH TEXT
-        /// Giống hệt khi bạn chèn ảnh trong Word và để "In line with text"
-        /// </summary>
         private void InsertQuestions(WordDocument doc, DeThi deThi, bool hoanViDapAn)
         {
             var section = doc.LastSection;
@@ -111,16 +127,16 @@ namespace BEQuestionBank.Core.Services
                         : html.Substring(pos);
 
                     // Kiểm tra xem text trước có kết thúc bằng <br/> không (trước khi xử lý)
-                    bool hasBrBefore = !string.IsNullOrWhiteSpace(textBefore) && 
+                    bool hasBrBefore = !string.IsNullOrWhiteSpace(textBefore) &&
                                       Regex.IsMatch(textBefore, @"<br\s*/?>[\s]*$", RegexOptions.IgnoreCase);
 
                     if (!string.IsNullOrWhiteSpace(textBefore))
                     {
                         // Xóa <br/> ở cuối để không duplicate
-                        string textToClean = hasBrBefore 
+                        string textToClean = hasBrBefore
                             ? Regex.Replace(textBefore, @"<br\s*/?>[\s]*$", "", RegexOptions.IgnoreCase)
                             : textBefore;
-                        
+
                         string cleanText = CleanHtmlText(textToClean);
                         if (!string.IsNullOrWhiteSpace(cleanText))
                             para.AppendText(cleanText);
@@ -136,13 +152,7 @@ namespace BEQuestionBank.Core.Services
                         para.ParagraphFormat.AfterSpacing = 6;
                     }
 
-                    // === ẢNH: Xử lý cả <span class='image-wrapper'> và <img> trực tiếp ===
-                    // Group 1: <span class='image-wrapper'><img...></span>
-                    // Group 2: base64 trong span wrapper
-                    // Group 3: style trong span wrapper
-                    // Group 4: <img> trực tiếp (không có wrapper)
-                    // Group 5: base64 trong img trực tiếp
-                    // Group 6: style trong img trực tiếp
+
                     if (m.Groups[1].Success || m.Groups[4].Success)
                     {
                         string base64 = m.Groups[1].Success ? m.Groups[2].Value : m.Groups[5].Value;
@@ -153,13 +163,13 @@ namespace BEQuestionBank.Core.Services
 
                         // Luôn dùng Inline wrapping style
                         pic.TextWrappingStyle = TextWrappingStyle.Inline;
-                        
+
                         // Nếu có <br/> trước hoặc style có "display:block"/"margin:" thì tạo paragraph mới sau ảnh
                         // để ảnh xuống dòng riêng (đã tạo paragraph mới trước ảnh ở trên nếu có <br/>)
                         bool shouldBeBlock = hasBrBefore ||
                                             style.Contains("display:block", StringComparison.OrdinalIgnoreCase) ||
                                             style.Contains("margin:", StringComparison.OrdinalIgnoreCase);
-                        
+
                         if (shouldBeBlock)
                         {
                             // Tạo paragraph mới sau ảnh để text tiếp theo không dính vào ảnh
@@ -287,5 +297,45 @@ namespace BEQuestionBank.Core.Services
             return JsonSerializer.Serialize(obj);
         }
         #endregion
+    
+
+
+    #region EZP Export
+        public async Task<byte[]> ExportEzpAsync(YeuCauXuatDeThiDto request, string password)
+        {
+            // 1. Xuất Word trước
+            byte[] wordBytes = await ExportWordAsync(request);
+
+            // 2. Mã hóa AES toàn bộ file Word
+            return AES_Encrypt(wordBytes, password);
+        }
+
+        // AES Encrypt helper
+        private byte[] AES_Encrypt(byte[] data, string password)
+        {
+            using var aes = System.Security.Cryptography.Aes.Create();
+            aes.Key = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(password));
+            aes.IV = new byte[16]; // IV = 0, hoặc random nếu muốn
+            using var ms = new MemoryStream();
+            using var cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write);
+            cs.Write(data, 0, data.Length);
+            cs.Close();
+            return ms.ToArray();
+        }
+
+        public byte[] AES_Decrypt(byte[] encryptedData, string password)
+        {
+            using var aes = System.Security.Cryptography.Aes.Create();
+            aes.Key = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(password));
+            aes.IV = new byte[16];
+            using var ms = new MemoryStream();
+            using var cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Write);
+            cs.Write(encryptedData, 0, encryptedData.Length);
+            cs.Close();
+            return ms.ToArray();
+        }
+        #endregion
+
+
     }
 }

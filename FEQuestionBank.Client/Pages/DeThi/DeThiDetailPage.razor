@@ -17,6 +17,7 @@
 
         <div class="d-flex gap-2">
             <MudButton Variant="Variant.Filled"
+                       OnClick="@(()=>OpenExportDialog("word"))"
                        StartIcon="@Icons.Material.Filled.Description"
                        Style=@("color:white; background-color:" + Colors.Blue.Darken3 +
                              "; border-radius:8px; height:42px; width:150px; text-transform:none;")>
@@ -26,6 +27,7 @@
             <!-- Nút Tải PDF - màu đỏ -->
             <MudButton Variant="Variant.Filled"
                        StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                       OnClick="@(()=>OpenExportDialog("pdf"))"
                        Style=@("color:white; background-color:" + Colors.Red.Darken3 +
                              "; border-radius:8px; height:42px; width:150px; text-transform:none; margin-left:10px;")>
                 Tải PDF
