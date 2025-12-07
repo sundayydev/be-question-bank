@@ -1,0 +1,85 @@
+﻿@using FEQuestionBank.Client.Services
+@using MudBlazor
+@using BEQuestionBank.Shared.DTOs.DeThi
+@using FEQuestionBank.Client.Services.Interface
+@inject IKhoaApiClient KhoaApiClient
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.h6" Class="mb-4">Thông tin xuất đề thi</MudText>
+        <MudGrid Spacing="3">
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="Model.HocKy" Label="Học kỳ" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="Model.NamHoc" Label="Năm học" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudDatePicker @bind-Date="Model.NgayThi" Label="Ngày thi" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudNumericField T="int?" @bind-Value="Model.ThoiLuong" Label="Thời lượng (phút)" Variant="Variant.Outlined" />
+            </MudItem>
+
+            <!-- ComboBox Khoa -->
+            <MudItem xs="12" sm="6">
+                <MudSelect T="Guid?" @bind-Value="Model.MaKhoa" Label="Khoa" Variant="Variant.Outlined" Dense="true"
+                           Disabled="@(!KhoaList.Any())">
+                    @if (!KhoaList.Any())
+                    {
+                        <MudSelectItem T="Guid?" Value="null">Đang tải...</MudSelectItem>
+                    }
+                    else
+                    {
+                        @foreach (var khoa in KhoaList)
+                        {
+                            <MudSelectItem T="Guid?" Value="@khoa.MaKhoa">@khoa.TenKhoa</MudSelectItem>
+                        }
+                    }
+                </MudSelect>
+            </MudItem>
+
+            <!-- ComboBox Hình thức thi -->
+            <MudItem xs="12" sm="6">
+                <MudSelect T="string" @bind-Value="Model.HinhThucThi" Label="Hình thức thi" Variant="Variant.Outlined" Dense="true">
+                    @foreach (var ht in HinhThucThiList)
+                    {
+                        <MudSelectItem T="string" Value="@ht">@ht</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit">
+            Xuất
+        </MudButton>
+        <MudButton OnClick="Cancel" Class="ml-2">
+            Hủy
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public YeuCauXuatDeThiDto Model { get; set; } = new();
+
+    private List<KhoaDto> KhoaList = new();
+    private List<string> HinhThucThiList = new() { "Trắc nghiệm", "Tự luận", "Thực hành" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var res = await KhoaApiClient.GetAllKhoasAsync();
+        if (res != null && res.Data != null)
+        {
+            KhoaList = res.Data;
+        }
+    }
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(Model));
+    private void Cancel() => MudDialog.Cancel();
+}
