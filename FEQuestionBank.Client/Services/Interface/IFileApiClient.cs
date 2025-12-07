@@ -1,4 +1,5 @@
 ﻿using BeQuestionBank.Shared.DTOs.Common;
+using BeQuestionBank.Shared.DTOs.CauHoi;
 using BeQuestionBank.Shared.DTOs.File;
 using BeQuestionBank.Shared.DTOs.Pagination;
 using BeQuestionBank.Shared.Enums;
@@ -11,5 +12,6 @@ namespace FEQuestionBank.Client.Services
         Task<ApiResponse<PagedResult<FileDto>>> GetFilesPagedAsync(int page, int pageSize, string? sort, string? search, FileType? fileType);
         Task<ApiResponse<bool>> DeleteFileAsync(Guid id);
         Task<ApiResponse<bool>> RestoreFileAsync(Guid id); // Thêm nếu có tính năng khôi phục
+        Task<ApiResponse<CauHoiWithCauTraLoiDto>> GetCauHoiByFileIdAsync(Guid fileId);
     }
 }

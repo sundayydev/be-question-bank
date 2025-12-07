@@ -1,4 +1,5 @@
 ﻿using BeQuestionBank.Shared.DTOs.Common;
+using BeQuestionBank.Shared.DTOs.CauHoi;
 using BeQuestionBank.Shared.DTOs.File;
 using BeQuestionBank.Shared.DTOs.Pagination;
 using BeQuestionBank.Shared.Enums;
@@ -82,6 +83,27 @@ namespace FEQuestionBank.Client.Services
             catch (Exception ex)
             {
                 return ApiResponseFactory.Error<bool>(500, ex.Message);
+            }
+        }
+
+        public async Task<ApiResponse<CauHoiWithCauTraLoiDto>> GetCauHoiByFileIdAsync(Guid fileId)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"/api/file/{fileId}/cauhoi");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ApiResponse<CauHoiWithCauTraLoiDto>>();
+                    return result ?? ApiResponseFactory.Error<CauHoiWithCauTraLoiDto>(500, "Lỗi khi đọc phản hồi");
+                }
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                return ApiResponseFactory.Error<CauHoiWithCauTraLoiDto>((int)response.StatusCode, errorContent);
+            }
+            catch (Exception ex)
+            {
+                return ApiResponseFactory.Error<CauHoiWithCauTraLoiDto>(500, ex.Message);
             }
         }
     }

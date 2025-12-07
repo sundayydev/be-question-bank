@@ -100,6 +100,16 @@
                                OnClick="() => OnPlayPreview(context)" 
                                Tooltip="Nghe chi tiết"/>
 
+                @if (context.MaCauHoi != null)
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" 
+                                   Style="@($"color:{Colors.Blue.Darken3};")" 
+                                   Size="Size.Small" 
+                                   Class="mx-1" 
+                                   OnClick="() => OnViewQuestionDetail(context)" 
+                                   Tooltip="Xem chi tiết câu hỏi"/>
+                }
+
                 <MudIconButton Icon="@Icons.Material.Filled.Delete" 
                                Style="@($"color:{Colors.Red.Darken3};")" 
                                Size="Size.Small" 

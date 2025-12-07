@@ -1,4 +1,5 @@
-﻿using BeQuestionBank.Shared.DTOs.File;
+﻿using BeQuestionBank.Shared.DTOs.CauHoi;
+using BeQuestionBank.Shared.DTOs.File;
 using BeQuestionBank.Shared.Enums;
 using FEQuestionBank.Client.Pages.OtherPage; // Để dùng MessageDialog
 using FEQuestionBank.Client.Services;
@@ -80,13 +81,43 @@ namespace FEQuestionBank.Client.Pages.File
 
         protected void OnPlayPreview(FileDto file)
         {
-            // Có thể mở một Dialog nhỏ chỉ để phát audio nếu không muốn dùng thẻ <audio> trên bảng
+            // Mở dialog để phát audio và xem chi tiết
             var parameters = new DialogParameters
             {
-                ["ContentText"] = $"Đang phát: {file.TenFile}",
-                // Bạn có thể truyền thêm URL vào dialog custom nếu cần
+                ["File"] = file
             };
-            DialogService.Show<MessageDialog>("Nghe thử", parameters);
+            DialogService.Show<AudioPreviewDialog>("Nghe thử và Xem chi tiết", parameters, new DialogOptions
+            {
+                MaxWidth = MaxWidth.Large,
+                FullWidth = true
+            });
+        }
+
+        protected async Task OnViewQuestionDetail(FileDto file)
+        {
+            if (!file.MaCauHoi.HasValue)
+            {
+                Snackbar.Add("File này chưa được liên kết với câu hỏi nào", Severity.Warning);
+                return;
+            }
+
+            try
+            {
+                var response = await FileApiClient.GetCauHoiByFileIdAsync(file.MaFile);
+                if (response is { Success: true, Data: not null })
+                {
+                    // Navigate đến trang chi tiết câu hỏi
+                    NavigationManager.NavigateTo($"/cauhoi/{file.MaCauHoi.Value}");
+                }
+                else
+                {
+                    Snackbar.Add($"Lỗi: {response?.Message ?? "Không tìm thấy câu hỏi"}", Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
+            }
         }
 
         protected async Task OnConfirmDelete(FileDto file)

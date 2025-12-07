@@ -46,6 +46,10 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<CauHoiService>();
         services.AddScoped<ICauHoiRepository, CauHoiRepository>();
+        
+        //File
+        services.AddScoped<IFileRepository, FileRepository>();
+        services.AddScoped<FileService>();
 
         return services;
     }

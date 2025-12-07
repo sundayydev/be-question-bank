@@ -1,0 +1,149 @@
+@using BeQuestionBank.Shared.DTOs.File
+@using BeQuestionBank.Shared.DTOs.CauHoi
+@using MudBlazor
+@inject FEQuestionBank.Client.Services.IFileApiClient FileApiClient
+@inject NavigationManager NavigationManager
+
+<MudDialog MaxWidth="MaxWidth.Large" FullWidth="true">
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="font-weight-bold mb-2">Nghe thử và Xem chi tiết</MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <div class="d-flex flex-column gap-3 p-3">
+            @if (File != null)
+            {
+                <!-- Audio Player -->
+                <div class="mb-3">
+                    <MudText Typo="Typo.subtitle1" Class="mb-2">File Audio: @File.TenFile</MudText>
+                    @if (!string.IsNullOrEmpty(File.Url))
+                    {
+                        <audio controls style="width: 100%; height: 50px;">
+                            <source src="@File.Url" type="audio/mpeg">
+                            Trình duyệt của bạn không hỗ trợ thẻ audio.
+                        </audio>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Warning">Không tìm thấy file audio</MudAlert>
+                    }
+                </div>
+
+                <!-- Thông tin câu hỏi -->
+                @if (File.MaCauHoi != null)
+                {
+                    @if (CauHoi != null)
+                    {
+                        <MudDivider />
+                        <div>
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">Câu hỏi liên kết:</MudText>
+                            <MudPaper Elevation="2" Class="pa-4">
+                                <div class="mb-2">
+                                    <MudText Typo="Typo.body2" Class="font-weight-bold">Loại câu hỏi:</MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info">@CauHoi.LoaiCauHoi</MudChip>
+                                </div>
+                                @if (!string.IsNullOrEmpty(CauHoi.NoiDung))
+                                {
+                                    <div class="mb-2">
+                                        <MudText Typo="Typo.body2" Class="font-weight-bold">Nội dung:</MudText>
+                                        <div class="mt-1" style="max-height: 200px; overflow-y: auto;">
+                                            @((MarkupString)CauHoi.NoiDung)
+                                        </div>
+                                    </div>
+                                }
+                                @if (CauHoi.CLO.HasValue)
+                                {
+                                    <div class="mb-2">
+                                        <MudText Typo="Typo.body2" Class="font-weight-bold">CLO:</MudText>
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Success">@CauHoi.CLO</MudChip>
+                                    </div>
+                                }
+                            </MudPaper>
+                        </div>
+                    }
+                    else if (IsLoading)
+                    {
+                        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+                        <MudText Typo="Typo.body2">Đang tải thông tin câu hỏi...</MudText>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info">Không tìm thấy thông tin câu hỏi</MudAlert>
+                    }
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Info">File này chưa được liên kết với câu hỏi nào</MudAlert>
+                }
+            }
+        </div>
+    </DialogContent>
+
+    <DialogActions>
+        <div class="p-3 d-flex gap-2">
+            @if (File?.MaCauHoi != null && CauHoi != null)
+            {
+                <MudButton OnClick="OnViewQuestionDetail" 
+                          Color="Color.Primary" 
+                          Variant="Variant.Filled"
+                          StartIcon="@Icons.Material.Filled.Visibility">
+                    Xem chi tiết câu hỏi
+                </MudButton>
+            }
+            <MudButton OnClick="Cancel" Color="Color.Secondary" Variant="Variant.Filled">
+                Đóng
+            </MudButton>
+        </div>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public FileDto? File { get; set; }
+
+    private CauHoiWithCauTraLoiDto? CauHoi { get; set; }
+    private bool IsLoading { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (File?.MaCauHoi != null)
+        {
+            await LoadCauHoiAsync();
+        }
+    }
+
+    private async Task LoadCauHoiAsync()
+    {
+        if (File?.MaFile == null) return;
+
+        IsLoading = true;
+        try
+        {
+            var response = await FileApiClient.GetCauHoiByFileIdAsync(File.MaFile);
+            if (response is { Success: true, Data: not null })
+            {
+                CauHoi = response.Data;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading cau hoi: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void OnViewQuestionDetail()
+    {
+        if (File?.MaCauHoi != null)
+        {
+            NavigationManager.NavigateTo($"/cauhoi/{File.MaCauHoi.Value}");
+            MudDialog.Close();
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}
+
