@@ -12,5 +12,6 @@ namespace BeQuestionBank.Domain.Interfaces.IRepositories;
 public interface IKhoaRepository : IRepository<Khoa>
 {
     Task<Khoa?> GetByTenKhoaAsync(string tenKhoa);
+    Task<Khoa?> GetByIdKhoaAsync(Guid id);
     Task<PagedResult<KhoaDto>> GetTrashedAsync(int page = 1, int pageSize = 10);
 }

@@ -10,7 +10,13 @@ using Syncfusion.Licensing;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1JFaF1cXGFCf1FpRGFGfV5ycUVPallYTnJYUj0eQnxTdEBiW39bcnVQT2RbWE1xVkleYg==");
+var syncfusionKey = builder.Configuration["Syncfusion:LicenseKey"];
+
+Console.WriteLine($"Syncfusion key loaded: {syncfusionKey != null}");
+Console.WriteLine(syncfusionKey); // debug xem có bị null không
+
+SyncfusionLicenseProvider.RegisterLicense(syncfusionKey);
+
 // Add services to the container.
 builder.Services.AddControllers().AddJsonOptions(options =>
 {

@@ -421,4 +421,11 @@ public class DeThiController : ControllerBase
         }
 
     }
+    [HttpPost("{id}/export-ezp")]
+    public async Task<IActionResult> ExportDeThiEzp(Guid id, [FromQuery] string password = "matkhau123")
+    {
+        var request = new YeuCauXuatDeThiDto { MaDeThi = id };
+        byte[] ezpBytes = await _exportService.ExportEzpAsync(request, password);
+        return File(ezpBytes, "application/octet-stream", $"DeThi_{id}.ezp");
+    }
 }
