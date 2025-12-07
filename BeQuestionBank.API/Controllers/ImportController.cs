@@ -424,6 +424,7 @@ namespace BeQuestionBank.API.Controllers
                         isValid = sub.IsValid,
                         loaiCauHoi = sub.LoaiCauHoi,
                         loaiCauHoiDisplay = sub.LoaiCauHoiDisplay,
+                        preview = sub.ContentPreview,
                         answersCount = sub.AnswersCount,
                         correctAnswersCount = sub.CorrectAnswersCount,
                         features = new
