@@ -1,15 +1,11 @@
 ﻿@page "/khoa"
-@using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Authorization
 @inherits KhoaBase
-@inject ISnackbar Snackbar
-@attribute [Authorize]
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Style="min-height:600px; width: 100%">
-    <MudBreadcrumbs Items="_breadcrumbs" Style="margin-top:2px; margin-bottom:2px;" />
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+    <MudBreadcrumbs Items="_breadcrumbs"/>
     <MudGrid Spacing="3" Style=" margin-bottom: 10px">
         <MudItem xs="12" sm="6" md="4">
             <InfoCard
-                Icon="@Icons.Material.Filled.People"
+                Icon="@Icons.Material.Filled.Apartment"
                 IconColor="Color.Primary"
                 Title="Tổng số khoa "
                 Value="@TotalKhoa.ToString()"/>
@@ -27,7 +23,7 @@
             <InfoCard
                 Icon="@Icons.Material.Filled.CloudUpload"
                 IconColor="Color.Info"
-                Title="Số khoa ngưng hoạt động"
+                Title="Số khoa ngừng hoạt động"
                 Value="@LockedKhoa.ToString()"
                 BackgroundColor="#f5f9ff"/>
         </MudItem>
@@ -67,8 +63,6 @@
             </MudButton>
         </div>
     </div>
-
-
     <!-- Bảng dữ liệu -->
     <MudTable ServerData="LoadServerData"
               Bordered="true"

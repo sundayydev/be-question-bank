@@ -20,7 +20,6 @@ namespace FEQuestionBank.Client.Pages.DeThi
         [Inject] protected ISnackbar Snackbar { get; set; } = default!;
         [Inject] protected IDialogService DialogService { get; set; } = default!;
         [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
-        [Inject] protected HttpClient Http { get; set; } = default!;
 
         protected string? _searchTerm;
         protected MudTable<DeThiDto>? table;

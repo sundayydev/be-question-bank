@@ -1,14 +1,6 @@
 ﻿using BeQuestionBank.Shared.DTOs.YeuCauRutTrich;
-using BeQuestionBank.Shared.DTOs.Common;
-using BeQuestionBank.Shared.DTOs.Pagination;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
 using FEQuestionBank.Client.Pages.YeuCauRutTrich;
 using FEQuestionBank.Client.Services;
 

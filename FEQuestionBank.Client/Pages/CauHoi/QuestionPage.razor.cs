@@ -9,6 +9,7 @@ using BeQuestionBank.Shared.DTOs.Khoa;
 using BeQuestionBank.Shared.DTOs.MonHoc;
 using BeQuestionBank.Shared.DTOs.Phan;
 using FEQuestionBank.Client.Component;
+using FEQuestionBank.Client.Components;
 using FEQuestionBank.Client.Services;
 
 namespace FEQuestionBank.Client.Pages
@@ -21,6 +22,7 @@ namespace FEQuestionBank.Client.Pages
         [Inject] protected IMonHocApiClient MonHocClient { get; set; }
         [Inject] protected IPhanApiClient PhanClient { get; set; }
         [Inject] protected ISnackbar Snackbar { get; set; }
+        [Inject] protected NavigationManager Navigation { get; set; } = default!;
 
         protected string? _searchTerm;
         protected MudTable<CauHoiDto> essayTable = new();
@@ -117,8 +119,8 @@ namespace FEQuestionBank.Client.Pages
 
                 EssayCount = t1.Data?.TotalCount ?? 0;
                 SingleCount = t2.Data?.TotalCount ?? 0;
-                FillCount = t3.Data?.TotalCount ?? 0;
-                GroupCount = t4.Data?.TotalCount ?? 0;
+                FillCount = t4.Data?.TotalCount ?? 0;
+                GroupCount = t3.Data?.TotalCount ?? 0;
                 PairingCount = t5.Data?.TotalCount ?? 0;
                 MultipleChoiceCount = t6.Data?.TotalCount ?? 0;
                 TotalQuestions = EssayCount + SingleCount;
@@ -255,11 +257,10 @@ namespace FEQuestionBank.Client.Pages
                     TotalItems = response.Data.TotalCount
                 };
             }
-
-            // Nếu không có dữ liệu → trả null hoặc Items rỗng
+            
             return new TableData<CauHoiDto>
             {
-                Items = null, // hoặc new List<CauHoiDto>()
+                Items = null, 
                 TotalItems = 0
             };
         }
@@ -344,45 +345,66 @@ namespace FEQuestionBank.Client.Pages
                 : new TableData<CauHoiDto> { Items = new List<CauHoiDto>(), TotalItems = 0 };
         }
 
-        // Load Trắc nghiệm đơn
-        // protected async Task<TableData<CauHoiDto>> LoadSingleData(TableState state, CancellationToken cancellationToken)
-        // {
-        //     var response = await CauHoiClient.GetSinglesPagedAsync(
-        //         page: state.Page + 1,
-        //         pageSize: state.PageSize,
-        //         sort: state.SortLabel + (state.SortDirection == SortDirection.Descending ? ",desc" : ""),
-        //         search: _searchTerm);
-        //
-        //     return response.Success && response.Data != null
-        //         ? new TableData<CauHoiDto> { Items = response.Data.Items, TotalItems = response.Data.TotalCount }
-        //         : new TableData<CauHoiDto> { Items = new List<CauHoiDto>(), TotalItems = 0 };
-        // }
-
         protected void OpenCreateDialog()
         {
-            // Mở dialog tạo câu hỏi (sẽ làm sau)
-            Snackbar.Add("Chức năng tạo câu hỏi đang phát triển", Severity.Info);
+            Navigation.NavigateTo("/question/create-question");
         }
 
-        protected async Task OnDeleteQuestionAsync(Guid id, string noiDung)
+        // protected async Task OnDeleteQuestionAsync(Guid id, string noiDung)
+        // {
+        //     var parameters = new DialogParameters
+        //     {
+        //         ["Message"] = "Bạn có chắc chắn muốn xóa câu hỏi này?",
+        //         ["NoiDung"] = noiDung 
+        //     };
+        //
+        //     var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        //     var dialog = DialogService.Show<ConfirmDeleteDialog>("Xác nhận xóa", parameters, options);
+        //     var result = await dialog.Result;
+        //     
+        //     if (!result.Canceled)
+        //     {
+        //         var response = await CauHoiClient.DeleteQuestionAsync(id);
+        //
+        //         if (response.Success)
+        //         {
+        //             Snackbar.Add("Xóa câu hỏi thành công!", Severity.Success);
+        //             await ReloadBothTables();
+        //             await LoadCountsAsync();
+        //         }
+        //         else
+        //         {
+        //             Snackbar.Add($"Xóa thất bại: {response.Message}", Severity.Error);
+        //         }
+        //     }
+        // }
+        protected async Task OnDeleteQuestionAsync(Guid id, string noiDung, int? soLanDung)
         {
-            // 1. Truyền tham số vào Dialog tùy chỉnh vừa tạo
+            // Chặn xóa nếu câu hỏi đã dùng nhiều hơn 1 lần
+            if (soLanDung > 1)
+            {
+                Snackbar.Add(" Câu hỏi đã được sử dụng nhiều lần nên không thể xóa!", Severity.Warning);
+                return;
+            }
+
             var parameters = new DialogParameters
             {
                 ["Message"] = "Bạn có chắc chắn muốn xóa câu hỏi này?",
-                ["NoiDung"] = noiDung // Truyền nội dung để render Latex
+                ["NoiDung"] = noiDung
             };
 
-            var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+            var options = new DialogOptions
+            {
+                CloseOnEscapeKey = true,
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true
+            };
 
-            // 2. Gọi Dialog tùy chỉnh (ConfirmDeleteDialog)
             var dialog = DialogService.Show<ConfirmDeleteDialog>("Xác nhận xóa", parameters, options);
             var result = await dialog.Result;
 
-            // 3. Kiểm tra kết quả (Nếu không bấm Hủy)
             if (!result.Canceled)
             {
-                // Gọi API xóa
                 var response = await CauHoiClient.DeleteQuestionAsync(id);
 
                 if (response.Success)
@@ -398,11 +420,55 @@ namespace FEQuestionBank.Client.Pages
             }
         }
 
-        // protected void ViewDetail(CauHoiDto cauHoi)
-        // {
-        //     var parameters = new DialogParameters { ["CauHoi"] = cauHoi };
-        //     DialogService.Show<CauHoiDetailDialog>("Chi tiết câu hỏi", parameters);
-        // }
+
+        /// <summary>
+        /// Mở dialog xem chi tiết câu hỏi – tự động xác định kiểu hiển thị dựa trên tab hiện tại
+        /// </summary>
+        protected void ViewDetail(CauHoiDto cauHoi, string? forceViewType = null)
+        {
+            var viewType = forceViewType ?? cauHoi.LoaiCauHoi switch
+            {
+                "Essay" or "Self" => "GroupEssay", // Tự luận (có hoặc không có câu con)
+                "Single" => "SingleMulti", // Trắc nghiệm chọn 1
+                "MultipleChoice" => "SingleMulti", // Trắc nghiệm chọn nhiều
+                "FillBlank" or "Filling" => "Fill", // Điền từ / điền chỗ trống
+                "Group" => "GroupEssay", // Câu nhóm (có câu con)
+                "Pairing" or "Matching" => "Pairing", // Ghép nối
+                _ => "SingleMulti" // Mặc định
+            };
+
+            var parameters = new DialogParameters<QuestionDetailDialog>
+            {
+                { x => x.CauHoi, cauHoi },
+                { x => x.ViewType, viewType }
+            };
+
+            var options = new DialogOptions
+            {
+                CloseButton = true,
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true,
+                CloseOnEscapeKey = true,
+                Position = DialogPosition.Center
+            };
+
+            DialogService.Show<QuestionDetailDialog>("Chi tiết câu hỏi", parameters, options);
+        }
+
+        protected async Task ResetFiltersAsync()
+        {
+            _searchTerm = string.Empty;
+            SelectedKhoaId = null;
+            SelectedMonHocId = null;
+            SelectedPhanId = null;
+            MonHocs.Clear();
+            Phans.Clear();
+            StateHasChanged();
+            await ReloadBothTables();
+            await LoadCountsAsync();
+            Snackbar.Add("Đã làm mới bộ lọc!", Severity.Info);
+        }
+
 
         protected Color GetLevelColor(short level) => level switch
         {
@@ -410,7 +476,6 @@ namespace FEQuestionBank.Client.Pages
             <= 4 => Color.Warning,
             _ => Color.Error
         };
-        
     }
 
     public static class StringExtensions
@@ -418,6 +483,4 @@ namespace FEQuestionBank.Client.Pages
         public static string Truncate(this string? value, int maxLength)
             => string.IsNullOrEmpty(value) ? "" : value.Length <= maxLength ? value : value[..maxLength] + "...";
     }
-
-    
 }

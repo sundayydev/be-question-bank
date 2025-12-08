@@ -317,7 +317,8 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
                 {
                     MaCauTraLoi = ct.MaCauTraLoi,
                     NoiDung = ct.NoiDung,
-                    LaDapAn = ct.LaDapAn
+                    LaDapAn = ct.LaDapAn,
+                    HoanVi = ct.HoanVi,
                 }).ToList()
             }).ToList()
         });
@@ -368,7 +369,8 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
             {
                 MaCauTraLoi = ct.MaCauTraLoi,
                 NoiDung = ct.NoiDung,
-                LaDapAn = ct.LaDapAn
+                LaDapAn = ct.LaDapAn,
+                HoanVi = ct.HoanVi
             }).ToList()
         });
 
@@ -425,7 +427,8 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
                 {
                     MaCauTraLoi = ct.MaCauTraLoi,
                     NoiDung = ct.NoiDung,
-                    LaDapAn = ct.LaDapAn
+                    LaDapAn = ct.LaDapAn,
+                    HoanVi = ct.HoanVi
                 }).ToList()
             }).ToList()
         });
@@ -483,7 +486,8 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
                 {
                     MaCauTraLoi = ct.MaCauTraLoi,
                     NoiDung = ct.NoiDung,
-                    LaDapAn = ct.LaDapAn
+                    LaDapAn = ct.LaDapAn,
+                    HoanVi = ct.HoanVi,
                 }).ToList()
             }).ToList()
         });
@@ -534,7 +538,8 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
             {
                 MaCauTraLoi = ct.MaCauTraLoi,
                 NoiDung = ct.NoiDung,
-                LaDapAn = ct.LaDapAn
+                LaDapAn = ct.LaDapAn,
+                HoanVi = ct.HoanVi,
             }).ToList()
         });
 

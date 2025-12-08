@@ -44,18 +44,15 @@
                     <span class="stat-number">@VaiTro</span>
                     <span class="stat-label">Vai Trò</span>
                 </div>
-                <div class="stat-divider"></div>
                 <div class="stat-item">
-                    <span class="stat-number">500+</span>
-                    <span class="stat-label">connections</span>
-                </div>
-                <div class="user-status">
-                    <span class="status-indicator @(CurrentUser?.BiKhoa == false ? "active" : "inactive")"></span>
-                    <span>@(CurrentUser?.BiKhoa == false ? "Đang hoạt động" : "Bị khóa")</span>
+                    <div>
+                        <span class="status-indicator @(CurrentUser?.BiKhoa == false ? "active" : "inactive")">
+                        </span>
+                        <span>@(CurrentUser?.BiKhoa == false ? "Đang hoạt động" : "Bị khóa")</span>
+                    </div>
+                    <span class="stat-label">@NgayTao</span>
                 </div>
             </div>
-           
-
             <!-- Action Buttons -->
             <div class="button-container">
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="false" Class="follow-btn">

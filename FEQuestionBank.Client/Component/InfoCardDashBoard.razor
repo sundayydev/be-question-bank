@@ -20,10 +20,7 @@
             <MudIcon Icon="@Icon" Size="Size.Large"/>
         </MudAvatar>
     </div>
-
-    <div class="mt-4">
-        <MudLinearProgress Value="75" Color="@IconColor" Size="Size.Small" Class="rounded"/>
-    </div>
+    
 </MudPaper>
 
 <style>
@@ -49,8 +46,7 @@
     [Parameter] public string BackgroundColor { get; set; } = "#f0f7ff";
 
     [Parameter] public string BorderColor { get; set; } = "#3b82f6";
-
-    private bool IsHovered = false;
+    
 
     private string GetColorHex(Color color)
     {
