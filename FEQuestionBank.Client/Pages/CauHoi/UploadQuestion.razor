@@ -5,6 +5,7 @@
 
 <div class="upload-container">
     <MudContainer MaxWidth="MaxWidth.ExtraLarge">
+        <MudBreadcrumbs Items="_breadcrumbs"/>
         <!-- Header -->
         <MudPaper Elevation="3" Class="pa-6 mb-4 glass-card" Style="border-radius: 20px;">
             <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
@@ -16,7 +17,7 @@
                         Upload file Word hoặc ZIP để import hàng loạt câu hỏi vào hệ thống
                     </MudText>
                 </div>
-                <MudButton Variant="Variant.Outlined" 
+                <MudButton Variant="Variant.Outlined"
                            StartIcon="@Icons.Material.Filled.HelpOutline"
                            Color="Color.Primary"
                            Style="border-radius: 20px; font-weight: 600;">
@@ -54,7 +55,7 @@
             </MudText>
             <MudGrid Spacing="3">
                 <MudItem xs="12" sm="4">
-                    <MudSelect T="string" Label="Khoa" Variant="Variant.Outlined" 
+                    <MudSelect T="string" Label="Khoa" Variant="Variant.Outlined"
                                Value="@(SelectedKhoa?.ToString())"
                                ValueChanged="@(s => OnKhoaChanged(s != null ? Guid.Parse(s) : null))"
                                AnchorOrigin="Origin.BottomCenter"
@@ -147,7 +148,7 @@
                                     </MudAlert>
                                 }
 
-                                <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary"
                                            FullWidth="true"
                                            StartIcon="@Icons.Material.Filled.Preview"
                                            Disabled="@(WordFile == null || IsProcessing)"
@@ -202,7 +203,7 @@
                                     </MudAlert>
                                 }
 
-                                <MudButton Variant="Variant.Filled" Color="Color.Success" 
+                                <MudButton Variant="Variant.Filled" Color="Color.Success"
                                            FullWidth="true"
                                            StartIcon="@Icons.Material.Filled.Preview"
                                            Disabled="@(ZipFile == null || IsProcessing)"
@@ -277,30 +278,31 @@
 
                     <!-- Questions List -->
                     <MudDivider Class="my-4"/>
-                    
+
                     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
                         <MudText Typo="Typo.h6" Class="fw-bold" Style="font-size: 20px;">
                             📋 Chi tiết từng câu hỏi
                         </MudText>
-                        <MudButton Variant="Variant.Text" 
+                        <MudButton Variant="Variant.Text"
                                    Size="Size.Small"
                                    OnClick="@(() => ExpandAll())"
                                    Style="font-weight: 600;">
                             @(ExpandedQuestions.Count == PreviewResult.Questions.Count ? "Thu gọn tất cả" : "Xem tất cả")
                         </MudButton>
                     </MudStack>
-                    
+
                     @foreach (var question in PreviewResult.Questions)
                     {
                         var isExpanded = ExpandedQuestions.Contains(question.QuestionNumber);
-                        
+
                         <div class="question-validation-card @(question.IsValid ? "valid" : "invalid")">
                             <MudPaper Elevation="2" Class="pa-4" Style="background: rgba(255,255,255,0.98);">
                                 <MudStack Spacing="3">
                                     <!-- Header -->
                                     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                                            <MudIcon Icon="@(question.IsGroup ? Icons.Material.Filled.Folder : Icons.Material.Filled.QuestionAnswer)" 
+                                            <MudIcon
+                                                Icon="@(question.IsGroup ? Icons.Material.Filled.Folder : Icons.Material.Filled.QuestionAnswer)"
                                                      Size="Size.Medium"
                                                      Color="@(question.IsValid ? Color.Success : Color.Error)"/>
                                             <MudText Typo="Typo.h6" Class="fw-bold" Style="font-size: 18px;">Câu @question.QuestionNumber</MudText>
@@ -314,7 +316,7 @@
                                                 </MudChip>
                                             }
                                         </MudStack>
-                                        <MudChip T="string" Color="@(question.IsValid ? Color.Success : Color.Error)" 
+                                        <MudChip T="string" Color="@(question.IsValid ? Color.Success : Color.Error)"
                                                  Icon="@(question.IsValid ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Error)"
                                                  Style="font-weight: 700; font-size: 13px; padding: 8px 16px;">
                                             @question.Status
@@ -360,7 +362,7 @@
                                                 <span class="feature-badge audio">🔊 AUDIO</span>
                                             }
                                         </MudStack>
-                                        
+
                                         <div class="expand-btn" @onclick="@(() => ToggleExpand(question.QuestionNumber))">
                                             <MudIcon Icon="@(isExpanded ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Size="Size.Small"/>
                                             <span>@(isExpanded ? "Thu gọn" : "Xem chi tiết")</span>
@@ -372,7 +374,7 @@
                                         @if (isExpanded)
                                         {
                                             <MudDivider Class="my-3" Style="border-color: rgba(102, 126, 234, 0.2);"/>
-                                            
+
                                             @if (!question.IsGroup)
                                             {
                                                 <!-- Nội dung câu hỏi đầy đủ -->
@@ -404,9 +406,9 @@
                                                                     </div>
                                                                     @if (answer.IsCorrect)
                                                                     {
-                                                                        <MudChip T="string" Size="Size.Small" 
-                                                                                 Color="Color.Success" 
-                                                                                 Icon="@Icons.Material.Filled.Check" 
+                                                                        <MudChip T="string" Size="Size.Small"
+                                                                                 Color="Color.Success"
+                                                                                 Icon="@Icons.Material.Filled.Check"
                                                                                  Style="font-weight: 700;">
                                                                             Đáp án đúng
                                                                         </MudChip>
@@ -479,8 +481,8 @@
                                                                 (@sub.AnswersCount đáp án, @sub.CorrectAnswersCount đúng)
                                                             </MudText>
                                                         </MudStack>
-                                                        <MudChip T="string" Size="Size.Small" 
-                                                                 Color="@(sub.IsValid ? Color.Success : Color.Error)" 
+                                                        <MudChip T="string" Size="Size.Small"
+                                                                 Color="@(sub.IsValid ? Color.Success : Color.Error)"
                                                                  Style="font-weight: 600;">
                                                             @(sub.IsValid ? "✓ Hợp lệ" : "✗ Có lỗi")
                                                         </MudChip>
@@ -519,13 +521,13 @@
                     <MudStack Row="true" Justify="Justify.Center" Spacing="4">
                         @if (!PreviewResult.HasErrors)
                         {
-                            <MudButton Variant="Variant.Filled" 
-                                       Color="Color.Success" 
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Success"
                                        Size="Size.Large"
                                        StartIcon="@Icons.Material.Filled.CloudUpload"
                                        OnClick="@PerformImport"
                                        Disabled="@IsProcessing"
-                                           Style="border-radius: 15px; font-weight: 700; padding: 16px 50px; box-shadow: 0 4px 16px rgba(40, 167, 69, 0.25); text-transform: uppercase; letter-spacing: 1.2px;">
+                                       Style="border-radius: 15px; font-weight: 700; padding: 16px 50px; box-shadow: 0 4px 16px rgba(40, 167, 69, 0.25); text-transform: uppercase; letter-spacing: 1.2px;">
                                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                                     <span>Import @PreviewResult.TotalFound Câu Hỏi</span>
                                     <MudIcon Icon="@Icons.Material.Filled.ArrowForward"/>
@@ -534,15 +536,15 @@
                         }
                         else
                         {
-                            <MudButton Variant="Variant.Filled" 
-                                       Color="Color.Warning" 
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Warning"
                                        Size="Size.Large"
                                        StartIcon="@Icons.Material.Filled.Edit"
                                        Style="border-radius: 15px; font-weight: 700; padding: 16px 40px; text-transform: uppercase; letter-spacing: 1.2px;">
                                 Sửa Lỗi Trong Word
                             </MudButton>
                         }
-                        <MudButton Variant="Variant.Outlined" 
+                        <MudButton Variant="Variant.Outlined"
                                    Color="Color.Default"
                                    Size="Size.Large"
                                    StartIcon="@Icons.Material.Filled.Refresh"

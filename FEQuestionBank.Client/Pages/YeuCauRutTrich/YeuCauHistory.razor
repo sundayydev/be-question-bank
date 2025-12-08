@@ -1,8 +1,6 @@
 ﻿@page "/tools/extract-history"
 @inherits FEQuestionBank.Client.Pages.YeuCau.YeuCauHistoryBase
 @using BeQuestionBank.Shared.DTOs.YeuCauRutTrich
-@using MudBlazor
-@inject ISnackbar Snackbar
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Style="min-height:600px; width: 100%">
     <MudBreadcrumbs Items="_breadcrumbs" Class="mb-4" />
@@ -38,7 +36,6 @@
                           Placeholder="Tìm tên người dùng, môn học, nội dung..."
                           Variant="Variant.Text"
                           Adornment="Adornment.Start"
-                          AdornmentIcon="@Icons.Material.Filled.Search"
                           DebounceInterval="500"
                           Immediate="true"
                           Class="flex-grow-1"

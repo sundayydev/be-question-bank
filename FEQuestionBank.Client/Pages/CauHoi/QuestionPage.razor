@@ -26,7 +26,7 @@
 
     <!-- Search + Create Button -->
     <div class="d-flex flex-wrap gap-3 mb-2 align-items-center">
-        <div class="flex-grow-1" style="max-width: 500px;">
+        <div class="flex-grow-1">
             <MudTextField @bind-Value="_searchTerm"
                           Placeholder="Tìm kiếm nội dung câu hỏi..."
                           Adornment="Adornment.Start"
@@ -50,6 +50,14 @@
                    OnClick="OpenCreateDialog">
             Thêm câu hỏi mới
         </MudButton>
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Refresh"
+                   OnClick="ResetFiltersAsync">
+            Làm mới
+        </MudButton>
+
     </div>
     <!-- Thêm ngay sau MudTextField tìm kiếm, trước nút Thêm câu hỏi -->
     <div class="d-flex flex-wrap gap-3 align-center mb-2">
@@ -119,40 +127,45 @@
                           Loading="@LoadingEssay"
                           LoadingProgressColor="Color.Info">
                     <HeaderContent>
-                        <MudTh>
-                            <MudTableSortLabel T="string" SortLabel="NoiDung">Nội dung</MudTableSortLabel>
-                        </MudTh>
-                        <MudTh>Cấp độ</MudTh>
-                        <MudTh>Clo</MudTh>
-                        <MudTh>Đã dùng</MudTh>
-                        <MudTh>Ngày tạo</MudTh>
-                        <MudTh Style="text-align:center">Thao tác</MudTh>
+                        <MudTh Style="width: 30%;">Nội dung</MudTh>
+                        <MudTh Style="width: 10%; text-align:center">Cấp độ</MudTh>
+                        <MudTh Style="width: 15%; text-align:center">Clo</MudTh>
+                        <MudTh Style="width: 10%; text-align:center">Đã dùng</MudTh>
+                        <MudTh Style="width: 15%;text-align:center">Ngày tạo</MudTh>
+                        <MudTh Style="width: 20%;text-align:center">Thao tác</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd DataLabel="Nội dung">
+                        <MudTd Style="width: 30%;" DataLabel="Nội dung">
                             <LatexContent Content="@context.NoiDung.Truncate(80)"/>
                         </MudTd>
 
-                        <MudTd>
+                        <MudTd Style="width: 10%;text-align:center">
                             <MudChip T="short" Size="Size.Small" Color="@GetLevelColor(context.CapDo)">
                                 Cấp @context.CapDo</MudChip>
                         </MudTd>
-                        <MudTd>
-                            <MudChip T="string" Size="Size.Small"
-                                     Color="Color.Secondary">@(context.CLO)</MudChip>
+                        <MudTd Style="width: 15%;text-align:center">
+                            <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Style="width:50px;">
+                                @context.CLO
+                            </MudChip>
                         </MudTd>
-                        <MudTd>@context.SoLanDung</MudTd>
-                        <MudTd>@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
-                        <MudTd Style="text-align:center">
+
+                        <MudTd Style="width: 10%;text-align:center">@context.SoLanDung</MudTd>
+                        <MudTd Style="width: 15%;text-align:center">@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
+                        <MudTd Style="width: 20%; text-align:center">
                             <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                            Color="Color.Primary"
                                            Size="Size.Small"
                                            OnClick="@(() => Snackbar.Add("Chức năng sửa đang làm", Severity.Info))"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                           Color="Color.Info"
+                                           Size="Size.Small"
+                                           OnClick="@(() => ViewDetail(context, "GroupEssay"))"/>
 
                             <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                            Color="Color.Error"
                                            Size="Size.Small"
-                                           OnClick="@(() => OnDeleteQuestionAsync(context.MaCauHoi, context.NoiDung))"/>
+                                           Disabled="@(context.SoLanDung > 0)"
+                                           OnClick="@(() => OnDeleteQuestionAsync(context.MaCauHoi, context.NoiDung, context.SoLanDung))"/>
                         </MudTd>
                     </RowTemplate>
                     <NoRecordsContent>
@@ -174,26 +187,42 @@
                           Hover="true" Striped="true" Dense="true"
                           Loading="@LoadingSingle">
                     <HeaderContent>
-                        <MudTh>Nội dung</MudTh>
-                        <MudTh>Cấp độ</MudTh>
-                        <MudTh>Clo</MudTh>
-                        <MudTh>Đã dùng</MudTh>
-                        >
-                        <MudTh>Thao tác</MudTh>
+                        <MudTh Style="width: 30%;">Nội dung</MudTh>
+                        <MudTh Style="width: 10%; text-align:center">Cấp độ</MudTh>
+                        <MudTh Style="width: 15%; text-align:center">Clo</MudTh>
+                        <MudTh Style="width: 10%; text-align:center">Đã dùng</MudTh>
+                        <MudTh Style="width: 15%; text-align:center">Ngày tạo</MudTh>
+                        <MudTh Style="width: 20%; text-align:center">Thao tác</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd>@((MarkupString)context.NoiDung?.Truncate(80))</MudTd>
-                        <MudTd>
+                        <MudTd Style="width: 30%;">@((MarkupString)context.NoiDung?.Truncate(80))</MudTd>
+                        <MudTd Style="width: 10%; text-align:center">
                             <MudChip T="short" Size="Size.Small" Color="@GetLevelColor(context.CapDo)">
                                 Cấp @context.CapDo</MudChip>
                         </MudTd>
-                        <MudTd>
-                            <MudChip T="string" Size="Size.Small"
-                                     Color="Color.Secondary">@(context.CLO)</MudChip>
+                        <MudTd Style="width: 15%; text-align:center">
+                            <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Style="width:50px;">
+                                @context.CLO
+                            </MudChip>
                         </MudTd>
-                        <MudTd>@context.SoLanDung</MudTd>
-                        <MudTd>@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
-                        <MudTd></MudTd>
+                        <MudTd Style="width: 10%; text-align:center">@context.SoLanDung</MudTd>
+                        <MudTd Style="width: 15%; text-align:center">@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
+                        <MudTd Style="width: 20%; text-align:center">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           OnClick="@(() => Snackbar.Add("Chức năng sửa đang làm", Severity.Info))"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                           Color="Color.Info"
+                                           Size="Size.Small"
+                                           OnClick="@(() => ViewDetail(context, "SingleMulti"))"/>
+
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           Disabled="@(context.SoLanDung > 0)"
+                                           OnClick="@(() => OnDeleteQuestionAsync(context.MaCauHoi, context.NoiDung, context.SoLanDung))"/>
+                        </MudTd>
                     </RowTemplate>
                     <NoRecordsContent>
                         <MudText Typo="Typo.body1" Color="Color.Warning">Không có câu trắc nghiệm nào</MudText>
@@ -205,33 +234,49 @@
             </ChildContent>
         </MudTabPanel>
         <!-- TAB TRẮC NGHIỆM nhiu dap án -->
-        <MudTabPanel Text="@($"MultipleChoice")" BadgeColor="Color.Info" BadgeData="@MultipleChoiceCount">
+        <MudTabPanel Text="@($"Nhiều đáp án")" BadgeColor="Color.Info" BadgeData="@MultipleChoiceCount">
             <ChildContent>
                 <MudTable ServerData="LoadMultipeChoiceData"
                           @ref="multipleTable"
                           Hover="true" Striped="true" Dense="true"
                           Loading="@LoadingMultiple">
                     <HeaderContent>
-                        <MudTh>Nội dung</MudTh>
-                        <MudTh>Cấp độ</MudTh>
-                        <MudTh>Clo</MudTh>
-                        <MudTh>Đã dùng</MudTh>
-                        <MudTh>Ngày tạo</MudTh>
-                        <MudTh>Thao tác</MudTh>
+                        <MudTh Style="width: 30%;">Nội dung</MudTh>
+                        <MudTh Style="width: 10%; text-align:center">Cấp độ</MudTh>
+                        <MudTh Style="width: 15%; text-align:center">Clo</MudTh>
+                        <MudTh Style="width: 10%; text-align:center">Đã dùng</MudTh>
+                        <MudTh Style="width: 15%; text-align:center">Ngày tạo</MudTh>
+                        <MudTh Style="width: 20%; text-align:center">Thao tác</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd>@((MarkupString)context.NoiDung?.Truncate(80))</MudTd>
-                        <MudTd>
+                        <MudTd Style="width: 30%;">@((MarkupString)context.NoiDung?.Truncate(80))</MudTd>
+                        <MudTd Style="width: 10%; text-align:center">
                             <MudChip T="short" Size="Size.Small" Color="@GetLevelColor(context.CapDo)">
                                 Cấp @context.CapDo</MudChip>
                         </MudTd>
-                        <MudTd>
-                            <MudChip T="string" Size="Size.Small"
-                                     Color="Color.Secondary">@(context.CLO)</MudChip>
+                        <MudTd Style="width: 15%; text-align:center">
+                            <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Style="width:50px;">
+                                @context.CLO
+                            </MudChip>
                         </MudTd>
-                        <MudTd>@context.SoLanDung</MudTd>
-                        <MudTd>@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
-                        <MudTd></MudTd>
+                        <MudTd Style="width: 10%; text-align:center">@context.SoLanDung</MudTd>
+                        <MudTd Style="width: 15%; text-align:center">@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
+                        <MudTd Style="width: 20%; text-align:center">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           OnClick="@(() => Snackbar.Add("Chức năng sửa đang làm", Severity.Info))"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                           Color="Color.Info"
+                                           Size="Size.Small"
+                                           OnClick="@(() => ViewDetail(context, "SingleMulti"))"/>
+
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           Disabled="@(context.SoLanDung > 0)"
+                                           OnClick="@(() => OnDeleteQuestionAsync(context.MaCauHoi, context.NoiDung, context.SoLanDung))"/>
+                        </MudTd>
                     </RowTemplate>
                     <NoRecordsContent>
                         <MudText Typo="Typo.body1" Color="Color.Warning">Không có câu trắc nghiệm nào</MudText>
@@ -250,26 +295,41 @@
                           Hover="true" Striped="true" Dense="true"
                           Loading="@LoadingFillBlink">
                     <HeaderContent>
-                        <MudTh>Nội dung</MudTh>
-                        <MudTh>Cấp độ</MudTh>
-                        <MudTh>Số đáp án</MudTh>
-                        <MudTh>Đã dùng</MudTh>
-                        <MudTh>Ngày tạo</MudTh>
-                        <MudTh>Thao tác</MudTh>
+                        <MudTh Style="width: 30%;">Nội dung</MudTh>
+                        <MudTh Style="width: 10%; text-align:center">Cấp độ</MudTh>
+                        <MudTh Style="width: 15%; text-align:center">Số đáp án</MudTh>
+                        <MudTh Style="width: 10%; text-align:center">Đã dùng</MudTh>
+                        <MudTh Style="width: 15%; text-align:center">Ngày tạo</MudTh>
+                        <MudTh Style="width: 20%; text-align:center">Thao tác</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd>@((MarkupString)context.NoiDung?.Truncate(80))</MudTd>
-                        <MudTd>
+                        <MudTd Style="width: 30%;">@((MarkupString)context.NoiDung?.Truncate(80))</MudTd>
+                        <MudTd Style="width: 10%; text-align:center">
                             <MudChip T="short" Size="Size.Small" Color="@GetLevelColor(context.CapDo)">
                                 Cấp @context.CapDo</MudChip>
                         </MudTd>
-                        <MudTd>
+                        <MudTd Style="width: 15%; text-align:center">
                             <MudChip T="string" Size="Size.Small"
                                      Color="Color.Secondary">@(context.SoCauHoiCon)</MudChip>
                         </MudTd>
-                        <MudTd>@context.SoLanDung</MudTd>
-                        <MudTd>@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
-                        <MudTd></MudTd>
+                        <MudTd Style="width: 10%; text-align:center">@context.SoLanDung</MudTd>
+                        <MudTd Style="width: 15%; text-align:center">@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
+                        <MudTd Style="width: 20%; text-align:center">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           OnClick="@(() => Snackbar.Add("Chức năng sửa đang làm", Severity.Info))"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                           Color="Color.Info"
+                                           Size="Size.Small"
+                                           OnClick="@(() => ViewDetail(context, "Fill"))"/>
+
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           Disabled="@(context.SoLanDung > 0)"
+                                           OnClick="@(() => OnDeleteQuestionAsync(context.MaCauHoi, context.NoiDung, context.SoLanDung))"/>
+                        </MudTd>
                     </RowTemplate>
                     <NoRecordsContent>
                         <MudText Typo="Typo.body1" Color="Color.Warning">Không có câu trắc nghiệm nào</MudText>
@@ -288,26 +348,41 @@
                           Hover="true" Striped="true" Dense="true"
                           Loading="@LoadingGroup">
                     <HeaderContent>
-                        <MudTh>Nội dung</MudTh>
-                        <MudTh>Cấp độ</MudTh>
-                        <MudTh>Số câu con</MudTh>
-                        <MudTh>Đã dùng</MudTh>
-                        <MudTh>Ngày tạo</MudTh>
-                        <MudTh>Thao tác</MudTh>
+                        <MudTh Style="width: 30%;">Nội dung</MudTh>
+                        <MudTh Style="width: 10%; text-align:center">Cấp độ</MudTh>
+                        <MudTh Style="width: 15%; text-align:center">Số câu con</MudTh>
+                        <MudTh Style="width: 10%; text-align:center">Đã dùng</MudTh>
+                        <MudTh Style="width: 15%; text-align:center">Ngày tạo</MudTh>
+                        <MudTh Style="width: 20%; text-align:center">Thao tác</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd>@((MarkupString)context.NoiDung?.Truncate(80))</MudTd>
-                        <MudTd>
+                        <MudTd Style="width: 30%;">@((MarkupString)context.NoiDung?.Truncate(80))</MudTd>
+                        <MudTd Style="width: 10%; text-align:center">
                             <MudChip T="short" Size="Size.Small" Color="@GetLevelColor(context.CapDo)">
                                 Cấp @context.CapDo</MudChip>
                         </MudTd>
-                        <MudTd>
+                        <MudTd Style="width: 15%; text-align:center">
                             <MudChip T="string" Size="Size.Small"
                                      Color="Color.Secondary">@(context.SoCauHoiCon)</MudChip>
                         </MudTd>
-                        <MudTd>@context.SoLanDung</MudTd>
-                        <MudTd>@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
-                        <MudTd></MudTd>
+                        <MudTd Style="width: 10%; text-align:center">@context.SoLanDung</MudTd>
+                        <MudTd Style="width: 15%; text-align:center">@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
+                        <MudTd Style="width: 20%; text-align:center">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           OnClick="@(() => Snackbar.Add("Chức năng sửa đang làm", Severity.Info))"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                           Color="Color.Info"
+                                           Size="Size.Small"
+                                           OnClick="@(() => ViewDetail(context, "GroupEssay"))"/>
+
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           Disabled="@(context.SoLanDung > 0)"
+                                           OnClick="@(() => OnDeleteQuestionAsync(context.MaCauHoi, context.NoiDung, context.SoLanDung))"/>
+                        </MudTd>
                     </RowTemplate>
                     <NoRecordsContent>
                         <MudText Typo="Typo.body1" Color="Color.Warning">Không có câu trắc nghiệm nào</MudText>
@@ -326,26 +401,41 @@
                           Hover="true" Striped="true" Dense="true"
                           Loading="@LoadingPairing">
                     <HeaderContent>
-                        <MudTh>Nội dung</MudTh>
-                        <MudTh>Cấp độ</MudTh>
-                        <MudTh>Số câu ghép nối</MudTh>
-                        <MudTh>Đã dùng</MudTh>
-                        <MudTh>Ngày tạo</MudTh>
-                        <MudTh>Thao tác</MudTh>
+                        <MudTh Style="width: 30%;">Nội dung</MudTh>
+                        <MudTh Style="width: 10%; text-align:center">Cấp độ</MudTh>
+                        <MudTh Style="width: 15%; text-align:center">Số câu ghép nối</MudTh>
+                        <MudTh Style="width: 10%; text-align:center">Đã dùng</MudTh>
+                        <MudTh Style="width: 15%; text-align:center">Ngày tạo</MudTh>
+                        <MudTh Style="width: 20%; text-align:center">Thao tác</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd>@((MarkupString)context.NoiDung?.Truncate(80))</MudTd>
-                        <MudTd>
+                        <MudTd Style="width: 30%;">@((MarkupString)context.NoiDung?.Truncate(80))</MudTd>
+                        <MudTd Style="width: 10%; text-align:center">
                             <MudChip T="short" Size="Size.Small" Color="@GetLevelColor(context.CapDo)">
                                 Cấp @context.CapDo</MudChip>
                         </MudTd>
-                        <MudTd>
+                        <MudTd Style="width: 15%; text-align:center">
                             <MudChip T="string" Size="Size.Small"
                                      Color="Color.Secondary">@(context.SoCauHoiCon)</MudChip>
                         </MudTd>
-                        <MudTd>@context.SoLanDung</MudTd>
-                        <MudTd>@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
-                        <MudTd></MudTd>
+                        <MudTd Style="width: 10%; text-align:center">@context.SoLanDung</MudTd>
+                        <MudTd Style="width: 15%; text-align:center">@context.NgayTao?.ToString("dd/MM/yyyy")</MudTd>
+                        <MudTd Style="width: 20%; text-align:center">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           OnClick="@(() => Snackbar.Add("Chức năng sửa đang làm", Severity.Info))"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                           Color="Color.Info"
+                                           Size="Size.Small"
+                                           OnClick="@(() => ViewDetail(context, "Pairing"))"/>
+
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           Disabled="@(context.SoLanDung > 0)"
+                                           OnClick="@(() => OnDeleteQuestionAsync(context.MaCauHoi, context.NoiDung, context.SoLanDung))"/>
+                        </MudTd>
                     </RowTemplate>
                     <NoRecordsContent>
                         <MudText Typo="Typo.body1" Color="Color.Warning">Không có câu trắc nghiệm nào</MudText>

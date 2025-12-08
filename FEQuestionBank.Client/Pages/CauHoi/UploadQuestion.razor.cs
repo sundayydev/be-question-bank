@@ -40,6 +40,13 @@ public partial class UploadQuestion : ComponentBase
     private int CurrentStep = 1;
     private bool IsProcessing = false;
     private string ProcessingMessage = "Đang xử lý...";
+
+    protected List<BreadcrumbItem> _breadcrumbs = new()
+    {
+        new BreadcrumbItem("Trang chủ", href: "/"),
+        new BreadcrumbItem("Quản lí câu hỏi", href: "#", disabled: true),
+        new BreadcrumbItem("Tải lên câu hỏi", href: "/question/upload"),
+    };
     
     // Expand/Collapse State
     private HashSet<int> ExpandedQuestions = new();
