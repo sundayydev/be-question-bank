@@ -10,6 +10,7 @@ namespace FEQuestionBank.Client.Services.Interface
         Task<ApiResponse<JsonElement>> RegisterAsync(string tenDangNhap, string matKhau, string? email = null, string vaiTro = "User");
         Task<ApiResponse<NguoiDungDto>> GetCurrentUserAsync();
         Task<ApiResponse<JsonElement>> RefreshTokenAsync(string refreshToken);
+        Task<ApiResponse<JsonElement>> RefreshTokenFromStorageAsync();
         Task<ApiResponse<JsonElement>> LogoutAsync();
         Task<ApiResponse<JsonElement>> ChangePasswordAsync(string matKhauHienTai, string matKhauMoi);
         Task<ApiResponse<JsonElement>> SendOtpAsync(string email);

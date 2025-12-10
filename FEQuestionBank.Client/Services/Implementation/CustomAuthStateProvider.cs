@@ -21,18 +21,34 @@ namespace FEQuestionBank.Client.Implementation
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            var token = await _localStorage.GetItemAsync<string>("authToken");
-            if (string.IsNullOrWhiteSpace(token))
+            var accessToken = await _localStorage.GetItemAsync<string>("authToken");
+            var refreshToken = await _localStorage.GetItemAsync<string>("refreshToken");
+
+            
+            if (!string.IsNullOrWhiteSpace(refreshToken))
+            {
+                
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    !string.IsNullOrWhiteSpace(accessToken)
+                        ? new AuthenticationHeaderValue("Bearer", accessToken)
+                        : null;
+
+                
+                var anonymousIdentity = new ClaimsIdentity(new[] { new Claim("refreshToken", refreshToken) }, "jwt");
+                return new AuthenticationState(new ClaimsPrincipal(anonymousIdentity));
+            }
+
+  
+            if (string.IsNullOrWhiteSpace(accessToken))
                 return Anonymous();
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
             try
             {
                 var handler = new JwtSecurityTokenHandler();
-                var jwt = handler.ReadJwtToken(token);
-                var claims = jwt.Claims.Select(c => new Claim(c.Type, c.Value)).ToList();
-                var identity = new ClaimsIdentity(claims, "jwt");
+                var jwt = handler.ReadJwtToken(accessToken);
+                var identity = new ClaimsIdentity(jwt.Claims, "jwt");
                 return new AuthenticationState(new ClaimsPrincipal(identity));
             }
             catch
@@ -40,45 +56,57 @@ namespace FEQuestionBank.Client.Implementation
                 return Anonymous();
             }
         }
-
-        // SỬA: DÙNG TryGetProperty + TỰ ĐỘNG TÌM TOKEN
-        public async Task MarkUserAsAuthenticated(JsonElement data)
+        public async Task UpdateStateWithNewToken(string accessToken)
         {
-            // LOG TOÀN BỘ JSON ĐỂ DEBUG
-            Console.WriteLine("=== LOGIN RESPONSE DATA ===");
-            Console.WriteLine(data.GetRawText());
-            Console.WriteLine("==============================");
-
-            string? token = null;
-
-            // Danh sách các key có thể chứa token
-            var possibleKeys = new[] { "token", "accessToken", "access_token", "jwt", "access", "bearer" };
-
-            foreach (var key in possibleKeys)
-            {
-                if (data.TryGetProperty(key, out var prop) && prop.ValueKind == JsonValueKind.String)
-                {
-                    token = prop.GetString();
-                    Console.WriteLine($"Token found in key: '{key}' = {token}");
-                    break;
-                }
-            }
-
-            // Nếu không tìm thấy token → báo lỗi rõ
-            if (string.IsNullOrWhiteSpace(token))
-            {
-                Console.WriteLine("ERROR: No token found in response data!");
-                throw new InvalidOperationException("Phản hồi từ server không chứa token. Vui lòng kiểm tra backend.");
-            }
-
-            // Lưu token + cập nhật auth state
-            await _localStorage.SetItemAsync("authToken", token);
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            await _localStorage.SetItemAsync("authToken", accessToken);
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
             var handler = new JwtSecurityTokenHandler();
-            var jwt = handler.ReadJwtToken(token);
-            var claims = jwt.Claims.Select(c => new Claim(c.Type, c.Value)).ToList();
-            var identity = new ClaimsIdentity(claims, "jwt");
+            var jwt = handler.ReadJwtToken(accessToken);
+
+            var identity = new ClaimsIdentity(jwt.Claims, "jwt");
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(new ClaimsPrincipal(identity))));
+        }
+        public async Task MarkUserAsAuthenticated(JsonElement data)
+        {
+            Console.WriteLine("=== LOGIN RESPONSE DATA ===");
+            Console.WriteLine(data.GetRawText());
+
+            // 1. LẤY ACCESS TOKEN
+            string? accessToken = null;
+            if (data.TryGetProperty("accessToken", out var at))
+                accessToken = at.GetString();
+            else if (data.TryGetProperty("access_token", out at))
+                accessToken = at.GetString();
+
+            if (string.IsNullOrWhiteSpace(accessToken))
+                throw new InvalidOperationException("Không tìm thấy accessToken trong phản hồi từ server!");
+
+            
+            string? refreshToken = null;
+            if (data.TryGetProperty("refreshToken", out var rt))
+                refreshToken = rt.GetString();
+            else if (data.TryGetProperty("refresh_token", out rt))
+                refreshToken = rt.GetString();
+
+            if (string.IsNullOrWhiteSpace(refreshToken))
+                throw new InvalidOperationException("Không tìm thấy refreshToken! Backend phải trả về refreshToken.");
+
+           
+            await _localStorage.SetItemAsync("authToken", accessToken);
+            await _localStorage.SetItemAsync("refreshToken", refreshToken); 
+
+            Console.WriteLine($"Đã lưu thành công!");
+            Console.WriteLine($"AccessToken: {accessToken.Substring(0, 30)}...");
+            Console.WriteLine($"RefreshToken: {refreshToken.Substring(0, 30)}...");
+
+            // 4. Cập nhật header cho HttpClient
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            // 5. Parse JWT và thông báo đã đăng nhập
+            var handler = new JwtSecurityTokenHandler();
+            var jwt = handler.ReadJwtToken(accessToken);
+            var identity = new ClaimsIdentity(jwt.Claims, "jwt");
 
             NotifyAuthenticationStateChanged(Task.FromResult(
                 new AuthenticationState(new ClaimsPrincipal(identity))
@@ -87,7 +115,7 @@ namespace FEQuestionBank.Client.Implementation
 
         public async Task MarkUserAsLoggedOut()
         {
-            await _localStorage.RemoveItemAsync("authToken");
+            await _localStorage.RemoveItemsAsync(new[] { "authToken", "refreshToken" }); 
             _httpClient.DefaultRequestHeaders.Authorization = null;
             NotifyAuthenticationStateChanged(Task.FromResult(Anonymous()));
         }
