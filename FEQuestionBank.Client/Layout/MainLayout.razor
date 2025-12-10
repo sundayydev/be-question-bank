@@ -1,6 +1,15 @@
+@using Blazored.LocalStorage
+@using FEQuestionBank.Client.Implementation
+@using FEQuestionBank.Client.Services.Interface
 @using Microsoft.AspNetCore.Authorization
 @inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
+@inject IAuthApiClient AuthApi
+@inject ILocalStorageService Local
+@inject IAuthApiClient AuthApi
+@inject CustomAuthStateProvider AuthState
+@inject ILocalStorageService Local
+@inject NavigationManager Nav
 @attribute [Authorize]  
 
 <MudLayout>
@@ -39,6 +48,47 @@
         var hiddenPages = new[] { "login", "register", "forgot-password", "404" };
         return hiddenPages.Any(p => relativePath.StartsWith(p));
     }
+    protected override async Task OnInitializedAsync()
+    {
+        var url = Nav.Uri.ToLower();
+
+        if (url.Contains("/login") || url.Contains("/register"))
+            return;
+
+        var access = await Local.GetItemAsync<string>("authToken");
+        var refresh = await Local.GetItemAsync<string>("refreshToken");
+
+
+        if (string.IsNullOrEmpty(access) && string.IsNullOrEmpty(refresh))
+        {
+            Nav.NavigateTo("/login", true);
+            return;
+        }
+
+        if (string.IsNullOrEmpty(access) && !string.IsNullOrEmpty(refresh))
+        {
+            var res = await AuthApi.RefreshTokenFromStorageAsync();
+
+            if (res.StatusCode == 200)
+            {
+                var newToken = res.Data.GetProperty("accessToken").GetString();
+                await AuthState.UpdateStateWithNewToken(newToken);
+
+                await AuthApi.GetCurrentUserAsync();
+            }
+            else
+            {
+                await AuthState.MarkUserAsLoggedOut();
+                Nav.NavigateTo("/login", true);
+            }
+
+            return;
+        }
+
+  
+        await AuthApi.GetCurrentUserAsync();
+    }
+
 
     private string MainContentCssClass => HideLayout ? "mud-main-content-auth" : "";
 }

@@ -72,7 +72,7 @@ namespace BEQuestionBank.Core.Services
             doc.Replace("{{ThoiGianLamBai}}", request.ThoiLuong.HasValue ? $"{request.ThoiLuong} phút" : "90 phút", false, false);
             doc.Replace("{{MaDe}}", maDe, false, false);
 
-            // === THÊM DÒNG NÀY ===
+           
             doc.Replace("{{HinhThucThi}}",
                 !string.IsNullOrWhiteSpace(request.HinhThucThi)
                     ? request.HinhThucThi
@@ -380,7 +380,7 @@ namespace BEQuestionBank.Core.Services
     
 
 
-    #region EZP Export
+        #region EZP Export
         public async Task<byte[]> ExportEzpAsync(YeuCauXuatDeThiDto request, string password)
         {
             // 1. Xuất Word trước
