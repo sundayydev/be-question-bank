@@ -1,4 +1,5 @@
-﻿@using FEQuestionBank.Client.Pages.CauHoi
+﻿@using BeQuestionBank.Shared.DTOs.CauTraLoi
+@using FEQuestionBank.Client.Pages.CauHoi
 
 <MudDialog>
     <DialogContent>
@@ -39,20 +40,22 @@
                     var ans = Answers[i];
                     var alpha = (char)('A' + i);
                     <MudItem xs="12">
-                        <MudPaper Class="@($"p-3 d-flex align-center transition-all {(ans.IsCorrect ? "answer-correct" : "answer-normal")}")"
+                        <MudPaper
+                            Class="@($"p-3 d-flex align-center transition-all {(ans.LaDapAn ? "answer-correct" : "answer-normal")}")"
                                   Elevation="0" Outlined="true">
 
-                            <MudAvatar Color="@(ans.IsCorrect? Color.Success: Color.Default)"
-                                       Variant="@(ans.IsCorrect ? Variant.Filled : Variant.Outlined)"
+                            <MudAvatar Color="@(ans.LaDapAn ? Color.Success : Color.Default)"
+                                       Variant="@(ans.LaDapAn ? Variant.Filled : Variant.Outlined)"
                                        Size="Size.Medium" Class="mr-3 font-bold">
                                 @alpha
                             </MudAvatar>
 
-                            <div class="flex-grow-1 answer-latex-content" style="@(ans.IsCorrect ? "font-weight: 500;" : "")">
-                                <LatexContent Content="@ans.Text"/>
+                            <div class="flex-grow-1 answer-latex-content"
+                                 style="@(ans.LaDapAn ? "font-weight: 500;" : "")">
+                                <LatexContent Content="@ans.NoiDung"/>
                             </div>
 
-                            @if (ans.IsCorrect)
+                            @if (ans.LaDapAn)
                             {
                                 <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Class="ml-2">ĐÚNG</MudChip>
                             }
@@ -93,7 +96,7 @@
 
     // Parameters nhận dữ liệu
     [Parameter] public string QuestionContent { get; set; } = string.Empty;
-    [Parameter] public List<CreateSingleQuestionBase.AnswerModel> Answers { get; set; } = new();
+    [Parameter] public List<CauTraLoiDto> Answers { get; set; } = new();
 
     // Parameters bổ sung cho Metadata
     [Parameter] public string TenKhoa { get; set; } = string.Empty;

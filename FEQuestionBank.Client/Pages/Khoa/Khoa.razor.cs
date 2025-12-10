@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using BeQuestionBank.Shared.DTOs.Pagination;
 using FEQuestionBank.Client.Pages.Khoa;
 using FEQuestionBank.Client.Pages.OtherPage;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace FEQuestionBank.Client.Pages
 {
@@ -21,6 +22,7 @@ namespace FEQuestionBank.Client.Pages
         [Inject] protected IDialogService DialogService { get; set; }
 
         protected string? _searchTerm;
+        private string? _currentSearchTerm;
         protected MudTable<KhoaDto>? table;
         protected int TotalKhoa { get; set; }
         protected int ActiveKhoa { get; set; }
@@ -36,6 +38,13 @@ namespace FEQuestionBank.Client.Pages
         
         protected override async Task OnInitializedAsync()
         {
+            var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+            var query = QueryHelpers.ParseQuery(uri.Query);
+            if (query.TryGetValue("search", out var searchValue))
+            {
+                _searchTerm = searchValue.ToString();
+                _currentSearchTerm = _searchTerm;
+            }
             await LoadAllKhoasForInfoCardAsync();
         }
 
@@ -107,14 +116,35 @@ namespace FEQuestionBank.Client.Pages
         }
 
 
-        protected async Task OnSearch(string? text)
+        // protected async Task OnSearch(string? text)
+        // {
+        //     _searchTerm = string.IsNullOrWhiteSpace(text) ? null : text.Trim();
+        //     if (table != null)
+        //     {
+        //         await table.ReloadServerData();
+        //         StateHasChanged();
+        //     }
+        // }
+        protected async Task OnSearch()
         {
-            _searchTerm = string.IsNullOrWhiteSpace(text) ? null : text.Trim();
-            if (table != null)
+            _searchTerm = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm.Trim();
+
+            // Chỉ cập nhật URL nếu search thay đổi
+            if (_currentSearchTerm != _searchTerm)
             {
-                await table.ReloadServerData();
-                StateHasChanged();
+                _currentSearchTerm = _searchTerm;
+
+                var uri = NavigationManager.Uri.Split('?')[0]; // bỏ query cũ
+                if (!string.IsNullOrEmpty(_searchTerm))
+                {
+                    uri = QueryHelpers.AddQueryString(uri, "search", _searchTerm);
+                }
+
+                NavigationManager.NavigateTo(uri, forceLoad: false); // forceLoad: false → không reload trang
             }
+
+            if (table != null)
+                await table.ReloadServerData();
         }
 
         protected async Task OnCreateNew()

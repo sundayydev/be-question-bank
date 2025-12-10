@@ -19,20 +19,30 @@ public class MonHocController(MonHocService service, ILogger<MonHocController> l
     // GET: api/MonHoc/{id}
     [HttpGet("{id}")]
     [SwaggerOperation("Tìm môn học theo mã")]
-    public async Task<ActionResult<MonHoc>> GetByIdAsync(string id)
+    public async Task<ActionResult<MonHoc>> GetByIdAsync(Guid id)
     {
         try
         {
-            var monHoc = await _service.GetMonHocByIdAsync(Guid.Parse(id));
-            if (monHoc == null)
-                return StatusCode(StatusCodes.Status404NotFound, ApiResponseFactory.NotFound<Object>($"Không tìm thấy môn học với mã {id}"));
+            if (id == Guid.Empty)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest,
+                    ApiResponseFactory.ValidationError<object>("ID không hợp lệ."));
+            }
 
-            return StatusCode(StatusCodes.Status200OK, monHoc);
+            var phan = await _service.GetMonHocByIdAsync(id);
+            if (phan == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound,
+                    ApiResponseFactory.NotFound<object>("Không tìm thấy mon với ID đã cho."));
+            }
+
+            return StatusCode(StatusCodes.Status200OK,
+                ApiResponseFactory.Success<Object>(phan, "Lấy phần thành công!"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Lỗi khi tìm môn học");
-            return StatusCode(StatusCodes.Status500InternalServerError, ApiResponseFactory.ServerError());
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
     }
 

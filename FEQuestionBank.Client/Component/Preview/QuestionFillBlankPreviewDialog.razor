@@ -38,11 +38,11 @@
             <!-- Danh sách đáp án đúng (ẩn trong thi, chỉ hiện ở preview) -->
             <MudText Typo="Typo.subtitle1" Class="mb-3 font-bold d-flex align-center">
                 <MudIcon Icon="@Icons.Material.Filled.Key" Color="Color.Success" Class="mr-2"/>
-                Đáp án đúng (@BlankAnswers.Count chỗ trống)
+                Đáp án đúng (@CauTraLoi.Count chỗ trống)
             </MudText>
 
             <div class="d-flex flex-column gap-3">
-                @foreach (var (answer, index) in BlankAnswers.Select((a, i) => (a, i)))
+                @foreach (var (answer, index) in CauTraLoi.Select((a, i) => (a, i)))
                 {
                     <MudPaper Elevation="2" Class="pa-4 rounded-lg d-flex align-center gap-4"
                               Style="background: #f0fdf4; border-left: 5px solid #22c55e;">
@@ -51,14 +51,14 @@
                         </MudAvatar>
                         <div>
                             <MudText Typo="Typo.body1" Class="font-bold" Color="Color.Success">
-                                @answer.NoiDung.Trim()
+                                <LatexContent Content="@answer.NoiDung"/>
                             </MudText>
                         </div>
                     </MudPaper>
                 }
             </div>
             <MudAlert Severity="Severity.Info" Class="mt-5" Variant="Variant.Filled">
-                Câu hỏi điền từ • Có <strong>@BlankAnswers.Count chỗ trống</strong> • Không phân biệt hoa thường
+                Câu hỏi điền từ • Có <strong>@CauTraLoi.Count chỗ trống</strong> • Không phân biệt hoa thường
             </MudAlert>
         </MudContainer>
     </DialogContent>
@@ -78,7 +78,7 @@
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
 
     [Parameter] public string QuestionContent { get; set; } = "";
-    [Parameter] public List<CreateCauTraLoiDienTuDto> BlankAnswers { get; set; } = new();
+    [Parameter] public List<CreateCauTraLoiDienTuDto> CauTraLoi { get; set; } = new();
 
     [Parameter] public string TenKhoa { get; set; } = "Chưa chọn";
     [Parameter] public string TenMon { get; set; } = "Chưa chọn";

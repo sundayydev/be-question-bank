@@ -4,12 +4,12 @@ using BeQuestionBank.Shared.DTOs.Khoa;
 using BeQuestionBank.Shared.DTOs.MonHoc;
 using BeQuestionBank.Shared.DTOs.Phan;
 using BeQuestionBank.Shared.Enums;
-using FEQuestionBank.Client.Component;
 using FEQuestionBank.Client.Component.Preview;
 using FEQuestionBank.Client.Implementation;
 using FEQuestionBank.Client.Services;
 using FEQuestionBank.Client.Services.Interface;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.WebUtilities;
 using MudBlazor;
 
 namespace FEQuestionBank.Client.Pages.CauHoi
@@ -17,6 +17,8 @@ namespace FEQuestionBank.Client.Pages.CauHoi
     public partial class CreateMultipleChoiceQuestionBase : ComponentBase
     {
         // 1. Inject các Service API
+        [Parameter] public Guid? EditId { get; set; }
+        protected bool IsEditMode => EditId.HasValue;
         [Inject] protected ICauHoiApiClient CauHoiApiClient { get; set; } = default!;
         [Inject] protected IKhoaApiClient KhoaApiClient { get; set; } = default!;
         [Inject] protected IMonHocApiClient MonHocApiClient { get; set; } = default!;
@@ -38,11 +40,10 @@ namespace FEQuestionBank.Client.Pages.CauHoi
         protected Guid? SelectedKhoaId { get; set; }
         protected Guid? SelectedMonHocId { get; set; }
         protected Guid? SelectedPhanId { get; set; }
-        protected EnumCLO SelectedCLO { get; set; }
-
+        protected EnumCLO SelectedCLO { get; set; } = EnumCLO.CLO1;
+        protected short CapDo { get; set; } = 1;
         protected string QuestionContent { get; set; } = string.Empty;
-
-        // List này giờ sẽ dùng class AnswerModel được định nghĩa bên dưới (ngoài class Base)
+        
         protected List<CauTraLoiDto> Answers { get; set; } = new()
         {
             new CauTraLoiDto { NoiDung = "", LaDapAn = false, HoanVi = true },
@@ -66,6 +67,7 @@ namespace FEQuestionBank.Client.Pages.CauHoi
             var res = await KhoaApiClient.GetAllKhoasAsync();
             if (res.Success && res.Data != null) Khoas = res.Data;
         }
+
 
         protected async Task OnKhoaChanged(Guid? khoaId)
         {
@@ -138,12 +140,12 @@ namespace FEQuestionBank.Client.Pages.CauHoi
                 HoanVi = true,
                 CapDo = 1,
                 CLO = SelectedCLO,
-                CauTraLois = Answers.Select(a => new CauTraLoiDto
+                CauTraLois = Answers.Select(a => new CreateCauTraLoiDto
                 {
                     NoiDung = a.NoiDung,
                     ThuTu = a.ThuTu,
                     LaDapAn = a.LaDapAn,
-                    HoanVi = a.HoanVi
+                    HoanVi = a.HoanVi ?? false
                 }).ToList()
             };
 
@@ -151,7 +153,7 @@ namespace FEQuestionBank.Client.Pages.CauHoi
             if (result.Success)
             {
                 Snackbar.Add("Tạo câu hỏi thành công!", Severity.Success);
-                Navigation.NavigateTo("/questions");
+                Navigation.NavigateTo("/question/list");
             }
             else
             {
@@ -178,7 +180,7 @@ namespace FEQuestionBank.Client.Pages.CauHoi
                 Snackbar.Add("Cần tối thiểu 3 câu trả lời", Severity.Warning);
         }
 
-        protected void GoBack() => Navigation.NavigateTo("/questions");
+        protected void GoBack() => Navigation.NavigateTo("/question/list");
 
         protected async Task PreviewQuestion()
         {
@@ -195,7 +197,7 @@ namespace FEQuestionBank.Client.Pages.CauHoi
             var parameters = new DialogParameters<QuestionMultipleChoicePreviewDialog>
             {
                 { x => x.QuestionContent, QuestionContent },
-                { x => x.Answers, Answers }, // Truyền List<AnswerModel>
+                { x => x.Answers, Answers }, 
                 { x => x.TenKhoa, tenKhoa },
                 { x => x.TenMon, tenMon },
                 { x => x.TenPhan, tenPhan },
@@ -211,6 +213,103 @@ namespace FEQuestionBank.Client.Pages.CauHoi
             {
                 await SaveQuestion();
             }
+        }
+
+        protected override async Task OnParametersSetAsync()
+        {
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+            if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("id", out var idStr))
+            {
+                EditId = Guid.Parse(idStr!);
+            }
+
+            if (IsEditMode && EditId.HasValue)
+            {
+                _breadcrumbs[^1] = new BreadcrumbItem(
+                    text: "Chỉnh sửa câu hỏi Multiple Choice",
+                    href: _breadcrumbs[^1].Href,
+                    disabled: _breadcrumbs[^1].Disabled,
+                    icon: _breadcrumbs[^1].Icon
+                );
+
+                await LoadForEdit(EditId.Value);
+            }
+
+            await base.OnParametersSetAsync();
+        }
+
+        private async Task LoadForEdit(Guid id)
+        {
+            var res = await CauHoiApiClient.GetByIdAsync(id);
+            if (!res.Success || res.Data == null)
+            {
+                Snackbar.Add("Không tải được câu hỏi!", Severity.Error);
+                Navigation.NavigateTo("/cauhoi");
+                return;
+            }
+
+            var q = res.Data;
+
+            QuestionContent = q.NoiDung ?? "";
+            SelectedCLO = q.CLO ?? EnumCLO.CLO1;
+            CapDo = q.CapDo;
+            SelectedPhanId = q.MaPhan;
+            bool loadSuccess = false;
+
+            // --- CHỈ XỬ LÝ KHI CÓ MaPhan ---
+            if (q.MaPhan != Guid.Empty)
+            {
+                try
+                {
+                    // 1. Lấy Phần
+                    var phanRes = await PhanApiClient.GetPhanByIdAsync(q.MaPhan);
+                    if (phanRes.Success && phanRes.Data != null)
+                    {
+                        var phan = phanRes.Data;
+                        SelectedMonHocId = phan.MaMonHoc;
+
+                        // 2. Lấy Môn
+                        var monRes = await MonHocApiClient.GetMonHocByIdAsync(phan.MaMonHoc);
+                        if (monRes.Success && monRes.Data != null)
+                        {
+                            SelectedKhoaId = monRes.Data.MaKhoa;
+
+                            // 3. Load danh sách theo thứ tự
+                            await LoadKhoas();
+
+                            var monListRes = await MonHocApiClient.GetMonHocsByMaKhoaAsync(SelectedKhoaId.Value);
+                            if (monListRes.Success) MonHocs = monListRes.Data ?? new();
+
+                            var phanListRes = await PhanApiClient.GetPhanByMonHocAsync(SelectedMonHocId.Value);
+                            if (phanListRes.Success) Phans = phanListRes.Data ?? new();
+
+                            loadSuccess = true;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[EDIT] Lỗi load Khoa/Môn: {ex.Message}");
+                }
+            }
+
+            // Load đáp án
+            Answers.Clear();
+            if (q.CauTraLois != null)
+            {
+                for (int i = 0; i < q.CauTraLois.Count; i++)
+                {
+                    var a = q.CauTraLois[i];
+                    Answers.Add(new CauTraLoiDto
+                    {
+                        NoiDung = a.NoiDung ?? "",
+                        LaDapAn = a.LaDapAn,
+                        HoanVi = a.HoanVi ?? true
+                    });
+                }
+            }
+
+            StateHasChanged();
         }
     }
 }

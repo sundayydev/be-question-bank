@@ -1,35 +1,28 @@
-﻿using BeQuestionBank.Shared.DTOs.Common;
-using BeQuestionBank.Shared.DTOs.Phan;
+﻿using BeQuestionBank.Shared.DTOs.Phan;
 using FEQuestionBank.Client.Services;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using FEQuestionBank.Client.Pages.OtherPage;
 using FEQuestionBank.Client.Pages.Phan;
 
 namespace FEQuestionBank.Client.Pages
 {
-   public partial class PhanBase : ComponentBase
-{
-
-    [Parameter] public Guid MaMonHoc { get; set; } = Guid.Empty;
-    [Inject] protected IPhanApiClient PhanApiClient { get; set; } = default!;
-    [Inject] protected ISnackbar Snackbar { get; set; } = default!;
-    [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
-    [Inject] protected IDialogService DialogService { get; set; } = default!;
-
-    protected List<PhanDto> phanList = new();
-    protected string? _searchTerm;
-    protected bool loading = true;
-        
-
-    protected override async Task OnInitializedAsync()
+    public partial class PhanBase : ComponentBase
     {
-        await LoadPhanList();
-    }
+        [Parameter] public Guid MaMonHoc { get; set; } = Guid.Empty;
+        [Inject] protected IPhanApiClient PhanApiClient { get; set; } = default!;
+        [Inject] protected ISnackbar Snackbar { get; set; } = default!;
+        [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
+        [Inject] protected IDialogService DialogService { get; set; } = default!;
+
+        protected List<PhanDto> phanList = new();
+        protected string? _searchTerm;
+        protected bool loading = true;
+
+
+        protected override async Task OnInitializedAsync()
+        {
+            await LoadPhanList();
+        }
 
         //private async Task LoadPhanList()
         //{
@@ -106,140 +99,151 @@ namespace FEQuestionBank.Client.Pages
                 StateHasChanged();
             }
         }
-        
 
 
-    // Làm phẳng cây → danh sách
-    private List<PhanDto> FlattenTree(List<PhanDto> tree)
-    {
-        var result = new List<PhanDto>();
-        foreach (var node in tree)
+        // Làm phẳng cây → danh sách
+        private List<PhanDto> FlattenTree(List<PhanDto> tree)
         {
-            result.Add(node);
-            if (node.PhanCons?.Any() == true)
+            var result = new List<PhanDto>();
+            foreach (var node in tree)
             {
-                result.AddRange(FlattenTree(node.PhanCons));
+                result.Add(node);
+                if (node.PhanCons?.Any() == true)
+                {
+                    result.AddRange(FlattenTree(node.PhanCons));
+                }
             }
+
+            return result;
         }
-        return result;
-    }
+
         protected void ViewTree(PhanDto phan)
         {
             NavigationManager.NavigateTo($"/phancon/{phan.MaPhan}");
         }
+
         // Tìm kiếm
         private List<PhanDto> ApplySearch(List<PhanDto> list)
-    {
-        if (string.IsNullOrWhiteSpace(_searchTerm))
-            return list;
-        return list
-            .Where(x => x.TenPhan.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-    }
-
-    protected async Task OnSearch()
-    {
-        await LoadPhanList();
-    }
-
-    protected async Task OnCreateNew()
-    {
-        var parameters = new DialogParameters
         {
-            ["Phan"] = new PhanDto(),
-            ["DialogTitle"] = "Tạo mới Phần"
-        };
-        var dialog = DialogService.Show<EditPhanDialog>("Tạo mới", parameters);
-        var result = await dialog.Result;
-        if (!result.Canceled)
+            if (string.IsNullOrWhiteSpace(_searchTerm))
+                return list;
+            return list
+                .Where(x => x.TenPhan.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        protected async Task OnSearch()
         {
-            await SavePhanAsync((PhanDto)result.Data);
             await LoadPhanList();
         }
-    }
 
-    protected async Task OnEdit(PhanDto phan)
-    {
-        var parameters = new DialogParameters
+        protected async Task OnCreateNew()
         {
-            ["Phan"] = phan,
-            ["DialogTitle"] = "Chỉnh sửa Phần"
-        };
-        var dialog = DialogService.Show<EditPhanDialog>("Chỉnh sửa", parameters);
-        var result = await dialog.Result;
-        if (!result.Canceled)
-        {
-            await SavePhanAsync((PhanDto)result.Data);
-            await LoadPhanList();
-        }
-    }
-
-    protected async Task OnConfirmDelete(PhanDto phan)
-    {
-        var confirm = await DialogService.ShowMessageBox(
-            "Xác nhận xóa",
-            $"Bạn có chắc chắn muốn xóa phần \"{phan.TenPhan}\"?",
-            yesText: "Xóa", cancelText: "Hủy");
-
-        if (confirm == true)
-        {
-            await DeletePhanAsync(phan.MaPhan);
-            await LoadPhanList();
-        }
-    }
-
-    protected void OnViewDetail(PhanDto phan)
-    {
-        DialogService.Show<PhanDetailDialog>("Chi tiết", new DialogParameters { ["Phan"] = phan });
-    }
-
-    protected void OnViewSubjects(PhanDto phan)
-    {
-        if (phan.MaMonHoc != Guid.Empty)
-            NavigationManager.NavigateTo($"/monhoc/{phan.MaMonHoc}/cauhoi?phan={phan.MaPhan}");
-    }
-
-    private async Task SavePhanAsync(PhanDto phan)
-    {
-        try
-        {
-            if (phan.MaPhan == Guid.Empty)
+            var parameters = new DialogParameters
             {
-                var create = new CreatePhanDto { TenPhan = phan.TenPhan,
-            NoiDung = phan.NoiDung,
-            MaSoPhan = phan.MaSoPhan,
-            ThuTu = phan.ThuTu,
-            SoLuongCauHoi = phan.SoLuongCauHoi,
-            LaCauHoiNhom = phan.LaCauHoiNhom,
-            MaPhanCha = phan.MaPhanCha,
-            MaMonHoc = phan.MaMonHoc };
-                var res = await PhanApiClient.CreatePhanAsync(create);
-                Snackbar.Add(res.Success ? "Tạo thành công!" : res.Message, res.Success ? Severity.Success : Severity.Error);
-            }
-            else
+                ["Phan"] = new PhanDto(),
+                ["DialogTitle"] = "Tạo mới Phần"
+            };
+            var dialog = DialogService.Show<EditPhanDialog>("Tạo mới", parameters);
+            var result = await dialog.Result;
+            if (!result.Canceled)
             {
-                var update = new UpdatePhanDto { TenPhan = phan.TenPhan,
-                    NoiDung = phan.NoiDung,
-                    MaSoPhan = phan.MaSoPhan,
-                    ThuTu = phan.ThuTu,
-                    SoLuongCauHoi = phan.SoLuongCauHoi,
-                    LaCauHoiNhom = phan.LaCauHoiNhom,
-                    MaPhanCha = phan.MaPhanCha,
-                    MaMonHoc = phan.MaMonHoc };
-                var res = await PhanApiClient.UpdatePhanAsync(phan.MaPhan, update);
-                Snackbar.Add(res.Success ? "Cập nhật thành công!" : res.Message, res.Success ? Severity.Success : Severity.Error);
+                await SavePhanAsync((PhanDto)result.Data);
+                await LoadPhanList();
             }
         }
-        catch (Exception ex)
+
+        protected async Task OnEdit(PhanDto phan)
         {
-            Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
+            var parameters = new DialogParameters
+            {
+                ["Phan"] = phan,
+                ["DialogTitle"] = "Chỉnh sửa Phần"
+            };
+            var dialog = DialogService.Show<EditPhanDialog>("Chỉnh sửa", parameters);
+            var result = await dialog.Result;
+            if (!result.Canceled)
+            {
+                await SavePhanAsync((PhanDto)result.Data);
+                await LoadPhanList();
+            }
+        }
+
+        protected async Task OnConfirmDelete(PhanDto phan)
+        {
+            var confirm = await DialogService.ShowMessageBox(
+                "Xác nhận xóa",
+                $"Bạn có chắc chắn muốn xóa phần \"{phan.TenPhan}\"?",
+                yesText: "Xóa", cancelText: "Hủy");
+
+            if (confirm == true)
+            {
+                await DeletePhanAsync(phan.MaPhan);
+                await LoadPhanList();
+            }
+        }
+
+        protected void OnViewDetail(PhanDto phan)
+        {
+            DialogService.Show<PhanDetailDialog>("Chi tiết", new DialogParameters { ["Phan"] = phan });
+        }
+
+        protected void OnViewSubjects(PhanDto phan)
+        {
+            if (phan.MaMonHoc != Guid.Empty)
+                NavigationManager.NavigateTo($"/monhoc/{phan.MaMonHoc}/cauhoi?phan={phan.MaPhan}");
+        }
+
+        private async Task SavePhanAsync(PhanDto phan)
+        {
+            try
+            {
+                if (phan.MaPhan == Guid.Empty)
+                {
+                    var create = new CreatePhanDto
+                    {
+                        TenPhan = phan.TenPhan,
+                        NoiDung = phan.NoiDung,
+                        MaSoPhan = phan.MaSoPhan,
+                        ThuTu = phan.ThuTu,
+                        SoLuongCauHoi = phan.SoLuongCauHoi,
+                        LaCauHoiNhom = phan.LaCauHoiNhom,
+                        MaPhanCha = phan.MaPhanCha,
+                        MaMonHoc = phan.MaMonHoc
+                    };
+                    var res = await PhanApiClient.CreatePhanAsync(create);
+                    Snackbar.Add(res.Success ? "Tạo thành công!" : res.Message,
+                        res.Success ? Severity.Success : Severity.Error);
+                }
+                else
+                {
+                    var update = new UpdatePhanDto
+                    {
+                        TenPhan = phan.TenPhan,
+                        NoiDung = phan.NoiDung,
+                        MaSoPhan = phan.MaSoPhan,
+                        ThuTu = phan.ThuTu,
+                        SoLuongCauHoi = phan.SoLuongCauHoi,
+                        LaCauHoiNhom = phan.LaCauHoiNhom,
+                        MaPhanCha = phan.MaPhanCha,
+                        MaMonHoc = phan.MaMonHoc
+                    };
+                    var res = await PhanApiClient.UpdatePhanAsync(phan.MaPhan, update);
+                    Snackbar.Add(res.Success ? "Cập nhật thành công!" : res.Message,
+                        res.Success ? Severity.Success : Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Lỗi: {ex.Message}", Severity.Error);
+            }
+        }
+
+        private async Task DeletePhanAsync(Guid id)
+        {
+            var res = await PhanApiClient.DeletePhanAsync(id);
+            Snackbar.Add(res.Success ? "Xóa thành công!" : res.Message,
+                res.Success ? Severity.Success : Severity.Error);
         }
     }
-
-    private async Task DeletePhanAsync(Guid id)
-    {
-        var res = await PhanApiClient.DeletePhanAsync(id);
-        Snackbar.Add(res.Success ? "Xóa thành công!" : res.Message, res.Success ? Severity.Success : Severity.Error);
-    }
-}
 }

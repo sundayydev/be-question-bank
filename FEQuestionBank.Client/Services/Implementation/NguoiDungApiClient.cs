@@ -1,7 +1,9 @@
-﻿using BeQuestionBank.Shared.DTOs.Common;
+﻿using System.Net;
+using BeQuestionBank.Shared.DTOs.Common;
 using BeQuestionBank.Shared.DTOs.Pagination;
 
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Web;
 using BeQuestionBank.Shared.DTOs.user;
 using BEQuestionBank.Shared.DTOs.user;
@@ -29,9 +31,36 @@ public class NguoiDungApiClient : BaseApiClient, INguoiDungApiClient
     public async Task<ApiResponse<NguoiDungDto>> UpdateNguoiDungAsync(Guid id, UpdateNguoiDungDto model)
     {
         var res = await _httpClient.PatchAsJsonAsync($"api/NguoiDung/{id}", model);
-        return await res.Content.ReadFromJsonAsync<ApiResponse<NguoiDungDto>>()
-               ?? new ApiResponse<NguoiDungDto>(500, "Lỗi khi cập nhật người dùng");
+
+        // Thành công → parse bình thường
+        if (res.IsSuccessStatusCode)
+        {
+            return await res.Content.ReadFromJsonAsync<ApiResponse<NguoiDungDto>>()
+                   ?? new ApiResponse<NguoiDungDto>(500, "Lỗi không xác định");
+        }
+
+        //  Bắt lỗi validation 400
+        if (res.StatusCode == HttpStatusCode.BadRequest)
+        {
+            var json = await res.Content.ReadAsStringAsync();
+
+            var errorObj = JsonSerializer.Deserialize<ValidationErrorResponse>(json,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            var messages = errorObj?.Errors?
+                .SelectMany(e => e.Value)
+                .ToList();
+
+            return new ApiResponse<NguoiDungDto>(400, string.Join("\n", messages));
+        }
+
+        // Các lỗi khác
+        return new ApiResponse<NguoiDungDto>(
+            (int)res.StatusCode,
+            $"Lỗi server: {res.StatusCode}"
+        );
     }
+
 
     public async Task<ApiResponse<string>> DeleteNguoiDungAsync(Guid id)
     {
@@ -70,4 +99,10 @@ public class NguoiDungApiClient : BaseApiClient, INguoiDungApiClient
         return await response.Content.ReadFromJsonAsync<ApiResponse<ImportResultDto>>()
                ?? new ApiResponse<ImportResultDto>(500, "Lỗi deserialize response");
     }
+
+    public class ValidationErrorResponse
+    {
+        public Dictionary<string, string[]> Errors { get; set; }
+    }
+
 }

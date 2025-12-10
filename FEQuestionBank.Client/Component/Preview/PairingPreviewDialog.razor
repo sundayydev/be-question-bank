@@ -17,7 +17,14 @@
                     <strong>Nội dung:</strong>
                 </MudText>
                 <MudText Typo="Typo.body1" Class="mb-4">
-                    @HuongDanChung
+                    @if (string.IsNullOrWhiteSpace(HuongDanChung))
+                    {
+                        <span>Chưa có nội dung</span>
+                    }
+                    else
+                    {
+                        <LatexContent Content="@HuongDanChung"/>
+                    }
                 </MudText>
 
                 <MudGrid Spacing="3">
@@ -61,11 +68,13 @@
                         @foreach (var (pair, i) in Pairs.Select((p, idx) => (p, idx)))
                         {
                             var color = Colors[i % Colors.Length];
-                            <MudPaper Class="pa-5 mb-4 text-center rounded-xl shadow-sm"
+                            <MudPaper Class="pa-5 mb-4 text-center rounded-xl shadow-sm fixed-cell"
                                       Style="@($"background:{color}18; border: 3px solid {color};")">
-                                <MudText Typo="Typo.body1" Class="font-bold" Style="@($"color:{color}")">
-                                    @(i + 1). @pair.Question
-                                </MudText>
+
+                                <div class="cell-content" style="@($"color:{color}")">
+                                    <LatexContent Content="@pair.Question"/>
+                                </div>
+
                             </MudPaper>
                         }
                     </MudItem>
@@ -82,11 +91,13 @@
                         @foreach (var (pair, i) in Pairs.Select((p, idx) => (p, idx)))
                         {
                             var color = Colors[i % Colors.Length];
-                            <MudPaper Class="pa-5 mb-4 text-center rounded-xl shadow-sm"
+                            <MudPaper Class="pa-5 mb-4 text-center rounded-xl shadow-sm fixed-cell"
                                       Style="@($"background:{color}18; border: 3px solid {color};")">
-                                <MudText Typo="Typo.body1" Class="font-bold" Style="@($"color:{color}")">
-                                    @(Char.ConvertFromUtf32(65 + i)) @pair.Answer
-                                </MudText>
+
+                                <div class="cell-content" style="@($"color:{color}")">
+                                    <LatexContent Content="@pair.Answer"/>
+                                </div>
+
                             </MudPaper>
                         }
                     </MudItem>
@@ -155,5 +166,26 @@
         margin-top: 1.5rem;
     }
 
+    .fixed-cell {
+        height: 50px;
+        display: flex;
+        justify-content: center;
+        text-align: center;
+        align-items: center;
+        overflow: hidden;
+        padding: 1rem !important;
+        border-radius: 14px;
+    }
+
+    .cell-content {
+        max-height: 100%;
+        width: 100%;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        word-break: break-word;
+        line-height: 1.4;
+    }
 
 </style>

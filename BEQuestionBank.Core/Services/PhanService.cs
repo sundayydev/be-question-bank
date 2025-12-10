@@ -30,6 +30,12 @@ public class PhanService
 
     }
 
+    // public async Task<List<PhanDto>> GetPhanById(Guid id)
+    // {
+    //     var phans = await _phanRepository.GetByIdAsync(id);
+    //     return BuildTree(phans);
+    // }
+
     public async Task<List<PhanDto>> GetTreeAsync()
     {
         var phans = await _phanRepository.GetAllAsync();

@@ -10,7 +10,7 @@
     </TitleContent>
 
     <DialogContent>
-        <MudContainer Style="max-height:80vh; overflow-y:auto;" Class="py-4">
+        <MudContainer Style="max-height:80vh;" Class="py-4">
 
             <!-- HEADER: Đoạn văn chung + Thông tin phân loại -->
             <MudPaper Class="pa-5 mb-6 rounded-xl" Elevation="4"
@@ -39,8 +39,16 @@
                     <strong>Đoạn văn </strong>
                 </MudText>
                 <MudText Typo="Typo.body1" Class="mb-4" Style="line-height: 1.8;">
-                    @(string.IsNullOrWhiteSpace(Passage) ? "Chưa có nội dung" : Passage)
+                    @if (string.IsNullOrWhiteSpace(Passage))
+                    {
+                        <span>Chưa có nội dung</span>
+                    }
+                    else
+                    {
+                        <LatexContent Content="@Passage"/>
+                    }
                 </MudText>
+
             </MudPaper>
 
             <!-- DANH SÁCH CÂU HỎI CON -->
@@ -69,9 +77,7 @@
                                     <MudText Typo="Typo.subtitle1" Class="font-bold">
                                         Câu @(index + 1):
                                     </MudText>
-                                    <MudText Typo="Typo.body1">
-                                        @question.NoiDung
-                                    </MudText>
+                                    <LatexContent Content="@question.NoiDung"/>
                                 </div>
 
                                 <div>

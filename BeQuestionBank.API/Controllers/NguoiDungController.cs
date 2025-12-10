@@ -139,6 +139,12 @@ public class NguoiDungController(NguoiDungService service, ILogger<NguoiDungCont
             {
                 existingUser.MatKhau = model.MatKhau; 
             }
+            else
+            {
+                // QUAN TRỌNG: Nếu không đổi pass, phải set null 
+                // để Service không hash lại mật khẩu cũ
+                existingUser.MatKhau = null;
+            }
 
             var updatedUser = await _service.UpdateAsync(existingUser.MaNguoiDung, existingUser);
             var userDto = MapToDto(updatedUser);

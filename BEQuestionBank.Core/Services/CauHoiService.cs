@@ -12,7 +12,7 @@ namespace BEQuestionBank.Core.Services
     {
         private readonly ICauHoiRepository _cauHoiRepository;
         private readonly IMemoryCache _cache;
-        
+
         public CauHoiService(ICauHoiRepository cauHoiRepository, IMemoryCache cache)
         {
             _cauHoiRepository = cauHoiRepository;
@@ -21,12 +21,11 @@ namespace BEQuestionBank.Core.Services
 
         public async Task<CauHoi> CreateSingleQuestionAsync(CreateCauHoiWithCauTraLoiDto dto, Guid userId)
         {
-            // 1. Map DTO sang Entity CauHoi
             var cauHoi = new CauHoi
             {
                 MaCauHoi = Guid.NewGuid(),
                 MaPhan = dto.MaPhan,
-                MaSoCauHoi = dto.MaSoCauHoi, // Nếu muốn tự động tăng, cần logic riêng ở Repo
+                MaSoCauHoi = dto.MaSoCauHoi, 
                 NoiDung = dto.NoiDung,
                 HoanVi = dto.HoanVi,
                 CapDo = dto.CapDo,
@@ -36,13 +35,13 @@ namespace BEQuestionBank.Core.Services
                 NgayTao = DateTime.Now,
                 NguoiTao = userId,
                 CLO = dto.CLO,
-                LoaiCauHoi = "Single", // Đánh dấu loại câu hỏi
+                LoaiCauHoi = "TN", 
                 XoaTam = false
             };
 
-            // 2. Map Câu trả lời
             if (dto.CauTraLois != null && dto.CauTraLois.Any())
             {
+                int order = 1;
                 foreach (var ansDto in dto.CauTraLois)
                 {
                     cauHoi.CauTraLois.Add(new CauTraLoi
@@ -51,12 +50,12 @@ namespace BEQuestionBank.Core.Services
                         MaCauHoi = cauHoi.MaCauHoi,
                         NoiDung = ansDto.NoiDung,
                         LaDapAn = ansDto.LaDapAn,
-                        HoanVi = true // Mặc định cho phép hoán vị câu trả lời
+                        HoanVi = ansDto.HoanVi,
+                        ThuTu = order++
                     });
                 }
             }
-
-            // 3. Gọi Repository để lưu
+            
             return (CauHoi)await _cauHoiRepository.AddWithAnswersAsync(cauHoi);
         }
 
@@ -67,9 +66,9 @@ namespace BEQuestionBank.Core.Services
             {
                 MaCauHoi = Guid.NewGuid(),
                 MaPhan = dto.MaPhan,
-                NoiDung = dto.NoiDung, // Nội dung đoạn văn
+                NoiDung = dto.NoiDung, 
                 MaSoCauHoi = dto.MaSoCauHoi,
-                HoanVi = false, // Câu hỏi nhóm thường không hoán vị nội dung đoạn văn
+                HoanVi = false,
                 CapDo = dto.CapDo,
                 SoCauHoiCon = dto.CauHoiCons?.Count ?? 0,
                 MaCauHoiCha = null,
@@ -89,8 +88,8 @@ namespace BEQuestionBank.Core.Services
                     var childQuestion = new CauHoi
                     {
                         MaCauHoi = Guid.NewGuid(),
-                        MaCauHoiCha = parentQuestion.MaCauHoi, // Link tới cha
-                        MaPhan = dto.MaPhan, // Cùng phân loại với cha
+                        MaCauHoiCha = parentQuestion.MaCauHoi,
+                        MaPhan = dto.MaPhan,
                         // MaSoCauHoi = ... (Có thể cần logic sinh mã tự động)
                         NoiDung = childDto.NoiDung,
                         HoanVi = childDto.HoanVi,
@@ -98,13 +97,14 @@ namespace BEQuestionBank.Core.Services
                         TrangThai = true,
                         NgayTao = DateTime.Now,
                         NguoiTao = userId,
-                        CLO = childDto.CLO ?? dto.CLO, // Lấy CLO của con hoặc kế thừa cha
+                        CLO = childDto.CLO ?? dto.CLO,
                         LoaiCauHoi = "NH"
                     };
 
                     // 3. Map Câu trả lời cho Câu hỏi Con
                     if (childDto.CauTraLois != null)
                     {
+                        int order = 1;
                         foreach (var ansDto in childDto.CauTraLois)
                         {
                             childQuestion.CauTraLois.Add(new CauTraLoi
@@ -113,22 +113,19 @@ namespace BEQuestionBank.Core.Services
                                 MaCauHoi = childQuestion.MaCauHoi,
                                 NoiDung = ansDto.NoiDung,
                                 LaDapAn = ansDto.LaDapAn,
-                                HoanVi = true
+                                HoanVi = ansDto.HoanVi,
+                                ThuTu = order++,
                             });
                         }
                     }
-
-                    // Thêm con vào danh sách con của cha
+                    
                     parentQuestion.CauHoiCons.Add(childQuestion);
                 }
             }
-
-            // 4. Lưu toàn bộ Graph (Cha -> Con -> Trả lời) vào DB
-            // EF Core đủ thông minh để insert theo thứ tự đúng
+            
             return (CauHoi)await _cauHoiRepository.AddWithAnswersAsync(parentQuestion);
         }
-
-        // ... (Các hàm Create đã có ở trên)
+        
         /// <summary>
         /// Lấy danh sách tất cả câu hỏi với phân trang và lọc nâng cao
         /// </summary>
@@ -226,7 +223,7 @@ namespace BEQuestionBank.Core.Services
                     CLO = e.CLO,
                     LoaiCauHoi = e.LoaiCauHoi,
 
-                    // Chỉ include câu trả lời cho câu hỏi đơn
+                 
                     CauTraLois = e.LoaiCauHoi != "Group"
                         ? e.CauTraLois.Select(a => new CauTraLoiDto
                         {
@@ -248,89 +245,14 @@ namespace BEQuestionBank.Core.Services
                 TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
             };
         }
-
-        /// <summary>
-        /// Lấy danh sách câu hỏi đơn (Single questions only)
-        /// </summary>
-        public async Task<object> GetSingleQuestionsAsync(
-            int pageIndex = 1,
-            int pageSize = 20,
-            string? keyword = null,
-            Guid? phanId = null)
-        {
-            var entities = await _cauHoiRepository.GetAllWithAnswersAsync();
-
-            // Lọc chỉ câu hỏi đơn (Single/Multiple Choice)
-            var query = entities
-                .Where(e => e.MaCauHoiCha == null &&
-                            e.LoaiCauHoi == "Single" &&
-                            !e.XoaTam.GetValueOrDefault())
-                .AsQueryable();
-
-            // Lọc theo từ khóa
-            if (!string.IsNullOrWhiteSpace(keyword))
-            {
-                keyword = keyword.ToLower();
-                query = query.Where(q => q.NoiDung != null && q.NoiDung.ToLower().Contains(keyword));
-            }
-
-            // Lọc theo Phần
-            if (phanId.HasValue)
-            {
-                query = query.Where(q => q.MaPhan == phanId.Value);
-            }
-
-            // Đếm tổng
-            var totalCount = query.Count();
-
-            // Phân trang
-            var pagedData = query
-                .OrderByDescending(q => q.NgayTao)
-                .Skip((pageIndex - 1) * pageSize)
-                .Take(pageSize)
-                .ToList() // Convert to list first to avoid expression tree issues
-                .Select(e => new CauHoiDto
-                {
-                    MaCauHoi = e.MaCauHoi,
-                    MaPhan = e.MaPhan,
-                    TenPhan = e.Phan != null ? e.Phan.TenPhan : null,
-                    MaSoCauHoi = e.MaSoCauHoi,
-                    NoiDung = e.NoiDung,
-                    HoanVi = e.HoanVi,
-                    CapDo = e.CapDo,
-                    NgayTao = e.NgayTao,
-                    CLO = e.CLO,
-                    LoaiCauHoi = e.LoaiCauHoi,
-                    XoaTam = e.XoaTam ?? false,
-                    CauTraLois = e.CauTraLois.Select(a => new CauTraLoiDto
-                    {
-                        MaCauTraLoi = a.MaCauTraLoi,
-                        NoiDung = a.NoiDung,
-                        LaDapAn = a.LaDapAn,
-                        HoanVi = a.HoanVi
-                    }).ToList()
-                })
-                .ToList();
-
-            return new
-            {
-                Items = pagedData,
-                TotalCount = totalCount,
-                PageIndex = pageIndex,
-                PageSize = pageSize,
-                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
-            };
-        }
-
-
+        
         /// <summary>
         /// Lấy danh sách tất cả câu hỏi (Dùng cho bảng dữ liệu)
         /// </summary>
         public async Task<IEnumerable<CauHoiDto>> GetAllAsync()
         {
             var entities = await _cauHoiRepository.GetAllWithAnswersAsync();
-
-            // Map Entity sang DTO phẳng để hiển thị trên grid
+            
             return entities.Select(e => new CauHoiDto
             {
                 MaCauHoi = e.MaCauHoi,
@@ -351,7 +273,6 @@ namespace BEQuestionBank.Core.Services
             var entity = await _cauHoiRepository.GetByIdWithAnswersAsync(id);
             if (entity == null) return null;
 
-            // Map Entity sang DTO chi tiết
             var dto = new CauHoiWithCauTraLoiDto
             {
                 MaCauHoi = entity.MaCauHoi,
@@ -363,20 +284,35 @@ namespace BEQuestionBank.Core.Services
                 CLO = entity.CLO,
                 LoaiCauHoi = entity.LoaiCauHoi,
                 SoCauHoiCon = entity.SoCauHoiCon,
-                CauTraLois = entity.CauTraLois.Select(ans => new BeQuestionBank.Shared.DTOs.CauTraLoi.CauTraLoiDto
+
+                CauTraLois = entity.CauTraLois.Select(ans => new CauTraLoiDto
                 {
                     MaCauTraLoi = ans.MaCauTraLoi,
                     NoiDung = ans.NoiDung,
                     LaDapAn = ans.LaDapAn,
                     HoanVi = ans.HoanVi
+                }).ToList(),
+
+                CauHoiCons = entity.CauHoiCons?.Select(ch => new CauHoiDto
+                {
+                    MaCauHoi = ch.MaCauHoi,
+                    NoiDung = ch.NoiDung ?? "",
+                    HoanVi = ch.HoanVi,
+                    CapDo = ch.CapDo,
+                    CLO = ch.CLO,
+                    CauTraLois = ch.CauTraLois?.Select(a => new CauTraLoiDto
+                    {
+                        MaCauTraLoi = a.MaCauTraLoi,
+                        NoiDung = a.NoiDung,
+                        LaDapAn = a.LaDapAn,
+                        HoanVi = a.HoanVi
+                    }).ToList() ?? new List<CauTraLoiDto>()
                 }).ToList()
             };
 
-            // Nếu là câu hỏi nhóm, bạn có thể cần thêm logic map CauHoiCons ở đây 
-            // (Tùy thuộc vào DTO của bạn có hỗ trợ danh sách con không)
-
             return dto;
         }
+
 
         /// <summary>
         /// Cập nhật câu hỏi và danh sách câu trả lời
@@ -388,7 +324,6 @@ namespace BEQuestionBank.Core.Services
             if (existing == null) return false;
 
             // 2. Cập nhật thông tin chính (Entity CauHoi)
-            // Tạo một object CauHoi mới chứa thông tin update để truyền xuống Repo
             var updateEntity = new CauHoi
             {
                 MaCauHoi = id,
@@ -397,9 +332,7 @@ namespace BEQuestionBank.Core.Services
                 HoanVi = dto.HoanVi,
                 CapDo = dto.CapDo,
                 CLO = dto.CLO,
-                NgayCapNhat = DateTime.Now,
-
-                // Giữ nguyên các thông tin hệ thống cũ
+                NgayCapNhat = DateTime.UtcNow,
                 NguoiTao = existing.NguoiTao,
                 NgayTao = existing.NgayTao,
                 LoaiCauHoi = existing.LoaiCauHoi,
@@ -409,7 +342,6 @@ namespace BEQuestionBank.Core.Services
             };
 
             // 3. Map danh sách câu trả lời mới
-            // Repository sẽ lo việc so sánh ID để biết cái nào là Thêm/Sửa/Xóa
             if (dto.CauTraLois != null)
             {
                 updateEntity.CauTraLois = dto.CauTraLois.Select(a => new CauTraLoi
@@ -443,80 +375,7 @@ namespace BEQuestionBank.Core.Services
             await _cauHoiRepository.UpdateAsync(entity);
             return true;
         }
-
-        /// <summary>
-        /// Lấy danh sách câu hỏi nhóm với phân trang và lọc
-        /// </summary>
-        public async Task<object> GetCauHoiNhomAsync(
-            int pageIndex = 1,
-            int pageSize = 10,
-            string? keyword = null,
-            Guid? khoaId = null,
-            Guid? monHocId = null,
-            Guid? phanId = null)
-        {
-            var groups = await _cauHoiRepository.GetAllGroupsAsync();
-
-            // Lọc câu hỏi nhóm (LoaiCauHoi = "Group" và có câu hỏi con)
-            var query = groups
-                .Where(g => g.MaCauHoiCha == null
-                            && g.LoaiCauHoi == "Group"
-                            && g.CauHoiCons.Any()
-                            && !g.XoaTam.GetValueOrDefault())
-                .AsQueryable();
-
-            // Lọc theo từ khóa (tìm trong nội dung đoạn văn)
-            if (!string.IsNullOrWhiteSpace(keyword))
-            {
-                keyword = keyword.ToLower();
-                query = query.Where(q => q.NoiDung != null && q.NoiDung.ToLower().Contains(keyword));
-            }
-
-            // Lọc theo Phần
-            if (phanId.HasValue)
-            {
-                query = query.Where(q => q.MaPhan == phanId.Value);
-            }
-            // Nếu muốn lọc theo MonHoc hoặc Khoa, cần join với Phan -> MonHoc -> Khoa
-            // (Giả định đã có navigation property hoặc sử dụng Include)
-
-            // Đếm tổng số
-            var totalCount = query.Count();
-
-            // Phân trang
-            var pagedData = query
-                .OrderByDescending(x => x.NgayTao)
-                .Skip((pageIndex - 1) * pageSize)
-                .Take(pageSize)
-                .Select(parent => new CauHoiDto
-                {
-                    MaCauHoi = parent.MaCauHoi,
-                    MaPhan = parent.MaPhan,
-                    MaSoCauHoi = parent.MaSoCauHoi,
-                    NoiDung = parent.NoiDung,
-                    HoanVi = parent.HoanVi,
-                    CapDo = parent.CapDo,
-                    SoCauHoiCon = parent.CauHoiCons.Count,
-                    NgayTao = parent.NgayTao,
-                    CLO = parent.CLO,
-                    LoaiCauHoi = parent.LoaiCauHoi,
-                    XoaTam = parent.XoaTam ?? false,
-
-                    // Không include CauHoiCons ở đây để giảm payload
-                    // Client có thể gọi API detail để lấy đầy đủ
-                })
-                .ToList();
-
-            return new
-            {
-                Items = pagedData,
-                TotalCount = totalCount,
-                PageIndex = pageIndex,
-                PageSize = pageSize,
-                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
-            };
-        }
-
+        
         /// <summary>
         /// Lấy chi tiết câu hỏi nhóm kèm tất cả câu hỏi con và câu trả lời
         /// </summary>
@@ -620,11 +479,9 @@ namespace BEQuestionBank.Core.Services
             {
                 return cachedResult;
             }
-
-            // Nếu chưa có cache, load từ DB
+            
             var groups = await _cauHoiRepository.GetAllGhepNoiAsync();
-
-            // Lọc loại GN
+            
             groups = groups.Where(x => x.LoaiCauHoi == "GN").ToList();
 
             var result = groups
@@ -669,7 +526,7 @@ namespace BEQuestionBank.Core.Services
                 .OrderByDescending(x => x.MaSoCauHoi)
                 .ToList();
 
-            // Set cache, ví dụ hết hạn 5 phút
+            // Set cache
             var cacheOptions = new MemoryCacheEntryOptions()
                 .SetSlidingExpiration(TimeSpan.FromMinutes(5));
 
@@ -683,9 +540,7 @@ namespace BEQuestionBank.Core.Services
         /// </summary>
         public async Task<List<CauHoiDto>> GetMultipleChoiceQuestionsAsync()
         {
-            // Lấy tất cả câu hỏi MCQ từ repository
             var questions = await _cauHoiRepository.GetAllMultipleChoiceAsync();
-            //  Map sang DTO
             var result = questions.Select(q => new CauHoiDto
                 {
                     MaCauHoi = q.MaCauHoi,
@@ -715,10 +570,8 @@ namespace BEQuestionBank.Core.Services
         /// </summary>
         public async Task<List<CauHoiDto>> GetCauHoiDienTuAsync()
         {
-            // Nếu chưa có cache, load từ DB
             var groups = await _cauHoiRepository.GetAllDienTuAsync();
-
-            // Lọc loại GN
+            
             groups = groups.Where(x => x.LoaiCauHoi == "DT").ToList();
 
             var result = groups
@@ -774,14 +627,14 @@ namespace BEQuestionBank.Core.Services
         /// </summary>
         public async Task<CauHoi> CreateCauHoiDienTuAsync(CreateCauHoiDienTuDto dto, Guid userId)
         {
-            // 1. Tạo Câu hỏi Cha (Đoạn văn/Ngữ cảnh)
+            // 1. Tạo Câu hỏi Cha
             var parentQuestion = new CauHoi
             {
                 MaCauHoi = Guid.NewGuid(),
                 MaPhan = dto.MaPhan,
-                NoiDung = $"<span>{dto.NoiDung}</span>", // Nội dung đoạn văn
+                NoiDung = $"<span>{dto.NoiDung}</span>", 
                 MaSoCauHoi = dto.MaSoCauHoi,
-                HoanVi = false, // Câu hỏi nhóm thường không hoán vị nội dung đoạn văn
+                HoanVi = false,
                 CapDo = dto.CapDo,
                 SoCauHoiCon = dto.CauHoiCons?.Count ?? 0,
                 MaCauHoiCha = null,
@@ -801,7 +654,7 @@ namespace BEQuestionBank.Core.Services
                     var childQuestion = new CauHoi
                     {
                         MaCauHoi = Guid.NewGuid(),
-                        MaCauHoiCha = parentQuestion.MaCauHoi, // Link tới cha
+                        MaCauHoiCha = parentQuestion.MaCauHoi,
                         MaPhan = parentQuestion.MaPhan,
                         NoiDung = $"<span>{childDto.NoiDung}</span>",
                         HoanVi = false,
@@ -813,8 +666,7 @@ namespace BEQuestionBank.Core.Services
                         LoaiCauHoi = null,
                         XoaTam = false
                     };
-
-                    // 3. Map Câu trả lời cho Câu hỏi Con
+                    
                     if (childDto.CauTraLois != null)
                     {
                         int order = 1;
@@ -826,13 +678,12 @@ namespace BEQuestionBank.Core.Services
                                 MaCauHoi = childQuestion.MaCauHoi,
                                 NoiDung = $"<p>{ansDto.NoiDung}</p>",
                                 LaDapAn = true,
-                                HoanVi = false,
+                                HoanVi = childDto.HoanVi,
                                 ThuTu = order++
                             });
                         }
                     }
-
-                    // Thêm con vào danh sách con của cha
+                    
                     parentQuestion.CauHoiCons.Add(childQuestion);
                 }
             }
@@ -852,8 +703,7 @@ namespace BEQuestionBank.Core.Services
         {
             if (dto.CauHoiCons == null || !dto.CauHoiCons.Any())
                 throw new InvalidOperationException("Câu hỏi GN phải có ít nhất 1 câu hỏi con.");
-
-            // 1️⃣ Tạo Parent
+            
             var parentQuestion = new CauHoi
             {
                 MaCauHoi = Guid.NewGuid(),
@@ -872,8 +722,7 @@ namespace BEQuestionBank.Core.Services
                 XoaTam = false,
                 CauHoiCons = new List<CauHoi>()
             };
-
-            // 2️⃣ Tạo Child
+            
             foreach (var childDto in dto.CauHoiCons)
             {
                 var childQuestion = new CauHoi
@@ -887,24 +736,33 @@ namespace BEQuestionBank.Core.Services
                     TrangThai = true,
                     NgayTao = DateTime.Now,
                     NguoiTao = userId,
-                    CLO = childDto.CLO ?? dto.CLO, // lấy của parent nếu null
-                    LoaiCauHoi = null, // child không cần LoaiCauHoi
+                    CLO = childDto.CLO ?? dto.CLO,
+                    LoaiCauHoi = null, 
                     XoaTam = false,
-                    CauTraLois = childDto.CauTraLois?.Select(a => new CauTraLoi
-                    {
-                        MaCauTraLoi = Guid.NewGuid(),
-                        MaCauHoi = Guid.NewGuid(), // EF sẽ map sau
-                        NoiDung = $"<p>{a.NoiDung}</p>",
-                        LaDapAn = true,
-                        HoanVi = childDto.HoanVi,
-                        ThuTu = a.ThuTu
-                    }).ToList() ?? new List<CauTraLoi>()
                 };
+
+                // 2. Thêm đáp án (chỉ đáp án hoán vị)
+                if (childDto.CauTraLois != null)
+                {
+                    int order = 1;
+                    foreach (var a in childDto.CauTraLois)
+                    {
+                        childQuestion.CauTraLois.Add(new CauTraLoi
+                        {
+                            MaCauTraLoi = Guid.NewGuid(),
+                            MaCauHoi = childQuestion.MaCauHoi,
+                            NoiDung = $"<p>{a.NoiDung}</p>",
+                            LaDapAn = true,
+                            HoanVi = childDto.HoanVi,
+                            ThuTu = order++
+                        });
+                    }
+                }
 
                 parentQuestion.CauHoiCons.Add(childQuestion);
             }
 
-            // 3️⃣ Lưu vào DB
+            //  Lưu vào DB
             await _cauHoiRepository.AddWithAnswersAsync(parentQuestion);
             _cache.Remove("PairingQuestions");
 
@@ -917,25 +775,22 @@ namespace BEQuestionBank.Core.Services
         /// </summary>
         public async Task<CauHoi> CreateMultipleChoiceQuestionAsync(CreateCauHoiMultipleChoiceDto dto, Guid userId)
         {
-            // Validate: ít nhất 3 câu trả lời
             if (dto.CauTraLois == null || dto.CauTraLois.Count < 3)
                 throw new InvalidOperationException("Câu hỏi Multiple Choice phải có ít nhất 3 câu trả lời.");
-
-            //  Validate: ít nhất 2 đáp án đúng
+            
             var dapAnDung = dto.CauTraLois.Count(a => a.LaDapAn);
             if (dapAnDung < 2)
                 throw new InvalidOperationException("Câu hỏi Multiple Choice phải có ít nhất 2 đáp án đúng.");
-
-            //  Map DTO sang entity CauHoi
+            
             var cauHoi = new CauHoi
             {
                 MaCauHoi = Guid.NewGuid(),
                 MaPhan = dto.MaPhan,
                 MaSoCauHoi = dto.MaSoCauHoi,
-                NoiDung = dto.NoiDung,
+                NoiDung = $"<span>{dto.NoiDung}</span>",
                 HoanVi = dto.HoanVi,
                 CapDo = dto.CapDo,
-                SoCauHoiCon = 0, //  không có câu hỏi con
+                SoCauHoiCon = 0, 
                 MaCauHoiCha = null,
                 TrangThai = true,
                 NgayTao = DateTime.Now,
@@ -944,17 +799,17 @@ namespace BEQuestionBank.Core.Services
                 LoaiCauHoi = "MN",
                 XoaTam = false
             };
-
-            // Map câu trả lời
+            int order = 1;
             foreach (var ansDto in dto.CauTraLois)
             {
                 cauHoi.CauTraLois.Add(new CauTraLoi
                 {
                     MaCauTraLoi = Guid.NewGuid(),
                     MaCauHoi = cauHoi.MaCauHoi,
-                    NoiDung = ansDto.NoiDung,
+                    NoiDung = $"<span>{ansDto.NoiDung}</span>",
                     LaDapAn = ansDto.LaDapAn,
-                    HoanVi = true
+                    HoanVi = ansDto.HoanVi,
+                    ThuTu = order++
                 });
             }
 
@@ -1169,8 +1024,7 @@ namespace BEQuestionBank.Core.Services
                 _ => type
             };
         }
-
-        // Thêm 5 cái này vào CauHoiService
+        
         public async Task<PagedResult<CauHoiDto>> GetEssayPagedAsync(int page, int pageSize, string? sort,
             string? search,
             Guid? khoaId, Guid? monHocId, Guid? phanId)
@@ -1201,5 +1055,157 @@ namespace BEQuestionBank.Core.Services
             Guid? khoaId, Guid? monHocId, Guid? phanId)
             => await _cauHoiRepository.GetMultipleChoicePagedAsync(page, pageSize, sort, search, khoaId, monHocId,
                 phanId);
+
+        /// <summary>
+        /// Cập nhật câu hỏi nhóm (NH) - kèm câu hỏi con và đáp án
+        /// </summary>
+        public async Task<bool> UpdateGroupQuestionAsync(Guid id, UpdateCauHoiNhomDto dto, Guid userId)
+        {
+            var existing = await _cauHoiRepository.GetByIdWithChildrenAsync(id);
+            if (existing == null || existing.LoaiCauHoi != "NH") return false;
+
+            // Tạo entity mới từ DTO 
+            var updatedEntity = new CauHoi
+            {
+                MaCauHoi = id,
+                MaPhan = dto.MaPhan,
+                NoiDung = dto.NoiDung,
+                HoanVi = dto.HoanVi,
+                CapDo = dto.CapDo,
+                CLO = dto.CLO,
+                LoaiCauHoi = "NH",
+                NgayCapNhat = DateTime.Now,
+                NguoiTao = userId,
+                SoCauHoiCon = dto.CauHoiCons?.Count ?? 0,
+                CauHoiCons = new List<CauHoi>(),
+                CauTraLois = new List<CauTraLoi>()
+            };
+
+            if (dto.CauHoiCons != null)
+            {
+                foreach (var childDto in dto.CauHoiCons)
+                {
+                    var child = new CauHoi
+                    {
+                        MaCauHoi = Guid.NewGuid(),
+                        MaCauHoiCha = id,
+                        MaPhan = dto.MaPhan,
+                        NoiDung = childDto.NoiDung,
+                        HoanVi = childDto.HoanVi,
+                        CapDo = childDto.CapDo,
+                        CLO = childDto.CLO ?? dto.CLO,
+                        LoaiCauHoi = "NH",
+                        TrangThai = true,
+                        NgayTao = DateTime.Now,
+                        NguoiTao = userId,
+                        CauTraLois = new List<CauTraLoi>()
+                    };
+
+                    if (childDto.CauTraLois != null)
+                    {
+                        int order = 1;
+                        foreach (var ansDto in childDto.CauTraLois)
+                        {
+                            child.CauTraLois.Add(new CauTraLoi
+                            {
+                                MaCauTraLoi = Guid.NewGuid(),
+                                NoiDung = ansDto.NoiDung,
+                                LaDapAn = ansDto.LaDapAn,
+                                HoanVi = ansDto.HoanVi,
+                                ThuTu = order++
+                            });
+                        }
+                    }
+
+                    updatedEntity.CauHoiCons.Add(child);
+                }
+            }
+
+            await _cauHoiRepository.UpdateWithFullGraphAsync(updatedEntity);
+            return true;
+        }
+
+
+        /// <summary>
+        /// Cập nhật câu hỏi Multiple Choice (MN) 
+        /// </summary>
+        public async Task<CauHoiDto?> UpdateMultipleChoiceQuestionAsync(Guid id, UpdateCauHoiWithCauTraLoiDto dto,
+            Guid userId)
+        {
+            var existing = await _cauHoiRepository.GetByIdWithAnswersAsync(id);
+            if (existing == null) return null;
+
+            // update parent
+            existing.NoiDung = $"<span>{dto.NoiDung}</span>";
+            existing.MaPhan = dto.MaPhan;
+            existing.HoanVi = dto.HoanVi;
+            existing.CapDo = dto.CapDo;
+            existing.CLO = dto.CLO;
+            existing.NgayCapNhat = DateTime.Now;
+
+            // update child answers
+            var incomingIds = dto.CauTraLois
+                .Where(x => x.MaCauTraLoi != null && x.MaCauTraLoi != Guid.Empty)
+                .Select(x => x.MaCauTraLoi)
+                .ToList();
+
+            // delete removed
+            var toDelete = existing.CauTraLois
+                .Where(db => !incomingIds.Contains(db.MaCauTraLoi))
+                .ToList();
+
+            await _cauHoiRepository.DeleteRangeAnswersAsync(toDelete);
+
+            // upsert
+            foreach (var ansDto in dto.CauTraLois)
+            {
+                if (ansDto.MaCauTraLoi != null && ansDto.MaCauTraLoi != Guid.Empty)
+                {
+                    var ex = existing.CauTraLois.First(a => a.MaCauTraLoi == ansDto.MaCauTraLoi);
+                    ex.NoiDung = $"<span>{ansDto.NoiDung}</span>";
+                    ex.MaCauHoi = ansDto.MaCauHoi;
+                    ex.HoanVi = ansDto.HoanVi;
+                    ex.LaDapAn = ansDto.LaDapAn;
+                    ex.ThuTu = ansDto.ThuTu;
+                }
+                else
+                {
+                    var newThuTu = existing.CauTraLois.Any()
+                        ? existing.CauTraLois.Max(x => x.ThuTu) + 1
+                        : 1;
+
+                    existing.CauTraLois.Add(new CauTraLoi
+                    {
+                        MaCauTraLoi = Guid.NewGuid(),
+                        MaCauHoi = id,
+                        NoiDung = $"<span>{ansDto.NoiDung}</span>",
+                        LaDapAn = ansDto.LaDapAn,
+                        HoanVi = ansDto.HoanVi,
+                        ThuTu = newThuTu,
+                    });
+                }
+            }
+
+            await _cauHoiRepository.SaveChangesAsync();
+
+            return new CauHoiDto
+            {
+                MaCauHoi = existing.MaCauHoi,
+                NoiDung = existing.NoiDung,
+                MaPhan = existing.MaPhan,
+                CapDo = existing.CapDo,
+                CLO = existing.CLO,
+                HoanVi = existing.HoanVi,
+                CauTraLois = existing.CauTraLois.Select(ct => new CauTraLoiDto
+                {
+                    MaCauTraLoi = ct.MaCauTraLoi,
+                    NoiDung = ct.NoiDung,
+                    ThuTu = ct.ThuTu,
+                    LaDapAn = ct.LaDapAn,
+                    HoanVi = ct.HoanVi
+                }).ToList()
+            };
+        }
+
     }
 }

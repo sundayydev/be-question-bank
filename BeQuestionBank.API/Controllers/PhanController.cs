@@ -26,20 +26,25 @@ public class PhanController(PhanService service, ILogger<PhanController> logger)
         {
             if (id == Guid.Empty)
             {
-                return StatusCode(StatusCodes.Status400BadRequest, ApiResponseFactory.ValidationError<object>("ID không hợp lệ."));
+                return StatusCode(StatusCodes.Status400BadRequest,
+                    ApiResponseFactory.ValidationError<object>("ID không hợp lệ."));
             }
-            var phan = await _service.GetTreeByMonHocAsync(id);
+
+            var phan = await _service.GetPhanByIdAsync(id);
             if (phan == null)
             {
-                return StatusCode(StatusCodes.Status404NotFound, ApiResponseFactory.NotFound<object>("Không tìm thấy phần với ID đã cho."));
+                return StatusCode(StatusCodes.Status404NotFound,
+                    ApiResponseFactory.NotFound<object>("Không tìm thấy phần với ID đã cho."));
             }
-            return StatusCode(StatusCodes.Status200OK, ApiResponseFactory.Success<Object>(phan, "Lấy phần thành công!"));
+
+            return StatusCode(StatusCodes.Status200OK,
+                ApiResponseFactory.Success<Object>(phan, "Lấy phần thành công!"));
         }
         catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
-
     }
 
     // GET: api/Phan
@@ -50,10 +55,14 @@ public class PhanController(PhanService service, ILogger<PhanController> logger)
         var list = await _service.GetTreeAsync();
         if (list == null || !list.Any())
         {
-            return StatusCode(StatusCodes.Status404NotFound, ApiResponseFactory.NotFound<object>("Không tìm thấy phần nào."));
+            return StatusCode(StatusCodes.Status404NotFound,
+                ApiResponseFactory.NotFound<object>("Không tìm thấy phần nào."));
         }
-        return StatusCode(StatusCodes.Status200OK, ApiResponseFactory.Success<object>(list, "Lấy danh sách phần thành công!"));
+
+        return StatusCode(StatusCodes.Status200OK,
+            ApiResponseFactory.Success<object>(list, "Lấy danh sách phần thành công!"));
     }
+
 
     // POST: api/Phan
     [HttpPost]
@@ -62,32 +71,35 @@ public class PhanController(PhanService service, ILogger<PhanController> logger)
     {
         if (phanCreateDto == null)
         {
-            return StatusCode(StatusCodes.Status400BadRequest, ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ."));
+            return StatusCode(StatusCodes.Status400BadRequest,
+                ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ."));
         }
+
         try
         {
-
             (bool success, string message) = (false, string.Empty);
             // Kiểm tra dữ liệu đầu vào
             if (phanCreateDto.MaPhanCha != null && phanCreateDto.MaPhanCha != Guid.Empty)
             {
-                (success,  message) = await _service.AddPhanWithChildrenAsync(phanCreateDto);
+                (success, message) = await _service.AddPhanWithChildrenAsync(phanCreateDto);
             }
             else
             {
                 (success, message) = await _service.AddPhanAsync(phanCreateDto);
             }
-           
+
             if (!success)
             {
                 return StatusCode(StatusCodes.Status400BadRequest, ApiResponseFactory.ValidationError<object>(message));
             }
 
-            return StatusCode(StatusCodes.Status201Created, ApiResponseFactory.Success<Object>(phanCreateDto, "Thêm phần thành công!"));
+            return StatusCode(StatusCodes.Status201Created,
+                ApiResponseFactory.Success<Object>(phanCreateDto, "Thêm phần thành công!"));
         }
         catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
     }
 
@@ -98,16 +110,20 @@ public class PhanController(PhanService service, ILogger<PhanController> logger)
     {
         if (phanUpdateDto == null || id == Guid.Empty)
         {
-            return StatusCode(StatusCodes.Status400BadRequest, ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ hoặc ID không hợp lệ."));
+            return StatusCode(StatusCodes.Status400BadRequest,
+                ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ hoặc ID không hợp lệ."));
         }
+
         try
         {
             // Cập nhật thông tin phần
             var existingPhan = await _service.GetPhanByIdAsync(id);
             if (existingPhan == null)
             {
-                return StatusCode(StatusCodes.Status404NotFound, ApiResponseFactory.NotFound<object>("Không tìm thấy phần với ID đã cho."));
+                return StatusCode(StatusCodes.Status404NotFound,
+                    ApiResponseFactory.NotFound<object>("Không tìm thấy phần với ID đã cho."));
             }
+
             // Cập nhật các trường cần thiết
             existingPhan.MaMonHoc = phanUpdateDto.MaMonHoc;
             existingPhan.TenPhan = phanUpdateDto.TenPhan;
@@ -121,11 +137,13 @@ public class PhanController(PhanService service, ILogger<PhanController> logger)
             existingPhan.NgayCapNhat = DateTime.UtcNow;
             // Lưu thay đổi
             await _service.UpdatePhanAsync(existingPhan);
-            return StatusCode(StatusCodes.Status200OK, ApiResponseFactory.Success<Object>(phanUpdateDto, "Cập nhật phần thành công!"));
+            return StatusCode(StatusCodes.Status200OK,
+                ApiResponseFactory.Success<Object>(phanUpdateDto, "Cập nhật phần thành công!"));
         }
         catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
     }
 
@@ -136,22 +154,27 @@ public class PhanController(PhanService service, ILogger<PhanController> logger)
     {
         if (id == Guid.Empty)
         {
-            return StatusCode(StatusCodes.Status400BadRequest, ApiResponseFactory.ValidationError<object>("ID không hợp lệ."));
+            return StatusCode(StatusCodes.Status400BadRequest,
+                ApiResponseFactory.ValidationError<object>("ID không hợp lệ."));
         }
+
         try
         {
             // Xóa phần
             var phan = await _service.GetPhanByIdAsync(id);
             if (phan == null)
             {
-                return StatusCode(StatusCodes.Status404NotFound, ApiResponseFactory.NotFound<object>("Không tìm thấy phần với ID đã cho."));
+                return StatusCode(StatusCodes.Status404NotFound,
+                    ApiResponseFactory.NotFound<object>("Không tìm thấy phần với ID đã cho."));
             }
+
             await _service.DeletePhanAsync(phan);
             return StatusCode(StatusCodes.Status200OK, ApiResponseFactory.Success<Object>("Xóa phần thành công!"));
         }
         catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
     }
 
@@ -162,23 +185,28 @@ public class PhanController(PhanService service, ILogger<PhanController> logger)
     {
         if (id == Guid.Empty)
         {
-            return StatusCode(StatusCodes.Status400BadRequest, ApiResponseFactory.ValidationError<object>("ID không hợp lệ."));
+            return StatusCode(StatusCodes.Status400BadRequest,
+                ApiResponseFactory.ValidationError<object>("ID không hợp lệ."));
         }
+
         try
         {
             // Xóa tạm phần
             var phan = await _service.GetPhanByIdAsync(id);
             if (phan == null)
             {
-                return StatusCode(StatusCodes.Status404NotFound, ApiResponseFactory.NotFound<object>("Không tìm thấy phần với ID đã cho."));
+                return StatusCode(StatusCodes.Status404NotFound,
+                    ApiResponseFactory.NotFound<object>("Không tìm thấy phần với ID đã cho."));
             }
+
             phan.XoaTam = true;
             await _service.UpdatePhanAsync(phan);
             return StatusCode(StatusCodes.Status200OK, ApiResponseFactory.Success<Object>("Xóa tạm phần thành công!"));
         }
         catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
     }
 
@@ -189,45 +217,59 @@ public class PhanController(PhanService service, ILogger<PhanController> logger)
     {
         if (id == Guid.Empty)
         {
-            return StatusCode(StatusCodes.Status400BadRequest, ApiResponseFactory.ValidationError<object>("ID không hợp lệ."));
+            return StatusCode(StatusCodes.Status400BadRequest,
+                ApiResponseFactory.ValidationError<object>("ID không hợp lệ."));
         }
+
         try
         {
             // Xóa tạm phần
             var phan = await _service.GetPhanByIdAsync(id);
             if (phan == null)
             {
-                return StatusCode(StatusCodes.Status404NotFound, ApiResponseFactory.NotFound<object>("Không tìm thấy phần với ID đã cho."));
+                return StatusCode(StatusCodes.Status404NotFound,
+                    ApiResponseFactory.NotFound<object>("Không tìm thấy phần với ID đã cho."));
             }
+
             phan.XoaTam = false;
             await _service.UpdatePhanAsync(phan);
             return StatusCode(StatusCodes.Status200OK, ApiResponseFactory.Success<Object>("Xóa tạm phần thành công!"));
         }
         catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
     }
+
     [HttpGet("monhoc/{maMonHoc}")]
     public async Task<IActionResult> GetByMonHoc(Guid maMonHoc)
     {
-        if (maMonHoc == Guid.Empty)
-
+        try
         {
-            return BadRequest(ApiResponseFactory.ValidationError<object>("Mã môn học không hợp lệ."));
+            if (maMonHoc == Guid.Empty)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest,
+                    ApiResponseFactory.ValidationError<object>("ID không hợp lệ."));
+            }
+
+            var phan = await _service.GetTreeByMonHocAsync(maMonHoc);
+            if (phan == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound,
+                    ApiResponseFactory.NotFound<object>("Không tìm thấy phần với ID đã cho."));
+            }
+
+            return StatusCode(StatusCodes.Status200OK,
+                ApiResponseFactory.Success<Object>(phan, "Lấy phần thành công!"));
         }
-
-
-        var result = await _service.GetTreeByMonHocAsync(maMonHoc);
-
-        return Ok(new ApiResponse<List<PhanDto>>
+        catch (Exception ex)
         {
-            StatusCode = 200,
-            Message = "Lấy danh sách phần theo môn học thành công",
-            Data = result,
-        });
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
+        }
     }
-    
+
     [HttpGet("trashed")]
     [SwaggerOperation("Lấy danh sách Khoa đã xóa tạm (dùng cho thùng rác)")]
     public async Task<IActionResult> GetTrashedAsync(

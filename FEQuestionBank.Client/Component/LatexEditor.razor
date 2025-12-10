@@ -1,0 +1,30 @@
+﻿@using TinyMCE.Blazor
+@using Microsoft.AspNetCore.Components
+
+<Editor Value="@Value"
+        ValueChanged="OnValueChanged"
+      
+        Conf="@EditorConfig"/>
+
+@code {
+    [Parameter] public string Value { get; set; } = string.Empty;
+
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    private async Task OnValueChanged(string newValue)
+    {
+        Value = newValue;
+        await ValueChanged.InvokeAsync(newValue);
+    }
+
+    private Dictionary<string, object> EditorConfig => new()
+    {
+        { "height", 300 },
+        { "menubar", false },
+        { "plugins", "lists link image table code paste" },
+        { "toolbar", "undo redo | bold italic underline | bullist numlist | table | code | latex" },
+        { "content_style", "body { font-family: 'Segoe UI', sans-serif; } .katex { font-size: 1.1em; }" },
+        { "setup", "function(editor) { editor.on('init', () => editor.setContent(editor.getContent())); }" }
+    };
+
+}
