@@ -46,7 +46,11 @@
                                   Placeholder="Tìm theo tên khoa..."
                                   Variant="Variant.Text"
                                   Immediate="true"
-                                  OnKeyDown="@(e => { if (e.Key == "Enter") table?.ReloadServerData(); })"
+                                  OnKeyDown="@(async (e) =>
+                                             {
+                                                 if (e.Key == "Enter") await OnSearch();
+                                             })"
+                                  OnAdornmentClick="OnSearch"
                                   Class="shadow-none"
                                   Style="border-radius: 0 10px 10px 0; height:42px; padding-left:10px;" />
                 </div>

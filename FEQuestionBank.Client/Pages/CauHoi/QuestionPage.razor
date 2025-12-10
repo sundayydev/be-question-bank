@@ -34,7 +34,6 @@
                           Margin="Margin.Dense"
                           Variant="Variant.Outlined"
                           Immediate="true"
-                          DebounceInterval="600"
                           Clearable="true"
                           OnKeyDown="@(async (e) =>
                                      {
@@ -155,7 +154,7 @@
                             <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                            Color="Color.Primary"
                                            Size="Size.Small"
-                                           OnClick="@(() => Snackbar.Add("Chức năng sửa đang làm", Severity.Info))"/>
+                                           OnClick="@(() => Navigation.NavigateTo($"/question/edit/{context.MaCauHoi}"))"/>
                             <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                            Color="Color.Info"
                                            Size="Size.Small"
@@ -211,7 +210,7 @@
                             <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                            Color="Color.Primary"
                                            Size="Size.Small"
-                                           OnClick="@(() => Snackbar.Add("Chức năng sửa đang làm", Severity.Info))"/>
+                                           OnClick="@(() => Navigation.NavigateTo($"/question/edit/{context.MaCauHoi}"))"/>
                             <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                            Color="Color.Info"
                                            Size="Size.Small"
@@ -265,7 +264,7 @@
                             <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                            Color="Color.Primary"
                                            Size="Size.Small"
-                                           OnClick="@(() => Snackbar.Add("Chức năng sửa đang làm", Severity.Info))"/>
+                                           OnClick="@(() => Navigation.NavigateTo($"/question/edit/{context.MaCauHoi}"))"/>
                             <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                            Color="Color.Info"
                                            Size="Size.Small"
@@ -318,7 +317,7 @@
                             <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                            Color="Color.Primary"
                                            Size="Size.Small"
-                                           OnClick="@(() => Snackbar.Add("Chức năng sửa đang làm", Severity.Info))"/>
+                                           OnClick="@(() => Navigation.NavigateTo($"/question/edit/{context.MaCauHoi}"))"/>
                             <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                            Color="Color.Info"
                                            Size="Size.Small"
@@ -371,7 +370,7 @@
                             <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                            Color="Color.Primary"
                                            Size="Size.Small"
-                                           OnClick="@(() => Snackbar.Add("Chức năng sửa đang làm", Severity.Info))"/>
+                                           OnClick="@(() => Navigation.NavigateTo($"/question/edit/{context.MaCauHoi}"))"/>
                             <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                            Color="Color.Info"
                                            Size="Size.Small"
@@ -424,7 +423,7 @@
                             <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                            Color="Color.Primary"
                                            Size="Size.Small"
-                                           OnClick="@(() => Snackbar.Add("Chức năng sửa đang làm", Severity.Info))"/>
+                                           OnClick="@(() => Navigation.NavigateTo($"/question/edit/{context.MaCauHoi}"))"/>
                             <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                            Color="Color.Info"
                                            Size="Size.Small"

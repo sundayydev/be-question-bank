@@ -1,0 +1,40 @@
+﻿@page "/question/edit/{Id:guid}"
+@using FEQuestionBank.Client.Services.Interface
+@inject ICauHoiApiClient CauHoiClient
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<MudProgressCircular Indeterminate="true" Class="my-16 mx-auto"/>
+<MudText Align="Align.Center">Đang tải câu hỏi để chỉnh sửa...</MudText>
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var res = await CauHoiClient.GetByIdAsync(Id);
+        if (!res.Success || res.Data == null)
+        {
+            Snackbar.Add("Không tìm thấy câu hỏi!", Severity.Error);
+            Nav.NavigateTo("/cauhoi");
+            return;
+        }
+
+        var type = res.Data.LoaiCauHoi?.Trim();
+        Console.WriteLine($"[DEBUG] LoaiCauHoi = '{type}'");
+
+        var redirectUrl = type switch
+        {
+            "TN" => $"/create-question/single?id={Id}",
+            "MN" or "multiple" => $"/create-question/create-multiple-choice?id={Id}",
+            "TL" or "self" => $"/create-question/create-essay?id={Id}",
+            "DT" or "filling" => $"/create-question/create-fill-blank?id={Id}",
+            "GN" or "matching" => $"/create-question/create-pairing?id={Id}",
+            "NH" => $"/create-question/group?id={Id}",
+            _ => "/question/list"
+        };
+
+        Nav.NavigateTo(redirectUrl);
+    }
+
+}

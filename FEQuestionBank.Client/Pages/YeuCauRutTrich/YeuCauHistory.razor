@@ -1,9 +1,10 @@
 ﻿@page "/tools/extract-history"
 @inherits FEQuestionBank.Client.Pages.YeuCau.YeuCauHistoryBase
 @using BeQuestionBank.Shared.DTOs.YeuCauRutTrich
+@inject ISnackbar Snackbar
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Style="min-height:600px; width: 100%">
-    <MudBreadcrumbs Items="_breadcrumbs" Class="mb-4" />
+    <MudBreadcrumbs Items="_breadcrumbs"/>
 
     <!-- Thống kê -->
     <MudGrid Spacing="3" Style="margin-bottom:16px">

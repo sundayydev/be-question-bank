@@ -85,6 +85,7 @@
 
     private void Submit()
     {
+        Password = string.IsNullOrWhiteSpace(Password) ? null : Password.Trim();
         MudDialog.Close(DialogResult.Ok(new Dictionary<string, object>
         {
             { "User", NguoiDung },

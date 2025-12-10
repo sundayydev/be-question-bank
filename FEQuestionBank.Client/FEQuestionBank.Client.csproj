@@ -8,6 +8,7 @@
 
     <ItemGroup>
         <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
+        <PackageReference Include="HtmlAgilityPack" Version="1.12.4"/>
         <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="9.0.10" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.9" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.9" PrivateAssets="all" />
@@ -15,6 +16,7 @@
         <PackageReference Include="MudBlazor" Version="8.12.0" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+        <PackageReference Include="TinyMCE.Blazor" Version="2.2.1"/>
     </ItemGroup>
 
     <ItemGroup>

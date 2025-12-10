@@ -9,17 +9,20 @@ using FEQuestionBank.Client.Component.Preview;
 using FEQuestionBank.Client.Services;
 using FEQuestionBank.Client.Services.Interface;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.WebUtilities;
 using MudBlazor;
 
 namespace FEQuestionBank.Client.Pages.CauHoi;
 
 public partial class CreatePairingQuestionBase : ComponentBase
 {
+    [Parameter] public Guid? EditId { get; set; }
+    protected bool IsEditMode => EditId.HasValue;
     [Inject] protected ICauHoiApiClient CauHoiApiClient { get; set; } = default!;
     [Inject] protected IKhoaApiClient KhoaApiClient { get; set; } = default!;
     [Inject] protected IMonHocApiClient MonHocApiClient { get; set; } = default!;
     [Inject] protected IPhanApiClient PhanApiClient { get; set; } = default!;
-    [Inject] protected NavigationManager Nav { get; set; } = default!;
+    [Inject] protected NavigationManager Navigation { get; set; } = default!;
     [Inject] protected ISnackbar Snackbar { get; set; } = default!;
     [Inject] protected IDialogService Dialog { get; set; } = default!;
 
@@ -31,9 +34,9 @@ public partial class CreatePairingQuestionBase : ComponentBase
     protected Guid? SelectedKhoaId { get; set; }
     protected Guid? SelectedMonHocId { get; set; }
     protected Guid? SelectedPhanId { get; set; }
-    protected EnumCLO SelectedCLO { get; set; }
+    protected EnumCLO SelectedCLO { get; set; } = EnumCLO.CLO1;
     protected string HuongDanChung { get; set; } = "Ghép các khái niệm ở cột trái với đáp án phù hợp ở cột phải";
-    protected short CapDo { get; set; }
+    protected short CapDo { get; set; } = 1;
     protected bool HoanVi { get; set; } = true;
 
     protected List<PairItem> Pairs = new()
@@ -162,7 +165,7 @@ public partial class CreatePairingQuestionBase : ComponentBase
         if (result.Success)
         {
             Snackbar.Add("Tạo câu hỏi ghép nối thành công!", Severity.Success);
-            Nav.NavigateTo("/questions");
+            Navigation.NavigateTo("/question/list");
         }
         else
         {
@@ -170,11 +173,111 @@ public partial class CreatePairingQuestionBase : ComponentBase
         }
     }
 
-    protected void GoBack() => Nav.NavigateTo("/questions");
+    protected void GoBack() => Navigation.NavigateTo("/question/list");
 
     public class PairItem
     {
         public string Question { get; set; } = "";
         public string Answer { get; set; } = "";
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("id", out var idStr))
+        {
+            EditId = Guid.Parse(idStr!);
+        }
+
+        if (IsEditMode && EditId.HasValue)
+        {
+            _breadcrumbs[^1] = new BreadcrumbItem(
+                text: "Chỉnh sửa câu hỏi ghép nối",
+                href: null,
+                disabled: true
+            );
+
+            await LoadForEdit(EditId.Value);
+        }
+
+        await base.OnParametersSetAsync();
+    }
+
+    private async Task LoadForEdit(Guid id)
+    {
+        var res = await CauHoiApiClient.GetByIdAsync(id);
+        if (!res.Success || res.Data == null)
+        {
+            Snackbar.Add("Không tải được câu hỏi!", Severity.Error);
+            Navigation.NavigateTo("/question/list");
+            return;
+        }
+
+        var q = res.Data;
+
+        // === Gán dữ liệu chung ===
+        HuongDanChung = q.NoiDung ?? "Ghép các khái niệm ở cột trái với đáp án phù hợp ở cột phải";
+        SelectedCLO = q.CLO ?? EnumCLO.CLO1;
+        CapDo = q.CapDo;
+        HoanVi = q.HoanVi;
+        SelectedPhanId = q.MaPhan;
+
+        // === Load Khoa → Môn → Phần (giống các trang khác) ===
+        if (q.MaPhan != Guid.Empty)
+        {
+            try
+            {
+                var phanRes = await PhanApiClient.GetPhanByIdAsync(q.MaPhan);
+                if (phanRes.Success && phanRes.Data != null)
+                {
+                    var phan = phanRes.Data;
+                    SelectedMonHocId = phan.MaMonHoc;
+
+                    var monRes = await MonHocApiClient.GetMonHocByIdAsync(phan.MaMonHoc);
+                    if (monRes.Success && monRes.Data != null)
+                    {
+                        SelectedKhoaId = monRes.Data.MaKhoa;
+
+                        await LoadKhoas();
+                        var monListRes = await MonHocApiClient.GetMonHocsByMaKhoaAsync(SelectedKhoaId.Value);
+                        if (monListRes.Success) MonHocs = monListRes.Data ?? new();
+
+                        var phanListRes = await PhanApiClient.GetPhanByMonHocAsync(SelectedMonHocId.Value);
+                        if (phanListRes.Success) Phans = phanListRes.Data ?? new();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EDIT Pairing] Lỗi load dropdown: {ex.Message}");
+            }
+        }
+
+        // === Load các cặp ghép nối ===
+        Pairs.Clear();
+
+        if (q.CauHoiCons != null && q.CauHoiCons.Any())
+        {
+            // Sắp xếp theo thứ tự tự nhiên (nếu muốn có thể sort theo gì đó, nhưng thường DB đã đúng)
+            foreach (var child in q.CauHoiCons.OrderBy(c => c.MaSoCauHoi))
+            {
+                var questionText = child.NoiDung ?? "";
+                var answerText = child.CauTraLois?
+                    .FirstOrDefault(a => a.LaDapAn == true)?
+                    .NoiDung ?? "";
+
+                Pairs.Add(new PairItem
+                {
+                    Question = questionText,
+                    Answer = answerText
+                });
+            }
+        }
+
+        // Đảm bảo luôn có ít nhất 2 cặp (tránh lỗi giao diện)
+        while (Pairs.Count < 2)
+            Pairs.Add(new PairItem());
+
+        StateHasChanged();
     }
 }

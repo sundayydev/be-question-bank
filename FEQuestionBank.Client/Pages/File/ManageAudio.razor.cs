@@ -107,7 +107,7 @@ namespace FEQuestionBank.Client.Pages.File
                 if (response is { Success: true, Data: not null })
                 {
                     // Navigate đến trang chi tiết câu hỏi
-                    NavigationManager.NavigateTo($"/cauhoi/{file.MaCauHoi.Value}");
+                    NavigationManager.NavigateTo($"/question/list?search={file.MaCauHoi.Value}");
                 }
                 else
                 {

@@ -157,43 +157,109 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
         return cauHoi;
     }
 
+    // public async Task<CauHoi> UpdateWithAnswersAsync(Guid maCauHoi, CauHoi cauHoi)
+    // {
+    //     var existing = await _context.CauHois
+    //         .Include(c => c.CauTraLois)
+    //         .FirstOrDefaultAsync(c => c.MaCauHoi == maCauHoi);
+    //
+    //     if (existing == null) return null!;
+    //
+    //     _context.Entry(existing).CurrentValues.SetValues(cauHoi);
+    //
+    //     if (cauHoi.CauTraLois != null)
+    //     {
+    //         foreach (var existingAnswer in existing.CauTraLois.ToList())
+    //         {
+    //             if (!cauHoi.CauTraLois.Any(c => c.MaCauTraLoi == existingAnswer.MaCauTraLoi))
+    //             {
+    //                 _context.CauTraLois.Remove(existingAnswer);
+    //             }
+    //         }
+    //
+    //         foreach (var newAnswer in cauHoi.CauTraLois)
+    //         {
+    //             var existingAnswer = existing.CauTraLois
+    //                 .FirstOrDefault(c => c.MaCauTraLoi == newAnswer.MaCauTraLoi && newAnswer.MaCauTraLoi != Guid.Empty);
+    //
+    //             if (existingAnswer != null)
+    //             {
+    //                 _context.Entry(existingAnswer).CurrentValues.SetValues(newAnswer);
+    //             }
+    //             else
+    //             {
+    //                 newAnswer.MaCauHoi = maCauHoi;
+    //                 existing.CauTraLois.Add(newAnswer);
+    //             }
+    //         }
+    //     }
+    //
+    //     await _context.SaveChangesAsync();
+    //     return existing;
+    // }
     public async Task<CauHoi> UpdateWithAnswersAsync(Guid maCauHoi, CauHoi cauHoi)
     {
+        // 1. Lấy dữ liệu cũ từ DB
         var existing = await _context.CauHois
             .Include(c => c.CauTraLois)
             .FirstOrDefaultAsync(c => c.MaCauHoi == maCauHoi);
 
         if (existing == null) return null!;
 
-        _context.Entry(existing).CurrentValues.SetValues(cauHoi);
+        // 2. Cập nhật thông tin cha (CauHoi)
+        // Lưu ý: KHÔNG dùng SetValues cho toàn bộ object để tránh mất ID gốc
+        existing.NoiDung = cauHoi.NoiDung;
+        existing.MaPhan = cauHoi.MaPhan;
+        existing.HoanVi = cauHoi.HoanVi;
+        existing.CapDo = cauHoi.CapDo;
+        existing.CLO = cauHoi.CLO;
+        existing.NgayCapNhat = DateTime.UtcNow;
 
+        // 3. Xử lý danh sách câu trả lời (Children)
         if (cauHoi.CauTraLois != null)
         {
-            foreach (var existingAnswer in existing.CauTraLois.ToList())
+            // A. XÓA các câu trả lời cũ không còn trong danh sách mới
+            var incomingIds = cauHoi.CauTraLois
+                .Where(x => x.MaCauTraLoi != Guid.Empty)
+                .Select(x => x.MaCauTraLoi)
+                .ToList();
+
+            var toDelete = existing.CauTraLois
+                .Where(old => !incomingIds.Contains(old.MaCauTraLoi))
+                .ToList();
+
+            foreach (var del in toDelete)
             {
-                if (!cauHoi.CauTraLois.Any(c => c.MaCauTraLoi == existingAnswer.MaCauTraLoi))
-                {
-                    _context.CauTraLois.Remove(existingAnswer);
-                }
+                // Xóa khỏi List của cha
+                existing.CauTraLois.Remove(del);
+                //  sinh lệnh DELETE
+                _context.CauTraLois.Remove(del);
             }
 
-            foreach (var newAnswer in cauHoi.CauTraLois)
+            // B. THÊM MỚI hoặc CẬP NHẬT
+            foreach (var newAns in cauHoi.CauTraLois)
             {
-                var existingAnswer = existing.CauTraLois
-                    .FirstOrDefault(c => c.MaCauTraLoi == newAnswer.MaCauTraLoi && newAnswer.MaCauTraLoi != Guid.Empty);
+                var existingAns = existing.CauTraLois
+                    .FirstOrDefault(c => c.MaCauTraLoi == newAns.MaCauTraLoi && newAns.MaCauTraLoi != Guid.Empty);
 
-                if (existingAnswer != null)
+                if (existingAns != null)
                 {
-                    _context.Entry(existingAnswer).CurrentValues.SetValues(newAnswer);
+                    // -- UPDATE --
+                    existingAns.NoiDung = newAns.NoiDung;
+                    existingAns.LaDapAn = newAns.LaDapAn;
+                    existingAns.HoanVi = newAns.HoanVi;
+                    existingAns.ThuTu = newAns.ThuTu;
                 }
                 else
                 {
-                    newAnswer.MaCauHoi = maCauHoi;
-                    existing.CauTraLois.Add(newAnswer);
+                    // -- INSERT --
+                    newAns.MaCauHoi = maCauHoi;
+                    if (newAns.MaCauTraLoi == Guid.Empty) newAns.MaCauTraLoi = Guid.NewGuid();
+
+                    existing.CauTraLois.Add(newAns);
                 }
             }
         }
-
         await _context.SaveChangesAsync();
         return existing;
     }
@@ -229,15 +295,19 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
         if (phanId.HasValue) query = query.Where(c => c.MaPhan == phanId);
         if (monHocId.HasValue)
             query = query.Where(c => c.Phan != null && c.Phan.MaMonHoc == monHocId);
-
-        // 3. Lọc theo Khoa (Bổ sung)
+        
         // Logic: Câu hỏi -> Phần -> Môn -> Khoa
         if (khoaId.HasValue)
             query = query.Where(c => c.Phan != null && c.Phan.MonHoc != null && c.Phan.MonHoc.MaKhoa == khoaId);
 
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(c => c.NoiDung != null && c.NoiDung.Contains(search));
-
+        {
+            query = query.Where(c =>
+                (c.NoiDung != null && c.NoiDung.Contains(search)) ||
+                c.MaCauHoi.ToString().Contains(search)
+            );
+        }
+        
         // Sort
         query = ApplySorting(query, sort);
 
@@ -288,7 +358,13 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
             query = query.Where(c => c.Phan != null && c.Phan.MonHoc != null && c.Phan.MonHoc.MaKhoa == khoaId);
 
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(c => c.NoiDung != null && c.NoiDung.Contains(search));
+        {
+            query = query.Where(c =>
+                (c.NoiDung != null && c.NoiDung.Contains(search)) ||
+                c.MaCauHoi.ToString().Contains(search)
+            );
+        }
+
 
         query = ApplySorting(query, sort);
 
@@ -342,13 +418,18 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
         if (phanId.HasValue) query = query.Where(c => c.MaPhan == phanId);
         if (monHocId.HasValue)
             query = query.Where(c => c.Phan != null && c.Phan.MaMonHoc == monHocId);
-
-        // 3. Lọc theo Khoa (Bổ sung)
+        
         // Logic: Câu hỏi -> Phần -> Môn -> Khoa
         if (khoaId.HasValue)
             query = query.Where(c => c.Phan != null && c.Phan.MonHoc != null && c.Phan.MonHoc.MaKhoa == khoaId);
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(c => c.NoiDung != null && c.NoiDung.Contains(search));
+        {
+            query = query.Where(c =>
+                (c.NoiDung != null && c.NoiDung.Contains(search)) ||
+                c.MaCauHoi.ToString().Contains(search)
+            );
+        }
+
 
         query = ApplySorting(query, sort);
 
@@ -398,7 +479,13 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
         if (khoaId.HasValue)
             query = query.Where(c => c.Phan != null && c.Phan.MonHoc != null && c.Phan.MonHoc.MaKhoa == khoaId);
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(c => c.NoiDung != null && c.NoiDung.Contains(search));
+        {
+            query = query.Where(c =>
+                (c.NoiDung != null && c.NoiDung.Contains(search)) ||
+                c.MaCauHoi.ToString().Contains(search)
+            );
+        }
+
 
         query = ApplySorting(query, sort);
 
@@ -457,7 +544,13 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
         if (khoaId.HasValue)
             query = query.Where(c => c.Phan != null && c.Phan.MonHoc != null && c.Phan.MonHoc.MaKhoa == khoaId);
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(c => c.NoiDung != null && c.NoiDung.Contains(search));
+        {
+            query = query.Where(c =>
+                (c.NoiDung != null && c.NoiDung.Contains(search)) ||
+                c.MaCauHoi.ToString().Contains(search)
+            );
+        }
+
 
         query = ApplySorting(query, sort);
 
@@ -517,7 +610,13 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
         if (khoaId.HasValue)
             query = query.Where(c => c.Phan != null && c.Phan.MonHoc != null && c.Phan.MonHoc.MaKhoa == khoaId);
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(c => c.NoiDung != null && c.NoiDung.Contains(search));
+        {
+            query = query.Where(c =>
+                (c.NoiDung != null && c.NoiDung.Contains(search)) ||
+                c.MaCauHoi.ToString().Contains(search)
+            );
+        }
+
 
         query = ApplySorting(query, sort);
 
@@ -563,5 +662,63 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
             ("capdo", "asc") => query.OrderBy(c => c.CapDo),
             _ => query.OrderByDescending(c => c.NgayTao)
         };
+    }
+
+    public async Task UpdateWithFullGraphAsync(CauHoi entity)
+    {
+        // Cách 1: Dùng trick "xóa cũ + thêm mới" nhưng vẫn giữ nguyên MaCauHoi của cha
+        var existing = await GetByIdWithChildrenAsync(entity.MaCauHoi);
+        if (existing == null) throw new KeyNotFoundException("Không tìm thấy câu hỏi");
+
+        // 1. Cập nhật thông tin cha (không thay đổi PK)
+        _context.Entry(existing).CurrentValues.SetValues(entity);
+
+        // 2. XÓA TẤT CẢ đáp án cũ của cha (nếu có)
+        if (existing.CauTraLois.Any())
+        {
+            _context.CauTraLois.RemoveRange(existing.CauTraLois);
+        }
+
+        // 3. XÓA TẤT CẢ câu hỏi con cũ + đáp án của chúng
+        foreach (var child in existing.CauHoiCons.ToList())
+        {
+            if (child.CauTraLois.Any())
+                _context.CauTraLois.RemoveRange(child.CauTraLois);
+        }
+
+        _context.CauHois.RemoveRange(existing.CauHoiCons);
+
+        // 4. Thêm lại đáp án mới của cha
+        foreach (var ans in entity.CauTraLois)
+        {
+            ans.MaCauHoi = entity.MaCauHoi;
+            _context.CauTraLois.Add(ans);
+        }
+
+        // 5. Thêm lại câu hỏi con + đáp án của con
+        foreach (var child in entity.CauHoiCons)
+        {
+            child.MaCauHoiCha = entity.MaCauHoi;
+            child.MaPhan = entity.MaPhan;
+            foreach (var ans in child.CauTraLois)
+            {
+                ans.MaCauHoi = child.MaCauHoi;
+            }
+
+            _context.CauHois.Add(child);
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteRangeAnswersAsync(IEnumerable<CauTraLoi> answers)
+        => _context.CauTraLois.RemoveRange(answers);
+
+    public async Task DeleteRangeChildrenAsync(IEnumerable<CauHoi> children)
+        => _context.CauHois.RemoveRange(children);
+
+    public Task<int> SaveChangesAsync()
+    {
+        return _context.SaveChangesAsync();
     }
 }

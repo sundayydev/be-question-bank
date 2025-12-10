@@ -10,6 +10,7 @@ using BeQuestionBank.Shared.DTOs.MonHoc;
 using BeQuestionBank.Shared.DTOs.Phan;
 using FEQuestionBank.Client.Component;
 using FEQuestionBank.Client.Components;
+using FEQuestionBank.Client.Helpers;
 using FEQuestionBank.Client.Services;
 
 namespace FEQuestionBank.Client.Pages
@@ -25,6 +26,10 @@ namespace FEQuestionBank.Client.Pages
         [Inject] protected NavigationManager Navigation { get; set; } = default!;
 
         protected string? _searchTerm;
+        private string? _currentSearchTerm;
+        private Guid? _currentKhoaId;
+        private Guid? _currentMonHocId;
+        private Guid? _currentPhanId;
         protected MudTable<CauHoiDto> essayTable = new();
         protected MudTable<CauHoiDto> singleTable = new();
         protected MudTable<CauHoiDto> groupTable = new();
@@ -61,12 +66,27 @@ namespace FEQuestionBank.Client.Pages
         protected List<BreadcrumbItem> _breadcrumbs = new()
         {
             new BreadcrumbItem("Trang chủ", href: "/"),
-            new BreadcrumbItem("Ngân hàng câu hỏi", href: "/cauhoi")
+            new BreadcrumbItem("Ngân hàng câu hỏi", href: "/question/list")
         };
 
         protected override async Task OnInitializedAsync()
         {
+            var query = UrlStateHelper.GetQueryParams(Navigation);
+
+            _searchTerm = query.GetValueOrDefault("search");
+            Guid.TryParse(query.GetValueOrDefault("khoa"), out var k);
+            SelectedKhoaId = k != Guid.Empty ? k : null;
+            Guid.TryParse(query.GetValueOrDefault("mon"), out var m);
+            SelectedMonHocId = m != Guid.Empty ? m : null;
+            Guid.TryParse(query.GetValueOrDefault("phan"), out var p);
+            SelectedPhanId = p != Guid.Empty ? p : null;
+
             await Task.WhenAll(LoadCountsAsync(), LoadKhoasAsync());
+
+            if (SelectedKhoaId.HasValue) await OnKhoaChanged(SelectedKhoaId);
+            if (SelectedMonHocId.HasValue) await OnMonHocChanged(SelectedMonHocId);
+
+            StateHasChanged();
         }
 
         protected async Task LoadCountsAsync()
@@ -128,10 +148,10 @@ namespace FEQuestionBank.Client.Pages
             catch
             {
                 // ignore
+                
             }
         }
-
-
+        
         protected async Task LoadKhoasAsync()
         {
             LoadingKhoa = true;
@@ -141,46 +161,48 @@ namespace FEQuestionBank.Client.Pages
             LoadingKhoa = false;
         }
 
-        protected async Task OnKhoaChanged(Guid? khoaId)
+        protected async Task OnKhoaChanged(Guid? id)
         {
-            SelectedKhoaId = khoaId;
+            SelectedKhoaId = id;
             SelectedMonHocId = null;
             SelectedPhanId = null;
             MonHocs.Clear();
             Phans.Clear();
 
-            if (khoaId.HasValue)
+            if (id.HasValue)
             {
                 LoadingMon = true;
-                StateHasChanged();
-                var response = await MonHocClient.GetMonHocsByMaKhoaAsync(khoaId.Value);
-                if (response.Success)
-                    MonHocs = response.Data ?? new();
+                var res = await MonHocClient.GetMonHocsByMaKhoaAsync(id.Value);
+                if (res.Success) MonHocs = res.Data ?? new();
                 LoadingMon = false;
             }
 
-            await ReloadBothTables();
+            SyncUrlAndReload();
             await LoadCountsAsync();
         }
 
-        // Khi chọn Môn học → load Phần
-        protected async Task OnMonHocChanged(Guid? monHocId)
+        protected async Task OnMonHocChanged(Guid? id)
         {
-            SelectedMonHocId = monHocId;
+            SelectedMonHocId = id;
             SelectedPhanId = null;
             Phans.Clear();
 
-            if (monHocId.HasValue)
+            if (id.HasValue)
             {
                 LoadingPhan = true;
-                StateHasChanged();
-                var response = await PhanClient.GetPhanByMonHocAsync(monHocId.Value);
-                if (response.Success)
-                    Phans = response.Data ?? new();
+                var res = await PhanClient.GetPhanByMonHocAsync(id.Value);
+                if (res.Success) Phans = res.Data ?? new();
                 LoadingPhan = false;
             }
 
-            await ReloadBothTables();
+            SyncUrlAndReload();
+            await LoadCountsAsync();
+        }
+
+        protected async Task OnPhanChanged(Guid? id)
+        {
+            SelectedPhanId = id;
+            SyncUrlAndReload();
             await LoadCountsAsync();
         }
 
@@ -191,18 +213,11 @@ namespace FEQuestionBank.Client.Pages
             await ReloadBothTables();
             await LoadCountsAsync();
         }
-
-        protected async Task OnPhanChanged(Guid? phanId)
-        {
-            SelectedPhanId = phanId;
-            await ReloadBothTables();
-            await LoadCountsAsync();
-        }
-
-        // Hàm này được gọi khi nhấn Enter → tìm ngay lập tức
+        
         protected async Task ForceSearchNow()
         {
-            await ReloadBothTables();
+            SyncUrlAndReload();
+            //await ReloadBothTables();
             await LoadCountsAsync();
         }
 
@@ -244,8 +259,6 @@ namespace FEQuestionBank.Client.Pages
                 phanId: SelectedPhanId);
 
             // Console.WriteLine($"TotalCount: {response.Data?.TotalCount}");
-            // Console.WriteLine($"Items: {System.Text.Json.JsonSerializer.Serialize(response.Data?.Items)}");
-            // Console.WriteLine($"Full Response: {System.Text.Json.JsonSerializer.Serialize(response)}");
 
             LoadingEssay = false;
 
@@ -257,10 +270,10 @@ namespace FEQuestionBank.Client.Pages
                     TotalItems = response.Data.TotalCount
                 };
             }
-            
+
             return new TableData<CauHoiDto>
             {
-                Items = null, 
+                Items = null,
                 TotalItems = 0
             };
         }
@@ -350,34 +363,19 @@ namespace FEQuestionBank.Client.Pages
             Navigation.NavigateTo("/question/create-question");
         }
 
-        // protected async Task OnDeleteQuestionAsync(Guid id, string noiDung)
-        // {
-        //     var parameters = new DialogParameters
-        //     {
-        //         ["Message"] = "Bạn có chắc chắn muốn xóa câu hỏi này?",
-        //         ["NoiDung"] = noiDung 
-        //     };
-        //
-        //     var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
-        //     var dialog = DialogService.Show<ConfirmDeleteDialog>("Xác nhận xóa", parameters, options);
-        //     var result = await dialog.Result;
-        //     
-        //     if (!result.Canceled)
-        //     {
-        //         var response = await CauHoiClient.DeleteQuestionAsync(id);
-        //
-        //         if (response.Success)
-        //         {
-        //             Snackbar.Add("Xóa câu hỏi thành công!", Severity.Success);
-        //             await ReloadBothTables();
-        //             await LoadCountsAsync();
-        //         }
-        //         else
-        //         {
-        //             Snackbar.Add($"Xóa thất bại: {response.Message}", Severity.Error);
-        //         }
-        //     }
-        // }
+        private void SyncUrlAndReload()
+        {
+            UrlStateHelper.UpdateUrl(Navigation, new()
+            {
+                ["search"] = _searchTerm,
+                ["khoa"] = SelectedKhoaId?.ToString(),
+                ["mon"] = SelectedMonHocId?.ToString(),
+                ["phan"] = SelectedPhanId?.ToString()
+            });
+
+            _ = ReloadAllTables();
+        }
+
         protected async Task OnDeleteQuestionAsync(Guid id, string noiDung, int? soLanDung)
         {
             // Chặn xóa nếu câu hỏi đã dùng nhiều hơn 1 lần
@@ -457,18 +455,19 @@ namespace FEQuestionBank.Client.Pages
 
         protected async Task ResetFiltersAsync()
         {
-            _searchTerm = string.Empty;
-            SelectedKhoaId = null;
-            SelectedMonHocId = null;
-            SelectedPhanId = null;
+            _searchTerm = null;
+            _currentSearchTerm = null;
+            SelectedKhoaId = _currentKhoaId = null;
+            SelectedMonHocId = _currentMonHocId = null;
+            SelectedPhanId = _currentPhanId = null;
             MonHocs.Clear();
             Phans.Clear();
-            StateHasChanged();
-            await ReloadBothTables();
+
+            Navigation.NavigateTo("/question/list", forceLoad: false);
+            await ReloadAllTables();
             await LoadCountsAsync();
             Snackbar.Add("Đã làm mới bộ lọc!", Severity.Info);
         }
-
 
         protected Color GetLevelColor(short level) => level switch
         {
@@ -476,6 +475,18 @@ namespace FEQuestionBank.Client.Pages
             <= 4 => Color.Warning,
             _ => Color.Error
         };
+
+        private async Task ReloadAllTables()
+        {
+            await Task.WhenAll(
+                essayTable.ReloadServerData(),
+                singleTable.ReloadServerData(),
+                fillblankTable.ReloadServerData(),
+                groupTable.ReloadServerData(),
+                pairingTable.ReloadServerData(),
+                multipleTable.ReloadServerData()
+            );
+        }
     }
 
     public static class StringExtensions

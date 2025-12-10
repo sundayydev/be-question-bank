@@ -1,40 +1,39 @@
 ﻿@using BeQuestionBank.Shared.DTOs.Phan
-@using MudBlazor
 
 <MudDialog FullWidth="true">
     <TitleContent>
         <MudText Typo="Typo.h6">@_dialogTitle</MudText>
     </TitleContent>
     <DialogContent>
-        <MudTextField Label="Tên Phần" 
-                      @bind-Value="Phan.TenPhan" 
+        <MudTextField Label="Tên Phần"
+                      @bind-Value="Phan.TenPhan"
                       Variant="Variant.Outlined"
                       Required="true"
-                      ErrorText="Tên phần là bắt buộc" />
+                      ErrorText="Tên phần là bắt buộc"/>
 
-        <MudTextField Label="Nội dung" 
-                      @bind-Value="Phan.NoiDung" 
-                      Lines="3" 
-                      Variant="Variant.Outlined" />
+        <MudTextField Label="Nội dung"
+                      @bind-Value="Phan.NoiDung"
+                      Lines="3"
+                      Variant="Variant.Outlined"/>
 
-        <MudTextField Label="Mã số phần" 
-                      @bind-Value="Phan.MaSoPhan" 
-                      Variant="Variant.Outlined" />
+        <MudTextField Label="Mã số phần"
+                      @bind-Value="Phan.MaSoPhan"
+                      Variant="Variant.Outlined"/>
 
-        <MudNumericField Label="Thứ tự" 
-                         @bind-Value="Phan.ThuTu" 
+        <MudNumericField Label="Thứ tự"
+                         @bind-Value="Phan.ThuTu"
                          Variant="Variant.Outlined"
-                         Min="0" />
+                         Min="0"/>
 
-        <MudNumericField Label="Số lượng câu hỏi" 
-                         @bind-Value="Phan.SoLuongCauHoi" 
+        <MudNumericField Label="Số lượng câu hỏi"
+                         @bind-Value="Phan.SoLuongCauHoi"
                          Variant="Variant.Outlined"
-                         Min="0" />
+                         Min="0"/>
 
-        <MudSwitch @bind-Checked="Phan.LaCauHoiNhom" 
+        <MudSwitch @bind-Checked="Phan.LaCauHoiNhom"
                    T="bool"
-                   Label="Là nhóm câu hỏi" 
-                   Color="Color.Primary" />
+                   Label="Là nhóm câu hỏi"
+                   Color="Color.Primary"/>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel" Color="Color.Secondary" Variant="Variant.Text">

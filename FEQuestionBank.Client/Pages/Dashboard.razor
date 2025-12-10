@@ -7,6 +7,7 @@
 @inject IMonHocApiClient MonHocService
 @inject ICauHoiApiClient CauHoiService
 @inject ISnackbar Snackbar
+@inject NavigationManager Nav
 
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge">
@@ -15,21 +16,23 @@
     <MudBreadcrumbs Items="_breadcrumbs" Class="mb-4"/>
     <div class="d-flex justify-space-between align-center flex-wrap gap-4">
         <div class="mb-5">
-            <MudText Typo="Typo.h4" Class="font-weight-bold mb-1" Style="color: #1a1a1a;">Tổng quan hệ thống
+            <MudText Typo="Typo.h4" Class="mb-1" Style="color:#1a1a1a; font-weight:450;">
+                Tổng quan hệ thống
             </MudText>
+
             <MudText Typo="Typo.body2" Style="color: #6b7280;">Dữ liệu được cập nhật mới nhất từ máy chủ
             </MudText>
         </div>
-                <MudButton Variant="Variant.Filled"
-                           Color="Color.Primary"
-                           StartIcon="@Icons.Material.Filled.Refresh"
-                           OnClick="RefreshAsync"
-                           Disabled="@_isLoading"
-                           Size="Size.Large"
-                           Class="px-6"
-                           Style="border-radius: 8px; font-weight: 600;">
-                    @(_isLoading ? "Đang tải..." : "Làm mới")
-                </MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Refresh"
+                   OnClick="RefreshAsync"
+                   Disabled="@_isLoading"
+                   Size="Size.Large"
+                   Class="px-6"
+                   Style="border-radius: 8px; font-weight: 600;">
+            @(_isLoading ? "Đang tải..." : "Làm mới")
+        </MudButton>
     </div>
 
 
@@ -80,7 +83,7 @@
     <!-- Improved layout with better card styling and consistent spacing -->
     <MudGrid Spacing="4">
         <!-- Recent Activities Card -->
-        <MudItem xs="12" lg="4">
+        <MudItem xs="12" lg="5">
             <MudPaper Elevation="0"
                       Class="pa-6 h-full"
                       Style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; display: flex; flex-direction: column;">
@@ -99,9 +102,9 @@
                             <MudPaper Class="pa-4 d-flex align-start gap-3 activity-item"
                                       Elevation="0"
                                       Style="background: #f9fafb ; border-radius: 6px; transition: all 0.2s ease;">
-                                <MudAvatar Color="@act.Color" Variant="Variant.Filled" Size="Size.Small"
+                                <MudAvatar Color="@act.Color" Variant="Variant.Filled" Size="Size.Medium"
                                            Class="mt-1 flex-shrink-0">
-                                    <MudIcon Icon="@act.Icon" Size="Size.Small"/>
+                                    <MudIcon Icon="@act.Icon" Size="Size.Medium"/>
                                 </MudAvatar>
                                 <div class="flex-grow-1" style="min-width: 0;">
                                     <MudText Typo="Typo.body2" Class="font-weight-600"
@@ -129,10 +132,28 @@
                     }
                 </MudStack>
             </MudPaper>
+            <MudPaper
+                Class="pa-6 h-full mt-3 d-flex align-center justify-space-between"
+                Style=" border-radius: 16px;border: 1px solid #e5e7eb; cursor:pointer;">
+
+                <div class="d-flex align-center gap-3">
+                    <MudAvatar Color="Color.Surface" Variant="Variant.Filled" Size="Size.Medium">
+                        <MudIcon Icon="@Icons.Material.Filled.LibraryBooks" Style="color: #6c757d;"/>
+                    </MudAvatar>
+                    <MudText Typo="Typo.h6" Class="font-weight-bold">
+                        Ngân hàng câu hỏi
+                    </MudText>
+                </div>
+
+                <MudIconButton Icon="@Icons.Material.Filled.ChevronRight"
+                               Size="Size.Medium"
+                               OnClick="GoToQuestion"/>
+            </MudPaper>
+
         </MudItem>
 
         <!-- Chart Card -->
-        <MudItem xs="12" lg="8">
+        <MudItem xs="12" lg="7">
             <MudPaper Elevation="0"
                       Class="pa-6"
                       Style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px;">
@@ -155,7 +176,7 @@
                               ChartSeries="@ChartSeries"
                               XAxisLabels="@XAxisLabels"
                               Width="100%"
-                              Height="320px"
+                              Height="400px"
                               Legend="true"
                               ChartOptions="@_chartOptions"
                               Class="chart-container">
@@ -360,6 +381,10 @@
         };
     }
 
+    protected void GoToQuestion()
+    {
+        Nav.NavigateTo("/question/list");
+    }
     public class ActivityItem
     {
         public string Icon { get; set; } = "";
@@ -368,4 +393,6 @@
         public string Date { get; set; } = "";
         public DateTime RawDate { get; set; } // Dùng để sort
     }
+
+
 }

@@ -64,4 +64,9 @@ public interface ICauHoiRepository : IRepository<CauHoi>
 
     Task<PagedResult<CauHoiDto>> GetMultipleChoicePagedAsync(int page, int pageSize, string? sort, string? search,
         Guid? khoaId, Guid? monHocId, Guid? phanId);
+
+    Task UpdateWithFullGraphAsync(CauHoi entity); // Update cả cha + con + đáp án
+    Task DeleteRangeAnswersAsync(IEnumerable<CauTraLoi> answers);
+    Task DeleteRangeChildrenAsync(IEnumerable<CauHoi> children);
+    public Task<int> SaveChangesAsync();
 }   

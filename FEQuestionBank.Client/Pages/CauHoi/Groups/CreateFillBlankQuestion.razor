@@ -63,9 +63,9 @@
                     </MudAlert>
                 }
 
-                @foreach (var answer in BlankAnswers)
+                @foreach (var answer in CauTraLoi)
                 {
-                    var index = BlankAnswers.IndexOf(answer) + 1;
+                    var index = CauTraLoi.IndexOf(answer) + 1;
                     <MudPaper Class="pa-2 mb-4 rounded-lg" Elevation="2" Style="border-left: 5px solid #8e24aa;">
                         <div class="d-flex align-center gap-4">
                             <MudAvatar Color="Color.Primary" Size="Size.Medium" Class="font-weight-bold">
@@ -83,8 +83,8 @@
                             </div>
                             <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                            Color="Color.Error"
-                                           OnClick="() => BlankAnswers.Remove(answer)"
-                                           Disabled="@(BlankAnswers.Count <= 1)"/>
+                                           OnClick="() => CauTraLoi.Remove(answer)"
+                                           Disabled="@(CauTraLoi.Count <= 1)"/>
                         </div>
                     </MudPaper>
                 }
@@ -92,7 +92,7 @@
                 <MudButton StartIcon="@Icons.Material.Filled.AddCircle"
                            Color="Color.Success"
                            Variant="Variant.Outlined"
-                           OnClick="() => BlankAnswers.Add(new CreateCauTraLoiDienTuDto())">
+                           OnClick="() => CauTraLoi.Add(new CreateCauTraLoiDienTuDto())">
                     Thêm chỗ trống thủ công
                 </MudButton>
                 <MudAlert Severity="Severity.Info" Class="mb-4 mt-5">

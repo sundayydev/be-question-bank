@@ -67,10 +67,21 @@ namespace BEQuestionBank.Core.Services
             }
             var existingUser = await _userRepository.GetByIdAsync(maNguoiDung);
             existingUser.TenDangNhap = user.TenDangNhap;
-            if (!string.IsNullOrEmpty(user.MatKhau))
+            if (!string.IsNullOrWhiteSpace(user.MatKhau))
             {
+                if (user.MatKhau.Length < 6)
+                {
+                    throw new ArgumentException("Mật khẩu phải từ 6 ký tự trở lên.");
+                }
+
+                if (BCrypt.Net.BCrypt.Verify(user.MatKhau, existingUser.MatKhau))
+                {
+                    throw new ArgumentException("Mật khẩu mới không được trùng với mật khẩu hiện tại.");
+                }
+                
                 existingUser.MatKhau = BCrypt.Net.BCrypt.HashPassword(user.MatKhau);
             }
+            
             existingUser.HoTen = user.HoTen;
             existingUser.Email = user.Email;
             existingUser.VaiTro = user.VaiTro;

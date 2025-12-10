@@ -354,42 +354,7 @@ namespace BeQuestionBank.API.Controllers
                 return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
             }
         }
-
-        /// <summary>
-        /// Lấy danh sách câu hỏi nhóm (có phân trang và lọc)
-        /// </summary>
-        [HttpGet("group-questions")]
-        [SwaggerOperation(
-            Summary = "Lấy danh sách câu hỏi nhóm",
-            Description =
-                "Trả về danh sách câu hỏi thuộc dạng nhóm với hỗ trợ phân trang, tìm kiếm và lọc theo các tiêu chí."
-        )]
-        public async Task<IActionResult> GetGroupQuestions(
-            [FromQuery] int pageIndex = 1,
-            [FromQuery] int pageSize = 10,
-            [FromQuery] string? keyword = null,
-            [FromQuery] Guid? khoaId = null,
-            [FromQuery] Guid? monHocId = null,
-            [FromQuery] Guid? phanId = null)
-        {
-            try
-            {
-                var result = await _cauHoiService.GetCauHoiNhomAsync(
-                    pageIndex,
-                    pageSize,
-                    keyword,
-                    khoaId,
-                    monHocId,
-                    phanId);
-
-                return Ok(ApiResponseFactory.Success(result));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi lấy danh sách câu hỏi nhóm");
-                return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
-            }
-        }
+        
 
         /// <summary>
         /// Lấy chi tiết câu hỏi nhóm kèm tất cả câu hỏi con
@@ -515,8 +480,6 @@ namespace BeQuestionBank.API.Controllers
             }
         }
 
-       
-
         /// <summary>
         /// Lấy tất cả câu hỏi tự luận (không phân trang)
         /// </summary>
@@ -534,6 +497,7 @@ namespace BeQuestionBank.API.Controllers
                 return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
             }
         }
+
 
         /// <summary>
         /// Lấy danh sách câu hỏi TỰ LUẬN (TL) - có phân trang, tìm kiếm, lọc
@@ -652,8 +616,67 @@ namespace BeQuestionBank.API.Controllers
                     phanId);
             return Ok(ApiResponseFactory.Success(result, "Lấy danh sách câu hỏi ghép nối thành công"));
         }
-       
 
-      
+        [HttpPatch("group/{id}")]
+        public async Task<IActionResult> UpdateGroup(Guid id, [FromBody] UpdateCauHoiNhomDto request)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var result = await _cauHoiService.UpdateGroupQuestionAsync(id, request, userId);
+
+                if (result)
+                {
+                    return Ok(ApiResponseFactory.Success<object?>(
+                        null,
+                        "Cập nhật câu hỏi nhóm thành công"
+                    ));
+                }
+
+                return BadRequest(ApiResponseFactory.Error<object>(400, "Cập nhật thất bại hoặc không tìm thấy ID"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi cập nhật câu hỏi nhóm");
+                return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Cập nhật câu hỏi Multiple Choice (MN)
+        /// </summary>
+        [HttpPatch("multiplechoice/{id}")]
+        [SwaggerOperation(
+            Summary = "Cập nhật câu hỏi Multiple Choice",
+            Description = "Cập nhật câu hỏi MN (ít nhất 3 đáp án, ít nhất 2 đáp án đúng)"
+        )]
+        public async Task<IActionResult> UpdateMultipleChoice(Guid id, [FromBody] UpdateCauHoiWithCauTraLoiDto request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ", ModelState));
+
+            try
+            {
+                var userId = GetCurrentUserId();
+
+                var updatedQuestion = await _cauHoiService.UpdateMultipleChoiceQuestionAsync(id, request, userId);
+
+                if (updatedQuestion != null)
+                    return Ok(
+                        ApiResponseFactory.Success(updatedQuestion, "Cập nhật câu hỏi Multiple Choice thành công"));
+
+                return NotFound(
+                    ApiResponseFactory.Error<object>(404, "Không tìm thấy câu hỏi hoặc không phải loại MN"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponseFactory.Error<object?>(400, ex.Message));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Lỗi khi cập nhật câu hỏi Multiple Choice {id}");
+                return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
+            }
+        }
     }
 }

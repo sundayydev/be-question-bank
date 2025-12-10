@@ -235,7 +235,7 @@ namespace FEQuestionBank.Client.Pages
                     Email = user.Email,
                     VaiTro = user.VaiTro,
                     BiKhoa = user.BiKhoa,
-                    MatKhau = string.IsNullOrWhiteSpace(password) ? null : password
+                    MatKhau = string.IsNullOrWhiteSpace(password) ? (string?)null : password.Trim()
                 };
 
                 var updateResponse = await NguoiDungApiClient.UpdateNguoiDungAsync(user.MaNguoiDung, updateDto);
