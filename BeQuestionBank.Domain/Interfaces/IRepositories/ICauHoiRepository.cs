@@ -37,6 +37,7 @@ public interface ICauHoiRepository : IRepository<CauHoi>
     Task<IEnumerable<CauHoi>> GetAllGhepNoiAsync();
     Task<IEnumerable<CauHoi>> GetAllDienTuAsync();
     Task<IEnumerable<CauHoi>> GetAllMultipleChoiceAsync();
+    Task<IEnumerable<CauHoi>> GetAllEssayAsync();
 
     // Đổi tham số input và return type từ Object -> CauHoi
     Task<CauHoi> AddWithAnswersAsync(CauHoi cauHoi);
@@ -68,5 +69,7 @@ public interface ICauHoiRepository : IRepository<CauHoi>
     Task UpdateWithFullGraphAsync(CauHoi entity); // Update cả cha + con + đáp án
     Task DeleteRangeAnswersAsync(IEnumerable<CauTraLoi> answers);
     Task DeleteRangeChildrenAsync(IEnumerable<CauHoi> children);
+    Task<int> GetNextMaSoCauHoiAsync(Guid maPhan);
+   
     public Task<int> SaveChangesAsync();
 }   

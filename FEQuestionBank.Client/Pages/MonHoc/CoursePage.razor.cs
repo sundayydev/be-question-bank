@@ -14,7 +14,7 @@ using FEQuestionBank.Client.Pages.OtherPage;
 
 namespace FEQuestionBank.Client.Pages.MonHoc
 {
-    public partial class MonHocKhoaBase : ComponentBase
+    public partial class MonHocBase : ComponentBase
     {
         [Parameter] public Guid? MaKhoa { get; set; } 
 
@@ -28,9 +28,7 @@ namespace FEQuestionBank.Client.Pages.MonHoc
         protected string? _searchTerm;
         protected MudTable<MonHocDto>? table;
         protected List<KhoaDto> Khoas { get; set; } = new();
-        protected Guid? MaKhoaFilter { get; set; }
         protected string PageTitle { get; set; } = "Danh sách Môn Học";
-        
         protected int TotalMon { get; set; }
         protected int ActiveMon { get; set; }
         protected int LockedMon { get; set; }
@@ -39,83 +37,74 @@ namespace FEQuestionBank.Client.Pages.MonHoc
         {
             new BreadcrumbItem("Trang chủ", href: "/"),
             new BreadcrumbItem("Quản lý đề", href: "#", disabled: true),
-            new BreadcrumbItem("Khoa", href: "/khoa"),
-            new BreadcrumbItem("Môn học của khoa", href: "/khoa", disabled: true),
+            new BreadcrumbItem("Danh sách môn học", href: "/monhoc"),
         };
 
 
         protected override async Task OnInitializedAsync()
         {
-            var response = await KhoaApiClient.GetAllKhoasAsync();
-            if (response.Success && response.Data != null)
-            {
-                Khoas = response.Data;
-
-                var currentKhoa = Khoas.Find(k => k.MaKhoa == MaKhoa);
-                PageTitle = currentKhoa != null 
-                    ? $"Danh sách Môn Học - Khoa {currentKhoa.TenKhoa}"
-                    : "Danh sách Môn Học của Khoa";
-            }
-
-            StateHasChanged();
+            await LoadAllMonHocsForInfoCardAsync();
         }
         
-        protected override async Task OnParametersSetAsync()
+        private async Task LoadAllMonHocsForInfoCardAsync()
         {
-            await UpdateMaKhoaFilterAsync();
-        }
-        
-        private async Task UpdateMaKhoaFilterAsync()
-        {
-            if (MaKhoa.HasValue)
+            try
             {
-                MaKhoaFilter = MaKhoa.Value;
-                var khoa = Khoas.Find(k => k.MaKhoa == MaKhoa.Value);
-                PageTitle = khoa != null
-                    ? $"Danh sách Môn Học của Khoa {khoa.TenKhoa}"
-                    : "Danh sách Môn Học (Khoa không xác định)";
-            
-
-                if (table != null)
+                var response = await MonHocApiClient.GetAllMonHocsAsync();
+                if (response.Success && response.Data != null)
                 {
-                    await table.ReloadServerData();
+                    allMons = response.Data;
+
+                    // Cập nhật InfoCard từ toàn bộ dữ liệu
+                    TotalMon = allMons.Count;
+                    ActiveMon = allMons.Count(k => k.XoaTam==false);
+                    LockedMon = allMons.Count(k => k.XoaTam==true);
                 }
             }
-            else
+            catch (Exception ex)
             {
-                MaKhoaFilter = null;
-                PageTitle = "Danh sách Môn Học";
-                await table!.ReloadServerData();
+                Snackbar.Add($"Lỗi khi tải số liệu: {ex.Message}", Severity.Error);
             }
-
         }
+        
 
-        protected async Task<TableData<MonHocDto>> LoadServerData(TableState state, CancellationToken token)
+        protected async Task<TableData<MonHocDto>> LoadServerData(TableState state, CancellationToken cancellationToken)
         {
-            // Luôn chỉ load môn học của khoa này
-            var response = await MonHocApiClient.GetMonHocsByMaKhoaAsync(MaKhoa ?? Guid.Empty);
-
-            if (response.Success && response.Data != null)
+            try
             {
-                var data = string.IsNullOrWhiteSpace(_searchTerm)
-                    ? response.Data
-                    : response.Data.Where(m => 
-                            m.TenMonHoc.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                            m.MaSoMonHoc.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase))
-                        .ToList();
+                // Lấy phân trang, sort, search từ state
+                int page = state.Page + 1;
+                int pageSize = state.PageSize;
 
-                return new TableData<MonHocDto>
+                string? sort = null;
+                if (!string.IsNullOrEmpty(state.SortLabel))
                 {
-                    Items = data,
-                    TotalItems = data.Count
-                };
-            }
+                    sort = $"{state.SortLabel},{(state.SortDirection == SortDirection.Ascending ? "asc" : "desc")}";
+                }
 
-            return new TableData<MonHocDto>
+                var pagedResponse = await MonHocApiClient.GetMonHocsPagedAsync(
+                    page: page,
+                    pageSize:pageSize,
+                    sort: sort,
+                    search: _searchTerm
+                );
+
+                if (pagedResponse is { Success: true, Data: not null })
+                {
+                    return new TableData<MonHocDto>
+                    {
+                        Items = pagedResponse.Data.Items ?? new List<MonHocDto>(),
+                        TotalItems = pagedResponse.Data.TotalCount
+                    };
+                }
+
+                return new TableData<MonHocDto> { Items = new List<MonHocDto>(), TotalItems = 0 };
+            }
+            catch (Exception ex)
             {
-                Items = new List<MonHocDto>(),
-                TotalItems = 0
-            };
+                Console.Error.WriteLine(ex);
+                return new TableData<MonHocDto> { Items = new List<MonHocDto>(), TotalItems = 0 };
+            }
         }
 
         protected async Task OnPartNav(MonHocDto monHoc)
@@ -133,12 +122,12 @@ namespace FEQuestionBank.Client.Pages.MonHoc
         {
             var parameters = new DialogParameters
             {
-                ["MonHoc"] = new MonHocDto { MaSoMonHoc = "", MaKhoa = MaKhoa  ?? Guid.Empty},
+                ["MonHoc"] = new MonHocDto { MaSoMonHoc = "" },
                 ["DialogTitle"] = "Tạo mới Môn Học",
                 ["Khoas"] = Khoas
             };
 
-            var dialog = DialogService.Show<EditMonHocDialog>("Tạo mới Môn Học", parameters);
+            var dialog = DialogService.Show<EditCourseDialog>("Tạo mới Môn Học", parameters);
             var result = await dialog.Result;
             if (!result.Canceled)
             {
@@ -156,7 +145,7 @@ namespace FEQuestionBank.Client.Pages.MonHoc
                 ["DialogTitle"] = "Chỉnh sửa Môn Học",
                 ["Khoas"] = Khoas
             };
-            var dialog = DialogService.Show<EditMonHocDialog>("Chỉnh sửa Môn Học", parameters);
+            var dialog = DialogService.Show<EditCourseDialog>("Chỉnh sửa Môn Học", parameters);
             var result = await dialog.Result;
 
             if (!result.Canceled)
@@ -206,7 +195,7 @@ namespace FEQuestionBank.Client.Pages.MonHoc
                 ["MonHoc"] = monHoc,
                 ["Khoas"] = Khoas
             };
-            DialogService.Show<MonHocDetailDialog>("Chi tiết Môn Học", parameters);
+            DialogService.Show<CourseDetailDialog>("Chi tiết Môn Học", parameters);
         }
 
         private async Task SaveMonHocAsync(MonHocDto monHoc)
@@ -266,7 +255,6 @@ namespace FEQuestionBank.Client.Pages.MonHoc
             var khoa = Khoas.Find(k => k.MaKhoa == maKhoa);
             return khoa?.TenKhoa ?? "Không xác định";
         }
-        
 
     }
     

@@ -27,15 +27,16 @@ namespace FEQuestionBank.Client.Pages
         protected int TotalKhoa { get; set; }
         protected int ActiveKhoa { get; set; }
         protected int LockedKhoa { get; set; }
-        
+
         private List<KhoaDto> allKhoas = new List<KhoaDto>();
+
         protected List<BreadcrumbItem> _breadcrumbs = new()
         {
             new BreadcrumbItem("Trang chủ", href: "/"),
             new BreadcrumbItem("Quản lý đề", href: "#", disabled: true),
             new BreadcrumbItem("Danh sách khoa", href: "/khoa")
         };
-        
+
         protected override async Task OnInitializedAsync()
         {
             var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
@@ -45,6 +46,7 @@ namespace FEQuestionBank.Client.Pages
                 _searchTerm = searchValue.ToString();
                 _currentSearchTerm = _searchTerm;
             }
+
             await LoadAllKhoasForInfoCardAsync();
         }
 
@@ -56,11 +58,10 @@ namespace FEQuestionBank.Client.Pages
                 if (response.Success && response.Data != null)
                 {
                     allKhoas = response.Data;
-
-                    // Cập nhật InfoCard từ toàn bộ dữ liệu
+                    
                     TotalKhoa = allKhoas.Count;
-                    ActiveKhoa = allKhoas.Count(k => k.XoaTam==false);
-                    LockedKhoa = allKhoas.Count(k => k.XoaTam==true);
+                    ActiveKhoa = allKhoas.Count(k => k.XoaTam == false);
+                    LockedKhoa = allKhoas.Count(k => k.XoaTam == true);
                 }
             }
             catch (Exception ex)
@@ -68,7 +69,7 @@ namespace FEQuestionBank.Client.Pages
                 Snackbar.Add($"Lỗi khi tải số liệu: {ex.Message}", Severity.Error);
             }
         }
-        
+
         protected async Task<TableData<KhoaDto>> LoadServerData(TableState state, CancellationToken cancellationToken)
         {
             try
@@ -115,16 +116,7 @@ namespace FEQuestionBank.Client.Pages
             }
         }
 
-
-        // protected async Task OnSearch(string? text)
-        // {
-        //     _searchTerm = string.IsNullOrWhiteSpace(text) ? null : text.Trim();
-        //     if (table != null)
-        //     {
-        //         await table.ReloadServerData();
-        //         StateHasChanged();
-        //     }
-        // }
+        
         protected async Task OnSearch()
         {
             _searchTerm = string.IsNullOrWhiteSpace(_searchTerm) ? null : _searchTerm.Trim();
@@ -156,7 +148,7 @@ namespace FEQuestionBank.Client.Pages
             };
 
             var options = new DialogOptions { MaxWidth = MaxWidth.Small, CloseButton = true };
-            var dialog = DialogService.Show<EditKhoaDialog>("Tạo mới Khoa", parameters, options);
+            var dialog = DialogService.Show<EditDepartmentDialog>("Tạo mới Khoa", parameters, options);
             var result = await dialog.Result;
 
             if (!result.Canceled)
@@ -174,7 +166,7 @@ namespace FEQuestionBank.Client.Pages
                 ["Khoa"] = khoa,
                 ["DialogTitle"] = "Chỉnh sửa Khoa"
             };
-            var dialog = DialogService.Show<EditKhoaDialog>("Chỉnh sửa Khoa", parameters);
+            var dialog = DialogService.Show<EditDepartmentDialog>("Chỉnh sửa Khoa", parameters);
             var result = await dialog.Result;
 
             if (!result.Canceled)
@@ -204,7 +196,7 @@ namespace FEQuestionBank.Client.Pages
         protected void OnViewDetail(KhoaDto khoa)
         {
             var parameters = new DialogParameters { ["Khoa"] = khoa };
-            DialogService.Show<KhoaDetailDialog>("Chi tiết Khoa", parameters);
+            DialogService.Show<DepartmentDetailDialog>("Chi tiết Khoa", parameters);
         }
 
         private async Task SaveKhoaAsync(KhoaDto khoa)
@@ -221,13 +213,15 @@ namespace FEQuestionBank.Client.Pages
                 {
                     var create = new CreateKhoaDto { TenKhoa = khoa.TenKhoa, MoTa = khoa.MoTa };
                     var response = await KhoaApiClient.CreateKhoaAsync(create);
-                    Snackbar.Add(response.Success ? "Tạo khoa thành công!" : $"Lỗi: {response.Message}", response.Success ? Severity.Success : Severity.Error);
+                    Snackbar.Add(response.Success ? "Tạo khoa thành công!" : $"Lỗi: {response.Message}",
+                        response.Success ? Severity.Success : Severity.Error);
                 }
                 else
                 {
                     var update = new UpdateKhoaDto { TenKhoa = khoa.TenKhoa, MoTa = khoa.MoTa };
                     var response = await KhoaApiClient.UpdateKhoaAsync(khoa.MaKhoa, update);
-                    Snackbar.Add(response.Success ? "Cập nhật khoa thành công!" : $"Lỗi: {response.Message}", response.Success ? Severity.Success : Severity.Error);
+                    Snackbar.Add(response.Success ? "Cập nhật khoa thành công!" : $"Lỗi: {response.Message}",
+                        response.Success ? Severity.Success : Severity.Error);
                 }
             }
             catch (Exception ex)
@@ -239,9 +233,10 @@ namespace FEQuestionBank.Client.Pages
         private async Task DeleteKhoaAsync(Guid id)
         {
             var response = await KhoaApiClient.DeleteKhoaAsync(id);
-            Snackbar.Add(response.Success ? "Xóa thành công!" : $"Lỗi: {response.Message}", response.Success ? Severity.Success : Severity.Error);
+            Snackbar.Add(response.Success ? "Xóa thành công!" : $"Lỗi: {response.Message}",
+                response.Success ? Severity.Success : Severity.Error);
         }
-        
+
         protected void OnViewSubjects(KhoaDto khoa)
         {
             NavigationManager.NavigateTo($"/monhoc/khoa/{khoa.MaKhoa}");

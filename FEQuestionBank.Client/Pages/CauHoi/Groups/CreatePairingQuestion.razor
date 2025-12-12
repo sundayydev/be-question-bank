@@ -20,7 +20,7 @@
     <MudPaper Class="p-4 mb-2 rounded-4" Elevation="2" Style="background: #fafafa;">
         <MudGrid Spacing="4">
             <MudItem xs="12">
-                <MudTextField @bind-Value="HuongDanChung"
+                <MudTextField @bind-Value="NoiDungCha"
                               Label="Hướng dẫn chung"
                               Placeholder="VD: Ghép các khái niệm ở cột trái với định nghĩa tương ứng..."
                               Variant="Variant.Outlined"
@@ -35,13 +35,6 @@
                     <MudSelectItem Value="@((short)3)">3 - Vận dụng</MudSelectItem>
                     <MudSelectItem Value="@((short)4)">4 - Vận dụng cao</MudSelectItem>
                 </MudSelect>
-            </MudItem>
-
-            <MudItem xs="12" sm="6" Class="d-flex align-center">
-                <MudCheckBox @bind-Value="HoanVi"
-                             Label="Cho phép hoán vị"
-                             Color="Color.Primary"
-                             Class="mt-2"/>
             </MudItem>
         </MudGrid>
     </MudPaper>

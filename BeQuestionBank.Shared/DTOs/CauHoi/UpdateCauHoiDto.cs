@@ -16,6 +16,7 @@ public class UpdateCauHoiDto
     [Required(ErrorMessage = "Mã số câu hỏi không được để trống.")]
     public int MaSoCauHoi { get; set; }
 
+    public Guid? MaCauHoi { get; set; }
     public required string NoiDung { get; set; }
 
     [Required(ErrorMessage = "Hoán vị không được để trống.")]
@@ -35,6 +36,8 @@ public class UpdateCauHoiDto
     public int? SoLanDuocThi { get; set; }
 
     public int? SoLanDung { get; set; }
+    public int ThuTu { get; set; }
 
     public EnumCLO? CLO { get; set; }
+    
 }

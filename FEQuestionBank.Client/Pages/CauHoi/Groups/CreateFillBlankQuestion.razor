@@ -1,4 +1,5 @@
 ﻿@page "/create-question/create-fill-blank"
+@page "/create-question/fill-blank/{EditId:guid}"
 @inherits CreateFillBlankQuestionBase
 @using BeQuestionBank.Shared.Enums
 @using BeQuestionBank.Shared.DTOs.CauHoi
@@ -26,7 +27,7 @@
                     Nội dung câu hỏi
                     <MudText Color="Color.Error">*</MudText>
                 </MudText>
-                <MudTextField @bind-Value="QuestionContent"
+                <MudTextField @bind-Value="NoiDungCha"
                               Placeholder="VD: Thủ đô của Việt Nam là (1)_____. Nước ta có (2)____ tỉnh thành trực thuộc trung ương."
                               Lines="6"
                               Variant="Variant.Outlined"
@@ -35,7 +36,7 @@
                               DebounceInterval="400"/>
 
                 <!-- Xem trước -->
-                @if (!string.IsNullOrWhiteSpace(QuestionContent))
+                @if (!string.IsNullOrWhiteSpace(NoiDungCha))
                 {
                     <MudPaper Class="pa-4 blank-preview mb-6">
                         <strong>Xem trước:</strong><br/>
@@ -66,7 +67,7 @@
                 @foreach (var answer in CauTraLoi)
                 {
                     var index = CauTraLoi.IndexOf(answer) + 1;
-                    <MudPaper Class="pa-2 mb-4 rounded-lg" Elevation="2" Style="border-left: 5px solid #8e24aa;">
+                    <MudPaper Class="pa-2 mb-4 rounded-lg" Elevation="2" Style="border-left: 5px solid #2563eb;">
                         <div class="d-flex align-center gap-4">
                             <MudAvatar Color="Color.Primary" Size="Size.Medium" Class="font-weight-bold">
                                 @index
@@ -81,6 +82,11 @@
                                               Style="max-height: 50px"
                                               Class="mb-3"/>
                             </div>
+                            <MudCheckBox
+                                @bind-Value="answer.HoanVi"
+                                Color="Color.Primary"
+                                Label="Hoán vị"
+                            />
                             <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                            Color="Color.Error"
                                            OnClick="() => CauTraLoi.Remove(answer)"
@@ -92,7 +98,7 @@
                 <MudButton StartIcon="@Icons.Material.Filled.AddCircle"
                            Color="Color.Success"
                            Variant="Variant.Outlined"
-                           OnClick="() => CauTraLoi.Add(new CreateCauTraLoiDienTuDto())">
+                           OnClick="() => CauTraLoi.Add(new FillBlankAnswer())">
                     Thêm chỗ trống thủ công
                 </MudButton>
                 <MudAlert Severity="Severity.Info" Class="mb-4 mt-5">
@@ -188,10 +194,11 @@
 
 <style>
     .blank-preview {
-        background: #f8f9fa;
+        background: #f8fafc;
         padding: 1.5rem;
         border-radius: 12px;
-        border-left: 5px solid #8e24aa;
+        border: 1px solid #e5e7eb;
+        border-left: 5px solid #2563eb;
         font-size: 1.1rem;
         line-height: 2rem;
     }

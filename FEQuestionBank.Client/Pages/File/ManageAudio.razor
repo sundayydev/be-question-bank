@@ -13,7 +13,7 @@
                 <span class="input-group-text bg-light"
                       style="border-radius: 10px 0 0 10px; border: 1px solid #ced4da; border-right: none;">
                     <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Medium"
-                             Style="@($"color:{Colors.Blue.Darken3};")" />
+                             Style="@($"color:{Colors.Blue.Darken3};")"/>
                 </span>
 
                 <div class="flex-grow-1">
@@ -21,9 +21,12 @@
                                   Placeholder="Tìm kiếm audio..."
                                   Variant="Variant.Text"
                                   Immediate="true"
-                                  OnKeyDown="@(e => { if (e.Key == "Enter") table?.ReloadServerData(); })"
+                                  OnKeyDown="@(e =>
+                                             {
+                                                 if (e.Key == "Enter") table?.ReloadServerData();
+                                             })"
                                   Class="shadow-none"
-                                  Style="border-radius: 0 10px 10px 0; height:42px; padding-left:10px;" />
+                                  Style="border-radius: 0 10px 10px 0; height:42px; padding-left:10px;"/>
                 </div>
             </div>
         </div>
@@ -49,9 +52,13 @@
               @ref="table">
 
         <HeaderContent>
-            <MudTh><MudTableSortLabel SortLabel="TenFile" T="FileDto">Tên File</MudTableSortLabel></MudTh>
+            <MudTh>
+                <MudTableSortLabel SortLabel="TenFile" T="FileDto">Tên File</MudTableSortLabel>
+            </MudTh>
             <MudTh Style="text-align:center;">Nghe thử</MudTh>
-            <MudTh><MudTableSortLabel SortLabel="MaCauHoi" T="FileDto">Liên kết</MudTableSortLabel></MudTh>
+            <MudTh>
+                <MudTableSortLabel SortLabel="MaCauHoi" T="FileDto">Liên kết</MudTableSortLabel>
+            </MudTh>
             <MudTh Style="text-align:center;">Thao Tác</MudTh>
         </HeaderContent>
 
@@ -62,7 +69,7 @@
                     <MudText Typo="Typo.body2">@context.TenFile</MudText>
                 </div>
             </MudTd>
-            
+
             <MudTd DataLabel="Nghe thử" Style="text-align:center;">
                 @if (!string.IsNullOrEmpty(context.Url))
                 {
@@ -80,41 +87,44 @@
             <MudTd DataLabel="Liên kết">
                 @if (context.MaCauHoi != null)
                 {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">Câu hỏi</MudChip>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">Câu hỏi
+                    </MudChip>
                 }
                 else if (context.MaCauTraLoi != null)
                 {
-                    <MudChip T="int" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">Câu trả lời</MudChip>
+                    <MudChip T="int" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">Câu trả lời
+                    </MudChip>
                 }
                 else
                 {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Text">Chưa liên kết</MudChip>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Text">Chưa liên kết
+                    </MudChip>
                 }
             </MudTd>
 
             <MudTd Style="text-align:center;">
-                <MudIconButton Icon="@Icons.Material.Filled.PlayCircle" 
-                               Style="@($"color:{Colors.Green.Darken3};")" 
-                               Size="Size.Small" 
-                               Class="mx-1" 
-                               OnClick="() => OnPlayPreview(context)" 
+                <MudIconButton Icon="@Icons.Material.Filled.PlayCircle"
+                               Style="@($"color:{Colors.Green.Darken3};")"
+                               Size="Size.Small"
+                               Class="mx-1"
+                               OnClick="() => OnPlayPreview(context)"
                                Tooltip="Nghe chi tiết"/>
 
                 @if (context.MaCauHoi != null)
                 {
-                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" 
-                                   Style="@($"color:{Colors.Blue.Darken3};")" 
-                                   Size="Size.Small" 
-                                   Class="mx-1" 
-                                   OnClick="() => OnViewQuestionDetail(context)" 
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                   Style="@($"color:{Colors.Blue.Darken3};")"
+                                   Size="Size.Small"
+                                   Class="mx-1"
+                                   OnClick="() => OnViewQuestionDetail(context)"
                                    Tooltip="Xem chi tiết câu hỏi"/>
                 }
 
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" 
-                               Style="@($"color:{Colors.Red.Darken3};")" 
-                               Size="Size.Small" 
-                               Class="mx-1" 
-                               OnClick="() => OnConfirmDelete(context)" 
+                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                               Style="@($"color:{Colors.Red.Darken3};")"
+                               Size="Size.Small"
+                               Class="mx-1"
+                               OnClick="() => OnConfirmDelete(context)"
                                Tooltip="Xóa file"/>
             </MudTd>
         </RowTemplate>
@@ -129,7 +139,7 @@
 
         <PagerContent>
             <MudTablePager RowsPerPageString="Hàng mỗi trang"
-                           InfoFormat="Hiển thị {first_item}-{last_item} của {all_items} mục" />
+                           InfoFormat="Hiển thị {first_item}-{last_item} của {all_items} mục"/>
         </PagerContent>
 
     </MudTable>

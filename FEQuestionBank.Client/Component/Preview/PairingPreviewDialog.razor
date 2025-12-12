@@ -1,103 +1,116 @@
 ﻿
+@using FEQuestionBank.Client.Component.Other
 @using FEQuestionBank.Client.Pages.CauHoi
-<MudDialog>
+<MudDialog MaxWidth="MaxWidth.Medium" FullWidth="true" Class=" pairing-preview">
     <TitleContent>
-        <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.Link" Class="mr-2" Color="Color.Success"/>
-            Xem trước câu hỏi ghép nối
-        </MudText>
+        <div class="d-flex align-center gap-2 px-1 pt-1 pb-0">
+            <MudIcon Icon="@Icons.Material.Filled.Link" Class="mr-1" Color="Color.Primary"/>
+            <MudText Typo="Typo.h6" Class="font-weight-bold text-neutral">Xem trước câu hỏi ghép nối</MudText>
+        </div>
     </TitleContent>
 
     <DialogContent>
-        <MudContainer Style="max-height:80vh; " Class="py-4">
+        <MudContainer Style="max-height:80vh;" Class="py-4">
+
             <!-- HEADER: Hướng dẫn + Thông tin phân loại -->
-            <MudPaper Class="pa-5 mb-6 rounded-xl" Elevation="4"
-                      Style="background: linear-gradient(135deg, #6b21a8, #8b3ac7); color: white;">
-                <MudText Typo="Typo.h6" Class="mb-3">
-                    <strong>Nội dung:</strong>
-                </MudText>
-                <MudText Typo="Typo.body1" Class="mb-4">
-                    @if (string.IsNullOrWhiteSpace(HuongDanChung))
+            <MudPaper Class="pa-5 mb-5 rounded-lg info-banner" Elevation="1">
+                <MudGrid Spacing="2" Class="info-grid">
+                    <MudItem xs="12" sm="6" lg="3">
+                        <MudText Typo="Typo.body1" Class="d-flex align-center gap-1">
+                            <MudIcon Icon="@Icons.Material.Filled.Bookmarks" Color="Color.Default" Size="Size.Small"/>
+                            <span class="label">Chương:</span><span>@TenPhan</span>
+                        </MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" lg="3">
+                        <MudText Typo="Typo.body1" Class="d-flex align-center gap-1">
+                            <MudIcon Icon="@Icons.Material.Filled.Flag" Color="Color.Default" Size="Size.Small"/>
+                            <span class="label">CLO:</span>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Secondary"
+                                     Class="ml-1 px-2 py-0">
+                                @CloName
+                            </MudChip>
+                        </MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" lg="3">
+                        <MudText Typo="Typo.body1" Class="d-flex align-center gap-1">
+                            <MudIcon Icon="@Icons.Material.Filled.Stairs" Color="Color.Default" Size="Size.Small"/>
+                            <span class="label">Cấp độ:</span><span>@CapDoText</span>
+                        </MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" lg="3">
+                        <MudText Typo="Typo.body1" Class="d-flex align-center gap-1">
+                            <MudIcon Icon="@Icons.Material.Filled.Sync" Color="Color.Default" Size="Size.Small"/>
+                            <span class="label">Hoán vị:</span><span>@(HoanVi ? "Có" : "Không")</span>
+                        </MudText>
+                    </MudItem>
+                </MudGrid>
+                <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-3 text-neutral">Nội dung</MudText>
+                <MudText Typo="Typo.body1" Class="mb-4 text-neutral">
+                    @if (string.IsNullOrWhiteSpace(NoiDungCha))
                     {
                         <span>Chưa có nội dung</span>
                     }
                     else
                     {
-                        <LatexContent Content="@HuongDanChung"/>
+                        <LatexContent Content="@NoiDungCha"/>
                     }
                 </MudText>
 
-                <MudGrid Spacing="3">
-                    <MudItem xs="12" sm="6">
-                        <MudText><strong>Chương:</strong> @TenPhan</MudText>
-                    </MudItem>
-                    <MudItem xs="12" sm="6">
-                        <strong>CLO:</strong>
-                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled"
-                                 Class="ml-2">
-                            @CloName
-                        </MudChip>
-                    </MudItem>
-                    <MudItem xs="12" sm="6">
-                        <MudText><strong>Cấp độ:</strong> @CapDoText</MudText>
-                    </MudItem>
-                    <MudItem xs="12" sm="6">
-                        <MudText><strong>Hoán vị:</strong> @(HoanVi ? "Có" : "Không")</MudText>
-                    </MudItem>
-                </MudGrid>
+
             </MudPaper>
+
             <div class="preview-info-alert">
-                <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-2"
+                <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-2" Color="Color.Primary"
                          Style="vertical-align: middle;"/>
-                Các thẻ cùng màu và số sẽ khớp với nhau
+                Các thẻ cùng màu và số là một cặp
             </div>
 
             <!-- 2 CỘT GHÉP NỐI -->
-            <MudPaper Class="pa-2 rounded-1 mb-4 mt-2" Elevation="3" Style="background:#ffffff;">
-                <MudGrid Spacing="6" Class="mt-2">
+            <MudPaper Class="pa-3 rounded-lg mb-4 mt-3" Elevation="1" Style="background:#ffffff;">
+                <MudGrid Spacing="4" Class="mt-1">
 
                     <!-- CỘT TRÁI -->
                     <MudItem xs="12" md="6">
-                        <MudPaper Class="pa-4 rounded-lg mb-4" Elevation="2" Style="background:#f8f9fa;">
-                            <MudText Typo="Typo.subtitle1"
-                                     Class="text-center mb-4 font-monospace text-primary fw-bold">
-                                CỘT A
-                            </MudText>
-                        </MudPaper>
+                        <MudText Typo="Typo.subtitle2" Class="text-center mb-3 font-weight-bold text-neutral">CỘT A
+                        </MudText>
 
                         @foreach (var (pair, i) in Pairs.Select((p, idx) => (p, idx)))
                         {
                             var color = Colors[i % Colors.Length];
-                            <MudPaper Class="pa-5 mb-4 text-center rounded-xl shadow-sm fixed-cell"
-                                      Style="@($"background:{color}18; border: 3px solid {color};")">
-
-                                <div class="cell-content" style="@($"color:{color}")">
-                                    <LatexContent Content="@pair.Question"/>
+                            <MudPaper Class="pa-4 mb-3 rounded-md shadow-none fixed-cell"
+                                      Style="@($"border: 1px solid {color}; background: #fff;")">
+                                <div class="d-flex align-center gap-2">
+                                    <MudChip T="string" Color="Color.Default" Variant="Variant.Filled"
+                                             Style="@($"background:{color}; color:#fff; min-width:44px; justify-content:center;")">
+                                        A@(i + 1)
+                                    </MudChip>
+                                    <div class="cell-content text-neutral">
+                                        <LatexContent Content="@pair.Question"/>
+                                    </div>
                                 </div>
-
                             </MudPaper>
                         }
                     </MudItem>
 
                     <!-- CỘT PHẢI -->
                     <MudItem xs="12" md="6">
-                        <MudPaper Class="pa-4 rounded-lg mb-4" Elevation="2" Style="background:#f8f9fa;">
-                            <MudText Typo="Typo.subtitle1"
-                                     Class="text-center mb-4 font-monospace text-success fw-bold">
-                                CỘT B
-                            </MudText>
-                        </MudPaper>
+                        <MudText Typo="Typo.subtitle2" Class="text-center mb-3 font-weight-bold text-neutral">CỘT B
+                        </MudText>
 
                         @foreach (var (pair, i) in Pairs.Select((p, idx) => (p, idx)))
                         {
                             var color = Colors[i % Colors.Length];
-                            <MudPaper Class="pa-5 mb-4 text-center rounded-xl shadow-sm fixed-cell"
-                                      Style="@($"background:{color}18; border: 3px solid {color};")">
-
-                                <div class="cell-content" style="@($"color:{color}")">
-                                    <LatexContent Content="@pair.Answer"/>
+                            <MudPaper Class="pa-4 mb-3 rounded-md shadow-none fixed-cell"
+                                      Style="@($"border: 1px solid {color}; background: #fff;")">
+                                <div class="d-flex align-center gap-2">
+                                    <MudChip T="string" Color="Color.Default" Variant="Variant.Filled"
+                                             Style="@($"background:{color}; color:#fff; min-width:44px; justify-content:center;")">
+                                        B@(i + 1)
+                                    </MudChip>
+                                    <div class="cell-content text-neutral">
+                                        <LatexContent Content="@pair.Answer"/>
+                                    </div>
                                 </div>
-
                             </MudPaper>
                         }
                     </MudItem>
@@ -105,17 +118,15 @@
                 </MudGrid>
             </MudPaper>
 
-
             <!-- THÔNG BÁO -->
-            <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mt-6">
-                <strong>@Pairs.Count cặp ghép nối</strong> • Khi thi, đáp án sẽ được <strong>xáo trộn ngẫu
-                    nhiên</strong>
+            <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mt-4">
+                <strong>@Pairs.Count cặp ghép nối</strong> • Khi thi, đáp án sẽ được xáo trộn ngẫu nhiên
             </MudAlert>
         </MudContainer>
     </DialogContent>
 
     <DialogActions>
-        <MudButton OnClick="Cancel" Variant="Variant.Text" Color="Color.Dark">
+        <MudButton OnClick="Cancel" Variant="Variant.Outlined" Color="Color.Primary">
             Sửa lại
         </MudButton>
         <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="Submit"
@@ -129,7 +140,7 @@
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
 
     [Parameter] public List<CreatePairingQuestionBase.PairItem> Pairs { get; set; } = new();
-    [Parameter] public string HuongDanChung { get; set; }
+    [Parameter] public string NoiDungCha { get; set; }
     [Parameter] public string TenPhan { get; set; } = "Chưa chọn";
     [Parameter] public string CloName { get; set; } = "N/A";
     [Parameter] public short CapDo { get; set; } = 2;
@@ -146,8 +157,14 @@
 
     private readonly string[] Colors = new[]
     {
-        "#0d47a1", "#6f42c1", "#0a3622", "#3b82f6",
-        "#2196f3", "#00bcd4", "#009688", "#4caf50",
+        "#A5D8FF", // Pastel Blue
+        "#FFADAD", // Pastel Red
+        "#FFD6A5", // Pastel Orange
+        "#FDFFB6", // Pastel Yellow
+        "#CAFFBF", // Pastel Green
+        "#BDB2FF", // Pastel Purple
+        "#FFC6FF", // Pastel Pink
+        "#9BF6FF", // Pastel Cyan
     };
 
     private void Cancel() => MudDialog.Cancel();
@@ -155,37 +172,43 @@
 }
 
 <style>
+    .pairing-preview .text-neutral {
+        color: #1f2937;
+    }
+
+    .info-banner {
+        background: #f8fafc;
+        color: #111827;
+        border: 1px solid #e5e7eb;
+        box-shadow: none;
+    }
+
+    .info-grid .label {
+        font-weight: 600;
+        margin-right: 0.2rem;
+    }
 
     .preview-info-alert {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
-        border: 2px solid rgba(102, 126, 234, 0.3);
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
         border-radius: 10px;
-        padding: 1.25rem;
-        color: #667eea;
+        padding: 0.85rem 1rem;
+        color: #1f2937;
         font-weight: 500;
-        margin-top: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
     }
 
     .fixed-cell {
-        height: 50px;
         display: flex;
-        justify-content: center;
-        text-align: center;
         align-items: center;
-        overflow: hidden;
-        padding: 1rem !important;
-        border-radius: 14px;
+        min-height: 56px;
     }
 
     .cell-content {
-        max-height: 100%;
-        width: 100%;
-        text-align: center;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        flex: 1;
         word-break: break-word;
-        line-height: 1.4;
+        line-height: 1.5;
     }
-
 </style>

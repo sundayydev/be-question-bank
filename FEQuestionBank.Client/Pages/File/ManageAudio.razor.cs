@@ -1,7 +1,7 @@
 ﻿using BeQuestionBank.Shared.DTOs.CauHoi;
 using BeQuestionBank.Shared.DTOs.File;
 using BeQuestionBank.Shared.Enums;
-using FEQuestionBank.Client.Pages.OtherPage; // Để dùng MessageDialog
+using FEQuestionBank.Client.Pages.OtherPage; 
 using FEQuestionBank.Client.Services;
 using FEQuestionBank.Client.Services.Implementation;
 using Microsoft.AspNetCore.Components;
@@ -88,7 +88,7 @@ namespace FEQuestionBank.Client.Pages.File
             };
             DialogService.Show<AudioPreviewDialog>("Nghe thử và Xem chi tiết", parameters, new DialogOptions
             {
-                MaxWidth = MaxWidth.Large,
+                MaxWidth = MaxWidth.Medium,
                 FullWidth = true
             });
         }

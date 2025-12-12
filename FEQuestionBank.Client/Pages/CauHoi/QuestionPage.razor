@@ -1,4 +1,6 @@
 ﻿@page "/question/list"
+@using FEQuestionBank.Client.Component.InfoCard
+@using FEQuestionBank.Client.Component.Other
 @inherits QuestionPageBase
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge">
@@ -158,7 +160,7 @@
                             <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                            Color="Color.Info"
                                            Size="Size.Small"
-                                           OnClick="@(() => ViewDetail(context, "GroupEssay"))"/>
+                                           OnClick="@(() => ViewDetail(context, "Essay"))"/>
 
                             <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                            Color="Color.Error"
@@ -214,7 +216,7 @@
                             <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                            Color="Color.Info"
                                            Size="Size.Small"
-                                           OnClick="@(() => ViewDetail(context, "SingleMulti"))"/>
+                                           OnClick="@(() => ViewDetail(context, "Single"))"/>
 
                             <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                            Color="Color.Error"
@@ -268,7 +270,7 @@
                             <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                            Color="Color.Info"
                                            Size="Size.Small"
-                                           OnClick="@(() => ViewDetail(context, "SingleMulti"))"/>
+                                           OnClick="@(() => ViewDetail(context, "Multi"))"/>
 
                             <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                            Color="Color.Error"
@@ -317,7 +319,7 @@
                             <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                            Color="Color.Primary"
                                            Size="Size.Small"
-                                           OnClick="@(() => Navigation.NavigateTo($"/question/edit/{context.MaCauHoi}"))"/>
+                                           OnClick="@(() => Navigation.NavigateTo($"/create-question/fill-blank/{context.MaCauHoi}"))"/>
                             <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                            Color="Color.Info"
                                            Size="Size.Small"
@@ -370,11 +372,11 @@
                             <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                            Color="Color.Primary"
                                            Size="Size.Small"
-                                           OnClick="@(() => Navigation.NavigateTo($"/question/edit/{context.MaCauHoi}"))"/>
+                                           OnClick="@(() => Navigation.NavigateTo($"/create-question/group/{context.MaCauHoi}"))"/>
                             <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                            Color="Color.Info"
                                            Size="Size.Small"
-                                           OnClick="@(() => ViewDetail(context, "GroupEssay"))"/>
+                                           OnClick="@(() => ViewDetail(context, "Group"))"/>
 
                             <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                            Color="Color.Error"

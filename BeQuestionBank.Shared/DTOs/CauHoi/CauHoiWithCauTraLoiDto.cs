@@ -10,8 +10,8 @@ namespace BeQuestionBank.Shared.DTOs.CauHoi;
 
 public class CauHoiWithCauTraLoiDto : CauHoiDto
 {
-    [JsonPropertyOrder(99)] 
-    public List<CauTraLoiDto> CauTraLois { get; set; } = new List<CauTraLoiDto>();
+    [JsonPropertyOrder(99)]
+    public List<CauTraLoiDto> CauTraLois { get; set; } = new();
 
     // public List<GhepNoiDto>? GhepNoiPairs { get; set; }
 

@@ -5,21 +5,19 @@
 @inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
 @inject IAuthApiClient AuthApi
-@inject ILocalStorageService Local
-@inject IAuthApiClient AuthApi
 @inject CustomAuthStateProvider AuthState
 @inject ILocalStorageService Local
 @inject NavigationManager Nav
-@attribute [Authorize]  
+@attribute [Authorize]
 
 <MudLayout>
     @if (!HideLayout)
     {
         <!-- Header -->
-        <Header OnMenuClick="ToggleDrawer" />
+        <Header OnMenuClick="ToggleDrawer"></Header>
 
+        <Sidebar Open="_drawerOpen"/>
         <!-- Sidebar -->
-        <Sidebar Open="_drawerOpen" />
     }
 
     <!-- Nội dung chính -->
@@ -48,6 +46,7 @@
         var hiddenPages = new[] { "login", "register", "forgot-password", "404" };
         return hiddenPages.Any(p => relativePath.StartsWith(p));
     }
+
     protected override async Task OnInitializedAsync()
     {
         var url = Nav.Uri.ToLower();
@@ -85,10 +84,12 @@
             return;
         }
 
-  
+
         await AuthApi.GetCurrentUserAsync();
     }
 
 
     private string MainContentCssClass => HideLayout ? "mud-main-content-auth" : "";
+}
+
 }

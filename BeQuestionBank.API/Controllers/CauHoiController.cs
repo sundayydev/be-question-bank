@@ -1,12 +1,13 @@
 using BeQuestionBank.Shared.DTOs.CauHoi;
+using BeQuestionBank.Shared.DTOs.CauHoi.Create;
+using BeQuestionBank.Shared.DTOs.CauHoi.TuLuan;
 using BeQuestionBank.Shared.DTOs.Common;
 using BEQuestionBank.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using BeQuestionBank.Shared.DTOs.CauHoi.Create;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Security.Claims;
 
 namespace BeQuestionBank.API.Controllers
 {
@@ -33,7 +34,6 @@ namespace BeQuestionBank.API.Controllers
         {
             try
             {
-                // Lưu ý: Bạn cần bổ sung hàm GetAllAsync vào Service nếu chưa có
                 var result = await _cauHoiService.GetAllAsync();
                 return Ok(ApiResponseFactory.Success(result));
             }
@@ -252,20 +252,35 @@ namespace BeQuestionBank.API.Controllers
         )]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCauHoiWithCauTraLoiDto request)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ", ModelState));
+
             try
             {
                 var userId = GetCurrentUserId();
-                var result = await _cauHoiService.UpdateAsync(id, request, userId);
 
-                if (result)
-                    return Ok(ApiResponseFactory.Success<object>(null, "Cập nhật thành công"));
+                var updatedQuestion = await _cauHoiService.UpdateAsync(id, request, userId);
 
-                return BadRequest(ApiResponseFactory.Error<object>(400, "Cập nhật thất bại hoặc không tìm thấy ID"));
+                if (updatedQuestion != null)
+                    return Ok(
+                        ApiResponseFactory.Success(updatedQuestion, "Cập nhật câu hỏi Multiple Choice thành công"));
+
+                return NotFound(
+                    ApiResponseFactory.Error<object>(404, "Không tìm thấy câu hỏi hoặc không phải loại MN"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponseFactory.Error<object?>(400, ex.Message));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Lỗi khi cập nhật câu hỏi {id}");
-                return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
+                _logger.LogError(ex, $"Lỗi khi cập nhật câu hỏi Multiple Choice {id}: {ex.Message}");
+                if (ex.InnerException != null)
+                    _logger.LogError(ex.InnerException, $"Inner: {ex.InnerException.Message}");
+
+                return StatusCode(500,
+                    ApiResponseFactory.ServerError(ex.Message + " | Inner: " +
+                                                   (ex.InnerException?.Message ?? "No inner")));
             }
         }
 
@@ -354,7 +369,7 @@ namespace BeQuestionBank.API.Controllers
                 return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
             }
         }
-        
+
 
         /// <summary>
         /// Lấy chi tiết câu hỏi nhóm kèm tất cả câu hỏi con
@@ -623,17 +638,12 @@ namespace BeQuestionBank.API.Controllers
             try
             {
                 var userId = GetCurrentUserId();
-                var result = await _cauHoiService.UpdateGroupQuestionAsync(id, request, userId);
+                var updated = await _cauHoiService.UpdateGroupQuestionAsync(id, request, userId);
 
-                if (result)
-                {
-                    return Ok(ApiResponseFactory.Success<object?>(
-                        null,
-                        "Cập nhật câu hỏi nhóm thành công"
-                    ));
-                }
+                if (updated != null)
+                    return Ok(ApiResponseFactory.Success(updated, "Cập nhật câu hỏi nhóm thành công"));
 
-                return BadRequest(ApiResponseFactory.Error<object>(400, "Cập nhật thất bại hoặc không tìm thấy ID"));
+                return NotFound(ApiResponseFactory.Error<object>(404, "Cập nhật thất bại hoặc không tìm thấy ID"));
             }
             catch (Exception ex)
             {
@@ -674,8 +684,139 @@ namespace BeQuestionBank.API.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Lỗi khi cập nhật câu hỏi Multiple Choice {id}");
-                return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
+                _logger.LogError(ex, $"Lỗi khi cập nhật câu hỏi Multiple Choice {id}: {ex.Message}");
+                if (ex.InnerException != null)
+                    _logger.LogError(ex.InnerException, $"Inner: {ex.InnerException.Message}");
+
+                return StatusCode(500,
+                    ApiResponseFactory.ServerError(ex.Message + " | Inner: " +
+                                                   (ex.InnerException?.Message ?? "No inner")));
+            }
+        }
+
+        /// <summary>
+        /// Cập nhật câu hỏi Tu kuab
+        /// </summary>
+        [HttpPatch("essay/{id}")]
+        [SwaggerOperation(
+            Summary = "Cập nhật câu hỏi Tự LUẬN",
+            Description = "Cập nhật câu hỏi Tự luận"
+        )]
+        public async Task<IActionResult> UpdateEssay(Guid id, [FromBody] UpdateCauHoiTuLuanDto request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ", ModelState));
+
+            try
+            {
+                var userId = GetCurrentUserId();
+
+                var updatedQuestion = await _cauHoiService.UpdateEssayQuestionAsync(id, request, userId);
+
+                if (updatedQuestion != null)
+                    return Ok(
+                        ApiResponseFactory.Success(updatedQuestion, "Cập nhật câu hỏi tự luận thành công"));
+
+                return NotFound(
+                    ApiResponseFactory.Error<object>(404, "Không tìm thấy câu hỏi hoặc không phải loại TL"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponseFactory.Error<object?>(400, ex.Message));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Lỗi khi cập nhật câu hỏi tự luận  {id}: {ex.Message}");
+                if (ex.InnerException != null)
+                    _logger.LogError(ex.InnerException, $"Inner: {ex.InnerException.Message}");
+
+                return StatusCode(500,
+                    ApiResponseFactory.ServerError(ex.Message + " | Inner: " +
+                                                   (ex.InnerException?.Message ?? "No inner")));
+            }
+        }
+
+        /// <summary>
+        /// Cập nhật câu hỏi dein từ
+        /// </summary>
+        [HttpPatch("Fillblank/{id}")]
+        [SwaggerOperation(
+            Summary = "Cập nhật câu hỏi dien từ",
+            Description = "Cập nhật câu hỏi Tự luận"
+        )]
+        public async Task<IActionResult> UpdateFillblank(Guid id, [FromBody] UpdateDienTuQuestionDto request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ", ModelState));
+
+            try
+            {
+                var userId = GetCurrentUserId();
+
+                var updatedQuestion = await _cauHoiService.UpdateDienTuQuestionAsync(id, request, userId);
+
+                if (updatedQuestion != null)
+                    return Ok(
+                        ApiResponseFactory.Success(updatedQuestion, "Cập nhật câu hỏi tự luận thành công"));
+
+                return NotFound(
+                    ApiResponseFactory.Error<object>(404, "Không tìm thấy câu hỏi hoặc không phải loại TL"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponseFactory.Error<object?>(400, ex.Message));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Lỗi khi cập nhật câu hỏi tự luận  {id}: {ex.Message}");
+                if (ex.InnerException != null)
+                    _logger.LogError(ex.InnerException, $"Inner: {ex.InnerException.Message}");
+
+                return StatusCode(500,
+                    ApiResponseFactory.ServerError(ex.Message + " | Inner: " +
+                                                   (ex.InnerException?.Message ?? "No inner")));
+            }
+        }
+
+        /// <summary>
+        /// Cập nhật câu hỏi Tu kuab
+        /// </summary>
+        [HttpPatch("Pairing/{id}")]
+        [SwaggerOperation(
+            Summary = "Cập nhật câu hỏi Tự LUẬN",
+            Description = "Cập nhật câu hỏi Tự luận"
+        )]
+        public async Task<IActionResult> UpdatePairing(Guid id, [FromBody] UpdateCauHoiNhomDto request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ", ModelState));
+
+            try
+            {
+                var userId = GetCurrentUserId();
+
+                var updatedQuestion = await _cauHoiService.UpdateGhepNoiQuestionAsync(id, request, userId);
+
+                if (updatedQuestion != null)
+                    return Ok(
+                        ApiResponseFactory.Success(updatedQuestion, "Cập nhật câu hỏi tự luận thành công"));
+
+                return NotFound(
+                    ApiResponseFactory.Error<object>(404, "Không tìm thấy câu hỏi hoặc không phải loại TL"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponseFactory.Error<object?>(400, ex.Message));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Lỗi khi cập nhật câu hỏi tự luận  {id}: {ex.Message}");
+                if (ex.InnerException != null)
+                    _logger.LogError(ex.InnerException, $"Inner: {ex.InnerException.Message}");
+
+                return StatusCode(500,
+                    ApiResponseFactory.ServerError(ex.Message + " | Inner: " +
+                                                   (ex.InnerException?.Message ?? "No inner")));
             }
         }
     }

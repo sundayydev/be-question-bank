@@ -3,6 +3,7 @@ using BeQuestionBank.Shared.DTOs.Common;
 using FEQuestionBank.Client.Services.Interface;
 using System.Net.Http.Json;
 using BeQuestionBank.Shared.DTOs.CauHoi.Create;
+using BeQuestionBank.Shared.DTOs.CauHoi.TuLuan;
 using BeQuestionBank.Shared.DTOs.Pagination;
 
 namespace FEQuestionBank.Client.Services
@@ -73,6 +74,49 @@ namespace FEQuestionBank.Client.Services
         public async Task<ApiResponse<object>> UpdateQuestionAsync(Guid id, UpdateCauHoiWithCauTraLoiDto request)
         {
             var response = await _httpClient.PutAsJsonAsync($"/api/cauhoi/{id}", request);
+            return await response.Content.ReadFromJsonAsync<ApiResponse<object>>()
+                   ?? ApiResponseFactory.Error<object>(500, "Lỗi kết nối");
+        }
+
+        public async Task<ApiResponse<object>> UpdateEssayQuestionAsync(Guid id, UpdateCauHoiTuLuanDto request)
+        {
+            var response = await _httpClient.PatchAsJsonAsync($"/api/cauhoi/essay/{id}", request);
+            return await response.Content.ReadFromJsonAsync<ApiResponse<object>>()
+                   ?? ApiResponseFactory.Error<object>(500, "Lỗi kết nối");
+        }
+
+        public async Task<ApiResponse<object>> UpdateDienTuQuestionAsync(Guid id, UpdateDienTuQuestionDto request)
+        {
+            var response = await _httpClient.PatchAsJsonAsync($"/api/cauhoi/fillblank/{id}", request);
+            return await response.Content.ReadFromJsonAsync<ApiResponse<object>>()
+                   ?? ApiResponseFactory.Error<object>(500, "Lỗi kết nối");
+        }
+
+        public async Task<ApiResponse<object>> UpdateGhepNoiQuestionAsync(Guid id, UpdateCauHoiNhomDto request)
+        {
+            var response = await _httpClient.PatchAsJsonAsync($"/api/cauhoi/pairing/{id}", request);
+            return await response.Content.ReadFromJsonAsync<ApiResponse<object>>()
+                   ?? ApiResponseFactory.Error<object>(500, "Lỗi kết nối");
+        }
+
+        public async Task<ApiResponse<object>> UpdateSingleQuestionAsync(Guid id, UpdateCauHoiWithCauTraLoiDto request)
+        {
+            var response = await _httpClient.PatchAsJsonAsync($"/api/cauhoi/{id}", request);
+            return await response.Content.ReadFromJsonAsync<ApiResponse<object>>()
+                   ?? ApiResponseFactory.Error<object>(500, "Lỗi kết nối");
+        }
+
+        public async Task<ApiResponse<object>> UpdateMultipleChoiceQuestionAsync(Guid id,
+            UpdateCauHoiWithCauTraLoiDto request)
+        {
+            var response = await _httpClient.PatchAsJsonAsync($"/api/cauhoi/multiplechoice/{id}", request);
+            return await response.Content.ReadFromJsonAsync<ApiResponse<object>>()
+                   ?? ApiResponseFactory.Error<object>(500, "Lỗi kết nối");
+        }
+
+        public async Task<ApiResponse<object>> UpdateGroupQuestionAsync(Guid id, UpdateCauHoiNhomDto request)
+        {
+            var response = await _httpClient.PatchAsJsonAsync($"/api/cauhoi/group/{id}", request);
             return await response.Content.ReadFromJsonAsync<ApiResponse<object>>()
                    ?? ApiResponseFactory.Error<object>(500, "Lỗi kết nối");
         }

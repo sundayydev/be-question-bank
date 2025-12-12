@@ -13,7 +13,6 @@ public class CreateCauHoiDto
     [Required(ErrorMessage = "Mã phần không được để trống.")]
     public Guid MaPhan { get; set; }
 
-    [Required(ErrorMessage = "Mã số câu hỏi không được để trống.")]
     public int MaSoCauHoi { get; set; }
 
     public required string NoiDung { get; set; }
@@ -22,7 +21,7 @@ public class CreateCauHoiDto
     public bool HoanVi { get; set; }
 
     [Required(ErrorMessage = "Cấp độ không được để trống.")]
-    public short CapDo { get; set; }
+    public short CapDo { get; set; } = 1;
     public int SoCauHoiCon { get; set; } = 0;
 
     public Guid? MaCauHoiCha { get; set; }

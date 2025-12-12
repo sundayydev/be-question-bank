@@ -12,7 +12,7 @@
         <MudTextField Label="Tên Đăng Nhập"
                       @bind-Value="NguoiDung.TenDangNhap"
                       Required="true"
-                      Variant="Variant.Outlined" />
+                      Variant="Variant.Outlined"/>
 
         @* Mật khẩu không nằm trong DTO nên tách riêng *@
         @if (NguoiDung.MaNguoiDung == Guid.Empty)
@@ -21,25 +21,25 @@
                           @bind-Value="Password"
                           Required="true"
                           InputType="InputType.Password"
-                          Variant="Variant.Outlined" />
+                          Variant="Variant.Outlined"/>
         }
         else
         {
             <MudTextField Label="Mật Khẩu Mới (để trống nếu không đổi)"
                           @bind-Value="Password"
                           InputType="InputType.Password"
-                          Variant="Variant.Outlined" />
+                          Variant="Variant.Outlined"/>
         }
 
         <MudTextField Label="Họ Tên"
                       @bind-Value="NguoiDung.HoTen"
                       Required="true"
-                      Variant="Variant.Outlined" />
+                      Variant="Variant.Outlined"/>
 
         <MudTextField Label="Email"
                       @bind-Value="NguoiDung.Email"
                       Required="true"
-                      Variant="Variant.Outlined" />
+                      Variant="Variant.Outlined"/>
 
         <MudSelect T="EnumRole"
                    Label="Vai Trò"
@@ -52,7 +52,7 @@
         <MudSwitch T="bool"
                    @bind-Value="NguoiDung.BiKhoa"
                    Label="Khóa tài khoản"
-                   Color="Color.Error" />
+                   Color="Color.Error"/>
 
     </DialogContent>
 
@@ -67,9 +67,9 @@
                    Color="Color.Primary"
                    Variant="Variant.Filled"
                    Disabled="@(
-                       string.IsNullOrWhiteSpace(NguoiDung.TenDangNhap)
-                       || string.IsNullOrWhiteSpace(NguoiDung.HoTen)
-                   )">
+                             string.IsNullOrWhiteSpace(NguoiDung.TenDangNhap)
+                             || string.IsNullOrWhiteSpace(NguoiDung.HoTen)
+                             )">
             Lưu
         </MudButton>
     </DialogActions>

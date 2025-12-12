@@ -1,17 +1,14 @@
-﻿@page "/exams"
-@using BEQuestionBank.Shared.DTOs.DeThi
-@inherits DeThiBase
-@inject ISnackbar Snackbar
-@inject NavigationManager Nav
-
+﻿@page "/khoa"
+@using FEQuestionBank.Client.Component.InfoCard
+@inherits KhoaBase
 <MudContainer MaxWidth="MaxWidth.ExtraLarge">
     <MudBreadcrumbs Items="_breadcrumbs"/>
     <MudGrid Spacing="3" Style=" margin-bottom: 10px">
         <MudItem xs="12" sm="6" md="4">
             <InfoCard
-                Icon="@Icons.Material.Filled.EventNote"
+                Icon="@Icons.Material.Filled.Apartment"
                 IconColor="Color.Primary"
-                Title="Tổng số đề thi "
+                Title="Tổng số khoa "
                 Value="@TotalKhoa.ToString()"/>
         </MudItem>
 
@@ -19,7 +16,7 @@
             <InfoCard
                 Icon="@Icons.Material.Filled.Assignment"
                 IconColor="Color.Success"
-                Title="Số đề đã xuất bản"
+                Title="Sô Khoa còn hoạt động"
                 Value="@ActiveKhoa.ToString()"/>
         </MudItem>
 
@@ -27,11 +24,12 @@
             <InfoCard
                 Icon="@Icons.Material.Filled.CloudUpload"
                 IconColor="Color.Info"
-                Title="Số đề lỗi"
+                Title="Số khoa ngừng hoạt động"
                 Value="@LockedKhoa.ToString()"
                 BackgroundColor="#f5f9ff"/>
         </MudItem>
     </MudGrid>
+
     <!-- Ô tìm kiếm + nút tạo mới -->
     <div class="row mb-3 g-2 align-items-center">
         <!-- Ô tìm kiếm -->
@@ -40,18 +38,20 @@
                 <span class="input-group-text bg-light"
                       style="border-radius: 10px 0 0 10px; border: 1px solid #ced4da; border-right: none;">
                     <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Medium"
-                             Style="@($"color:{Colors.Blue.Darken3};")"/>
+                             Style="@($"color:{Colors.Blue.Darken3};")"
+                    />
                 </span>
 
                 <div class="flex-grow-1">
                     <MudTextField @bind-Value="_searchTerm"
-                                  Placeholder="Tìm theo tên đề thi..."
+                                  Placeholder="Tìm theo tên khoa..."
                                   Variant="Variant.Text"
                                   Immediate="true"
-                                  OnKeyDown="@(e =>
+                                  OnKeyDown="@(async (e) =>
                                              {
-                                                 if (e.Key == "Enter") table?.ReloadServerData();
+                                                 if (e.Key == "Enter") await OnSearch();
                                              })"
+                                  OnAdornmentClick="OnSearch"
                                   Class="shadow-none"
                                   Style="border-radius: 0 10px 10px 0; height:42px; padding-left:10px;"/>
                 </div>
@@ -68,10 +68,8 @@
             </MudButton>
         </div>
     </div>
-
     <!-- Bảng dữ liệu -->
-    <MudTable T="DeThiDto"
-              ServerData="LoadServerData"
+    <MudTable ServerData="LoadServerData"
               Bordered="true"
               Hover="true"
               Striped="true"
@@ -82,46 +80,48 @@
               @ref="table">
 
         <HeaderContent>
-            <MudTh Style="width:25%;"><MudTableSortLabel T="DeThiDto" SortBy="x => x.TenDeThi">Tên Đề Thi</MudTableSortLabel></MudTh>
-            <MudTh Style="width:15%;"><MudTableSortLabel T="DeThiDto" SortBy="x => x.SoCauHoi">Số Câu Hỏi</MudTableSortLabel></MudTh>
-            <MudTh Style="width:15%;"><MudTableSortLabel T="DeThiDto" SortBy="x => x.DaDuyet">Trạng Thái</MudTableSortLabel></MudTh>
-            <MudTh Style="width:20%;"><MudTableSortLabel T="DeThiDto" SortBy="x => x.NgayTao">Ngày Tạo</MudTableSortLabel></MudTh>
-            <MudTh Style="width:25%; text-align:center;">Thao Tác</MudTh>
+            <MudTh Style="width:25%;">
+                <MudTableSortLabel SortLabel="TenKhoa" T="KhoaDto">Tên Khoa</MudTableSortLabel>
+            </MudTh>
+            <MudTh Style="width:35%;">
+                <MudTableSortLabel SortLabel="MoTa" T="KhoaDto">Mô Tả</MudTableSortLabel>
+            </MudTh>
+            <MudTh Style="width:20%; text-align:center;">
+                <MudTableSortLabel SortLabel="XoaTam" T="KhoaDto">Trạng Thái</MudTableSortLabel>
+            </MudTh>
+            <MudTh Style="width:20%; text-align:center;">Thao Tác</MudTh>
         </HeaderContent>
 
         <RowTemplate>
-            <MudTd Style="width:25%;">@context.TenDeThi</MudTd>
-            <MudTd Style="width:15%;">@context.SoCauHoi</MudTd>
-            <MudTd Style="width:15%;">
+            <MudTd Style="width:25%;">@context.TenKhoa</MudTd>
+            <MudTd Style="width:35%;">@context.MoTa</MudTd>
+            <MudTd Style="text-align:center;">
                 <MudChip T="string"
                          Size="Size.Small"
                          Style="@(
-                                context.DaDuyet == true
-                                    ? $"background-color:{Colors.Red.Lighten4}; color:{Colors.Red.Darken3}; font-weight:500; width:90px;"
-                                    : $"background-color:{Colors.Green.Lighten4}; color:{Colors.Green.Darken3}; font-weight:500; width:90px;"
+                                context.XoaTam == true
+                                    ? $"background-color:{Colors.Red.Lighten4}; color:{Colors.Red.Darken3}; " +
+                                      $"font-weight:400; width:80px"
+                                    : $"background-color:{Colors.Green.Lighten4}; color:{Colors.Green.Darken3};" +
+                                      $" font-weight:400; width:80px"
                                 )">
-                    @(context.DaDuyet == true ? "Chưa xuất bản" : "Đã duyệt")
+                    @(context.XoaTam == true ? "Đã khóa" : "Hoạt động")
                 </MudChip>
             </MudTd>
-            <MudTd Style="width:20%;">@context.NgayTao.ToString("dd/MM/yyyy HH:mm")</MudTd>
-            <MudTd Style="width:25%; text-align:center;">
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Class="mx-1"
-                               Style="@($"color:{Colors.Blue.Darken2};")"
-                               OnClick="() => OnEdit(context)"/>
-                <MudIconButton Icon="@Icons.Material.Filled.Visibility"
-                               Size="Size.Small"
-                               Class="mx-1"
-                               Style="@($"color:{Colors.Yellow.Darken2};")"
-                               OnClick="@(() => Nav.NavigateTo($"/exams/{context.MaDeThi}"))"/>
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Class="mx-1"
-                               Color="Color.Error"
-                               OnClick="() => OnConfirmDelete(context)"/>
-
+            <MudTd Style="width:20%; text-align:center;">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Style="@($"color:{Colors.Blue.Darken2};")"
+                               Size="Size.Small" Class="mx-1" OnClick="() => OnEdit(context)"/>
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Style="@($"color:{Colors.Yellow.Darken2};")"
+                               Size="Size.Small" Class="mx-1" OnClick="() => OnViewDetail(context)"/>
+                <MudIconButton Icon="@Icons.Material.Filled.List" Style="@($"color:{Colors.Pink.Darken2};")"
+                               Size="Size.Small" Class="mx-1" OnClick="() => OnViewSubjects(context)"/>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Style="@($"color:{Colors.Red.Darken2};")"
+                               Size="Size.Small" Class="mx-1" OnClick="() => OnConfirmDelete(context)"/>
             </MudTd>
         </RowTemplate>
 
         <NoRecordsContent>
-            <MudText>Không tìm thấy đề thi nào</MudText>
+            <MudText>Không tìm thấy khoa nào</MudText>
         </NoRecordsContent>
 
         <LoadingContent>
@@ -134,5 +134,4 @@
                 InfoFormat="Hiển thị {first_item}-{last_item} của {all_items} mục"/>
         </PagerContent>
     </MudTable>
-
 </MudContainer>

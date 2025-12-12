@@ -42,9 +42,10 @@ namespace FEQuestionBank.Client.Pages.CauHoi
         protected Guid? SelectedPhanId { get; set; }
         protected EnumCLO SelectedCLO { get; set; } = EnumCLO.CLO1;
         protected short CapDo { get; set; } = 1;
-        protected string QuestionContent { get; set; } = string.Empty;
-        
-        protected List<CauTraLoiDto> Answers { get; set; } = new()
+        protected bool HoanVi { get; set; } = true;
+        protected string NoiDungCha { get; set; } = string.Empty;
+
+        protected List<CauTraLoiDto> CauTraLoi { get; set; } = new()
         {
             new CauTraLoiDto { NoiDung = "", LaDapAn = false, HoanVi = true },
             new CauTraLoiDto { NoiDung = "", LaDapAn = false, HoanVi = true },
@@ -102,7 +103,7 @@ namespace FEQuestionBank.Client.Pages.CauHoi
             var userIdString = await AuthStateProvider.GetUserIdAsync();
             var userId = Guid.Parse(userIdString);
             Console.WriteLine(userId);
-            if (string.IsNullOrWhiteSpace(QuestionContent))
+            if (string.IsNullOrWhiteSpace(NoiDungCha))
             {
                 Snackbar.Add("Vui lòng nhập nội dung câu hỏi", Severity.Error);
                 return;
@@ -114,56 +115,97 @@ namespace FEQuestionBank.Client.Pages.CauHoi
                 return;
             }
 
-            if (Answers.Count < 3)
+            if (CauTraLoi.Count < 3)
             {
                 Snackbar.Add("Câu hỏi Multiple Choice phải có ít nhất 3 đáp án", Severity.Error);
                 return;
             }
 
-            if (Answers.Count(a => a.LaDapAn) < 2)
+            if (CauTraLoi.Count(a => a.LaDapAn) < 2)
             {
                 Snackbar.Add("Phải chọn ít nhất 2 đáp án đúng", Severity.Error);
                 return;
             }
 
-            if (Answers.Any(a => string.IsNullOrWhiteSpace(a.NoiDung)))
+            if (CauTraLoi.Any(a => string.IsNullOrWhiteSpace(a.NoiDung)))
             {
                 Snackbar.Add("Tất cả đáp án phải có nội dung", Severity.Error);
                 return;
             }
 
-            var request = new CreateCauHoiMultipleChoiceDto
+            try
             {
-                NoiDung = QuestionContent,
-                MaPhan = SelectedPhanId.Value,
-                MaSoCauHoi = 0,
-                HoanVi = true,
-                CapDo = 1,
-                CLO = SelectedCLO,
-                CauTraLois = Answers.Select(a => new CreateCauTraLoiDto
+                if (IsEditMode)
                 {
-                    NoiDung = a.NoiDung,
-                    ThuTu = a.ThuTu,
-                    LaDapAn = a.LaDapAn,
-                    HoanVi = a.HoanVi ?? false
-                }).ToList()
-            };
+                    // === CHẾ ĐỘ CHỈNH SỬA ===
+                    var updateRequest = new UpdateCauHoiWithCauTraLoiDto
+                    {
+                        NoiDung = NoiDungCha,
+                        MaPhan = SelectedPhanId.Value,
+                        CLO = SelectedCLO,
+                        CapDo = CapDo,
+                        HoanVi = HoanVi,
+                        CauTraLois = CauTraLoi.Select((a, index) => new UpdateCauTraLoiDto
+                        {
+                            MaCauTraLoi = a.MaCauTraLoi,
+                            NoiDung = a.NoiDung,
+                            ThuTu = index + 1,
+                            LaDapAn = a.LaDapAn,
+                            HoanVi = a.HoanVi ?? true
+                        }).ToList()
+                    };
 
-            var result = await CauHoiApiClient.CreateMultipeChoiceQuestionAsync(request);
-            if (result.Success)
-            {
-                Snackbar.Add("Tạo câu hỏi thành công!", Severity.Success);
-                Navigation.NavigateTo("/question/list");
+                    var result = await CauHoiApiClient.UpdateMultipleChoiceQuestionAsync(EditId.Value, updateRequest);
+                    Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(result));
+                    if (result.Success)
+                    {
+                        Snackbar.Add("Cập nhật câu hỏi thành công!", Severity.Success);
+                        Navigation.NavigateTo("/question/list");
+                    }
+                    else
+                    {
+                        Snackbar.Add($"Cập nhật thất bại: {result.Message}", Severity.Error);
+                    }
+                }
+                else
+                {
+                    // === CHẾ ĐỘ TẠO MỚI (giữ nguyên như cũ) ===
+                    var createRequest = new CreateCauHoiMultipleChoiceDto
+                    {
+                        NoiDung = NoiDungCha,
+                        MaPhan = SelectedPhanId.Value,
+                        CLO = SelectedCLO,
+                        CapDo = CapDo,
+                        HoanVi = HoanVi,
+                        CauTraLois = CauTraLoi.Select(a => new CreateCauTraLoiDto
+                        {
+                            NoiDung = a.NoiDung,
+                            LaDapAn = a.LaDapAn,
+                            HoanVi = a.HoanVi ?? true
+                        }).ToList()
+                    };
+
+                    var result = await CauHoiApiClient.CreateMultipeChoiceQuestionAsync(createRequest);
+                    if (result.Success)
+                    {
+                        Snackbar.Add("Tạo câu hỏi thành công!", Severity.Success);
+                        Navigation.NavigateTo("/question/list");
+                    }
+                    else
+                    {
+                        Snackbar.Add($"Lỗi: {result.Message}", Severity.Error);
+                    }
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Snackbar.Add($"Lỗi: {result.Message}", Severity.Error);
+                Snackbar.Add("Có lỗi xảy ra: " + ex.Message, Severity.Error);
             }
         }
 
         protected void AddAnswer()
         {
-            Answers.Add(new CauTraLoiDto
+            CauTraLoi.Add(new CauTraLoiDto
             {
                 NoiDung = "",
                 LaDapAn = false,
@@ -174,8 +216,8 @@ namespace FEQuestionBank.Client.Pages.CauHoi
 
         protected void RemoveAnswer(CauTraLoiDto answer)
         {
-            if (Answers.Count > 3)
-                Answers.Remove(answer);
+            if (CauTraLoi.Count > 3)
+                CauTraLoi.Remove(answer);
             else
                 Snackbar.Add("Cần tối thiểu 3 câu trả lời", Severity.Warning);
         }
@@ -184,7 +226,7 @@ namespace FEQuestionBank.Client.Pages.CauHoi
 
         protected async Task PreviewQuestion()
         {
-            if (string.IsNullOrWhiteSpace(QuestionContent))
+            if (string.IsNullOrWhiteSpace(NoiDungCha))
             {
                 Snackbar.Add("Vui lòng nhập nội dung câu hỏi để xem trước", Severity.Warning);
                 return;
@@ -196,8 +238,8 @@ namespace FEQuestionBank.Client.Pages.CauHoi
 
             var parameters = new DialogParameters<QuestionMultipleChoicePreviewDialog>
             {
-                { x => x.QuestionContent, QuestionContent },
-                { x => x.Answers, Answers }, 
+                { x => x.NoiDungCha, NoiDungCha },
+                { x => x.CauTraLoi, CauTraLoi },
                 { x => x.TenKhoa, tenKhoa },
                 { x => x.TenMon, tenMon },
                 { x => x.TenPhan, tenPhan },
@@ -205,7 +247,12 @@ namespace FEQuestionBank.Client.Pages.CauHoi
                 { x => x.CapDo, 1 }
             };
 
-            var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+            var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true,
+                CloseButton = true
+            };
             var dialog = DialogService.Show<QuestionMultipleChoicePreviewDialog>("Xem trước", parameters, options);
             var result = await dialog.Result;
 
@@ -244,13 +291,13 @@ namespace FEQuestionBank.Client.Pages.CauHoi
             if (!res.Success || res.Data == null)
             {
                 Snackbar.Add("Không tải được câu hỏi!", Severity.Error);
-                Navigation.NavigateTo("/cauhoi");
+                Navigation.NavigateTo("/question/list");
                 return;
             }
 
             var q = res.Data;
 
-            QuestionContent = q.NoiDung ?? "";
+            NoiDungCha = q.NoiDung ?? "";
             SelectedCLO = q.CLO ?? EnumCLO.CLO1;
             CapDo = q.CapDo;
             SelectedPhanId = q.MaPhan;
@@ -294,17 +341,18 @@ namespace FEQuestionBank.Client.Pages.CauHoi
             }
 
             // Load đáp án
-            Answers.Clear();
+            CauTraLoi.Clear();
             if (q.CauTraLois != null)
             {
-                for (int i = 0; i < q.CauTraLois.Count; i++)
+                foreach (var a in q.CauTraLois.OrderBy(x => x.ThuTu))
                 {
-                    var a = q.CauTraLois[i];
-                    Answers.Add(new CauTraLoiDto
+                    CauTraLoi.Add(new CauTraLoiDto
                     {
+                        MaCauTraLoi = a.MaCauTraLoi, 
                         NoiDung = a.NoiDung ?? "",
                         LaDapAn = a.LaDapAn,
-                        HoanVi = a.HoanVi ?? true
+                        HoanVi = a.HoanVi ?? true,
+                        ThuTu = a.ThuTu
                     });
                 }
             }

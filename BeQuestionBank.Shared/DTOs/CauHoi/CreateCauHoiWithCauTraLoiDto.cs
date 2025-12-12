@@ -9,6 +9,7 @@ namespace BeQuestionBank.Shared.DTOs.CauHoi
 {
     public class CreateCauHoiWithCauTraLoiDto : CreateCauHoiDto
     {
-        public List<CreateCauTraLoiDto> CauTraLois { get; set; } = new List<CreateCauTraLoiDto>();
+        public Guid? MaCauHoi { get; set; }
+        public List<CreateCauTraLoiDto> CauTraLois { get; set; } = new();
     }
 }

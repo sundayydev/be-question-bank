@@ -245,7 +245,118 @@ public class DeThiService
             TenKhoa = deThi.MonHoc?.Khoa?.TenKhoa
         };
     }
+    /// <summary>
+    /// Map CauHoi entity → DTO với đáp án và câu hỏi con (có đáp án riêng)
+    /// </summary>
+    //private CauHoiWithCauTraLoiDto MapCauHoiFull(CauHoi ch)
+    //{
+    //    var dto = new CauHoiWithCauTraLoiDto
+    //    {
+    //        MaCauHoi = ch.MaCauHoi,
+    //        MaPhan = ch.MaPhan,
+    //        MaSoCauHoi = ch.MaSoCauHoi,
+    //        NoiDung = ch.NoiDung,
+    //        HoanVi = ch.HoanVi,
+    //        CapDo = ch.CapDo,
+    //        SoCauHoiCon = ch.SoCauHoiCon,
+    //        XoaTam = ch.XoaTam,
+    //        NgaySua = ch.NgayCapNhat,
+    //        CLO = ch.CLO,
+    //        LoaiCauHoi = ch.LoaiCauHoi,
+    //        MaCauHoiCha = ch.MaCauHoiCha,
 
+    //        // Đáp án của chính câu hỏi này (cha hoặc con)
+    //        CauTraLois = ch.CauTraLois?
+    //            .OrderBy(tl => tl.ThuTu)
+    //            .Select(tl => new CauTraLoiDto
+    //            {
+    //                MaCauTraLoi = tl.MaCauTraLoi,
+    //                MaCauHoi = tl.MaCauHoi,
+    //                NoiDung = tl.NoiDung,
+    //                ThuTu = tl.ThuTu,
+    //                LaDapAn = tl.LaDapAn
+    //            }).ToList(),
+
+    //        // Câu hỏi con (nếu có) - và mỗi con cũng có đáp án riêng
+    //        CauHoiCons = ch.CauHoiCons?
+    //            .OrderBy(con => con.MaCauHoi)
+    //            .Select(con => MapCauHoiFull(con))  // Đệ quy để map đầy đủ đáp án của con
+    //            .ToList()
+    //    };
+
+    //    return dto;
+    //}
+    private CauHoiDto MapCauHoiFull(CauHoi ch)
+    {
+        var dto = new CauHoiDto
+        {
+            MaCauHoi = ch.MaCauHoi,
+            MaPhan = ch.MaPhan,
+            MaSoCauHoi = ch.MaSoCauHoi,
+            NoiDung = ch.NoiDung,
+            HoanVi = ch.HoanVi,
+            CapDo = ch.CapDo,
+            SoCauHoiCon = ch.SoCauHoiCon,
+            XoaTam = ch.XoaTam,
+            NgaySua = ch.NgayCapNhat,  // hoặc ch.NgaySua nếu entity có field này
+            CLO = ch.CLO,
+            LoaiCauHoi = ch.LoaiCauHoi,
+            MaCauHoiCha = ch.MaCauHoiCha,
+
+            // Đáp án của câu hỏi hiện tại (cha hoặc con)
+            CauTraLois = ch.CauTraLois?
+                .OrderBy(tl => tl.ThuTu)
+                .Select(tl => new CauTraLoiDto
+                {
+                    MaCauTraLoi = tl.MaCauTraLoi,
+                    MaCauHoi = tl.MaCauHoi,
+                    NoiDung = tl.NoiDung,
+                    ThuTu = tl.ThuTu,
+                    LaDapAn = tl.LaDapAn,
+                    HoanVi = tl.HoanVi  // nếu entity có
+                })
+                .ToList(),
+
+            // Map câu hỏi con (chỉ 1 cấp, KHÔNG đệ quy)
+            CauHoiCons = ch.CauHoiCons?
+                .OrderBy(con => con.MaSoCauHoi)
+                .Select(con => new CauHoiDto
+                {
+                    MaCauHoi = con.MaCauHoi,
+                    MaPhan = con.MaPhan,
+                    MaSoCauHoi = con.MaSoCauHoi,
+                    NoiDung = con.NoiDung,
+                    HoanVi = con.HoanVi,
+                    CapDo = con.CapDo,
+                    SoCauHoiCon = con.SoCauHoiCon,
+                    XoaTam = con.XoaTam,
+                    NgaySua = con.NgayCapNhat,
+                    CLO = con.CLO,
+                    LoaiCauHoi = con.LoaiCauHoi,
+                    MaCauHoiCha = con.MaCauHoiCha,
+
+                    // Đáp án của câu con
+                    CauTraLois = con.CauTraLois?
+                        .OrderBy(tl => tl.ThuTu)
+                        .Select(tl => new CauTraLoiDto
+                        {
+                            MaCauTraLoi = tl.MaCauTraLoi,
+                            MaCauHoi = tl.MaCauHoi,
+                            NoiDung = tl.NoiDung,
+                            ThuTu = tl.ThuTu,
+                            LaDapAn = tl.LaDapAn,
+                            HoanVi = tl.HoanVi
+                        })
+                        .ToList()
+
+                    // Không map CauHoiCons của con nữa → tránh đệ quy
+                    // Nếu sau này cần con của con thì mới thêm
+                })
+                .ToList()
+        };
+
+        return dto;
+    }
     /// <summary>
     /// Maps a DeThi ewith chi tiết
     /// </summary>
@@ -326,148 +437,87 @@ public class DeThiService
             TenMonHoc = deThi.MonHoc?.TenMonHoc,
             TenKhoa = deThi.MonHoc?.Khoa?.TenKhoa,
 
-            ChiTietDeThis = deThi.ChiTietDeThis?
-                // QUAN TRỌNG: Loại bỏ hoàn toàn các câu con của GN (chỉ giữ câu cha hoặc câu đơn)
-                .Where(ct => ct.CauHoi != null)
-                .Where(ct => ct.CauHoi.MaCauHoiCha == null) // ← Chỉ lấy câu gốc
+            ChiTietDeThis = deThi.ChiTietDeThis
                 .OrderBy(ct => ct.ThuTu)
-                .Select(ct => MapChiTietWithSpecialHandling(ct))
-                .ToList() ?? new List<ChiTietDeThiWithCauTraLoiDto>()
-        };
-    }
-
-    /// <summary>
-    /// Map từng chi tiết đề thi, xử lý riêng cho từng loại câu hỏi
-    /// </summary>
-    private ChiTietDeThiWithCauTraLoiDto MapChiTietWithSpecialHandling(ChiTietDeThi ct)
-    {
-        var cauHoi = ct.CauHoi;
-
-        var result = new ChiTietDeThiWithCauTraLoiDto
-        {
-            MaDeThi = ct.MaDeThi,
-            MaPhan = ct.MaPhan,
-            MaCauHoi = ct.MaCauHoi,
-            ThuTu = ct.ThuTu,
-            CauHoi = null
-        };
-
-        if (cauHoi == null)
-        {
-            result.CauHoi = new CauHoiWithCauTraLoiDto
-            {
-                MaCauHoi = ct.MaCauHoi,
-                NoiDung = "[Câu hỏi đã bị xóa]",
-                LoaiCauHoi = "Deleted"
-            };
-            return result;
-        }
-
-
-        // XỬ LÝ CÂU NHÓM (Group) - đoạn văn + nhiều câu con
-        if (cauHoi.LoaiCauHoi == "NH" && cauHoi.MaCauHoiCha == null)
-        {
-            result.CauHoi = MapGroupQuestion(cauHoi);
-            return result;
-        }
-
-        // Các loại còn lại: TN, DT, TL, MN, TN... (câu đơn)
-        result.CauHoi = MapNormalQuestion(cauHoi);
-        return result;
-    }
-
-
-    /// <summary>
-    /// Câu hỏi nhóm 
-    /// </summary>
-    private CauHoiWithCauTraLoiDto MapGroupQuestion(CauHoi parent)
-    {
-        return new CauHoiWithCauTraLoiDto
-        {
-            MaCauHoi = parent.MaCauHoi,
-            MaPhan = parent.MaPhan,
-            MaSoCauHoi = parent.MaSoCauHoi,
-            NoiDung = parent.NoiDung,
-            HoanVi = parent.HoanVi,
-            CapDo = parent.CapDo,
-            CLO = parent.CLO,
-            LoaiCauHoi = "NH",
-            SoCauHoiCon = parent.CauHoiCons?.Count ?? 0,
-            NgaySua = parent.NgayCapNhat,
-
-            CauHoiCons = parent.CauHoiCons?
-                .Select(child => new CauHoiDto
+                .Select(ct => new ChiTietDeThiWithCauTraLoiDto
                 {
-                    MaCauHoi = child.MaCauHoi,
-                    MaPhan = child.MaPhan,
-                    MaSoCauHoi = child.MaSoCauHoi,
-                    NoiDung = child.NoiDung,
-                    HoanVi = child.HoanVi,
-                    CapDo = child.CapDo,
-                    CLO = child.CLO,
-                    SoCauHoiCon = child.CauHoiCons?.Count ?? 0,
-                    MaCauHoiCha = child.MaCauHoiCha
-                })
-                .ToList() ?? new List<CauHoiDto>(),
-
-            CauTraLois = new List<CauTraLoiDto>()
+                    MaDeThi = ct.MaDeThi,
+                    MaPhan = ct.MaPhan,
+                    MaCauHoi = ct.MaCauHoi,
+                    ThuTu = ct.ThuTu ?? 0,
+                    CauHoi = ct.CauHoi != null ? new CauHoiWithCauTraLoiDto
+                    {
+                        MaCauHoi = ct.CauHoi.MaCauHoi,
+                        MaPhan = ct.CauHoi.MaPhan,
+                        TenPhan = ct.CauHoi.Phan?.TenPhan,
+                        MaSoCauHoi = ct.CauHoi.MaSoCauHoi,
+                        NoiDung = ct.CauHoi.NoiDung,
+                        HoanVi = ct.CauHoi.HoanVi,
+                        CapDo = ct.CauHoi.CapDo,
+                        SoCauHoiCon = ct.CauHoi.SoCauHoiCon,
+                        DoPhanCach = ct.CauHoi.DoPhanCach,
+                        MaCauHoiCha = ct.CauHoi.MaCauHoiCha,
+                        XoaTam = ct.CauHoi.XoaTam,
+                        SoLanDuocThi = ct.CauHoi.SoLanDuocThi,
+                        SoLanDung = ct.CauHoi.SoLanDung,
+                        NgayTao = ct.CauHoi.NgayTao,
+                        NgaySua = ct.CauHoi.NgayCapNhat,
+                        CLO = ct.CauHoi.CLO,
+                        LoaiCauHoi = ct.CauHoi.LoaiCauHoi,
+                        CauHoiCons = ct.CauHoi.CauHoiCons?.Select(MapChildToDto).ToList() ?? new(),
+                        CauTraLois = ct.CauHoi.CauTraLois?.Select(ctl => new CauTraLoiDto
+                        {
+                            // map các field của CauTraLoi
+                            MaCauTraLoi = ctl.MaCauTraLoi,
+                            NoiDung = ctl.NoiDung,
+                            LaDapAn = ctl.LaDapAn,
+                            // các field khác...
+                        }).ToList() ?? new()
+                    } : null!
+                }).ToList()
         };
     }
-
-    /// <summary>
-    /// Câu hỏi bình thường: TN, TL, DT, MN...
-    /// </summary>
-    private CauHoiWithCauTraLoiDto MapNormalQuestion(CauHoi cauHoi)
-    {
-        return new CauHoiWithCauTraLoiDto
-        {
-            MaCauHoi = cauHoi.MaCauHoi,
-            MaPhan = cauHoi.MaPhan,
-            MaSoCauHoi = cauHoi.MaSoCauHoi,
-            NoiDung = cauHoi.NoiDung,
-            HoanVi = cauHoi.HoanVi,
-            CapDo = cauHoi.CapDo,
-            SoCauHoiCon = cauHoi.SoCauHoiCon,
-            MaCauHoiCha = cauHoi.MaCauHoiCha,
-            CLO = cauHoi.CLO,
-            LoaiCauHoi = cauHoi.LoaiCauHoi ?? "TN",
-            NgaySua = cauHoi.NgayCapNhat,
-            XoaTam = cauHoi.XoaTam,
-
-            CauTraLois = cauHoi.CauTraLois?
-                .OrderBy(a => a.ThuTu)
-                .Select(a => new CauTraLoiDto
-                {
-                    MaCauTraLoi = a.MaCauTraLoi,
-                    MaCauHoi = a.MaCauHoi,
-                    NoiDung = a.NoiDung,
-                    ThuTu = a.ThuTu,
-                    HoanVi = a.HoanVi,
-                    LaDapAn = a.LaDapAn
-                }).ToList() ?? new List<CauTraLoiDto>(),
-
-            CauHoiCons = cauHoi.CauHoiCons?
-                .Select(child => MapChildToDto(child))
-                .ToList() ?? new List<CauHoiDto>(),
-        };
-    }
-
     private CauHoiDto MapChildToDto(CauHoi child)
     {
+        if (child == null)
+            return null!;
+
         return new CauHoiDto
         {
             MaCauHoi = child.MaCauHoi,
             MaPhan = child.MaPhan,
+            TenPhan = child.Phan?.TenPhan,
             MaSoCauHoi = child.MaSoCauHoi,
             NoiDung = child.NoiDung,
             HoanVi = child.HoanVi,
             CapDo = child.CapDo,
+            SoCauHoiCon = child.SoCauHoiCon,
+            DoPhanCach = child.DoPhanCach,
+            MaCauHoiCha = child.MaCauHoiCha,
+            XoaTam = child.XoaTam ?? false,
+            SoLanDuocThi = child.SoLanDuocThi,
+            SoLanDung = child.SoLanDung,
+            NgayTao = child.NgayTao,
+            NgaySua = child.NgayCapNhat,
             CLO = child.CLO,
-            SoCauHoiCon = child.CauHoiCons?.Count ?? 0,
-            MaCauHoiCha = child.MaCauHoiCha
+            LoaiCauHoi = child.LoaiCauHoi ?? string.Empty,
+
+            // Câu trả lời của câu hỏi con này
+            CauTraLois = child.CauTraLois
+                .Select(ctl => new CauTraLoiDto
+                {
+                    MaCauTraLoi = ctl.MaCauTraLoi,
+                    MaCauHoi = ctl.MaCauHoi,
+                    NoiDung = ctl.NoiDung,
+                    LaDapAn= ctl.LaDapAn,
+                    ThuTu = ctl.ThuTu,
+                    // Thêm các field khác của CauTraLoiDto nếu có
+                    // Ví dụ: GhepNoiId = ctl.GhepNoiId, ...
+                })
+                .OrderBy(ctl => ctl.ThuTu) // sắp xếp câu trả lời theo thứ tự nếu cần
+                .ToList() ?? new List<CauTraLoiDto>()
         };
     }
-
 
     /// <summary>
     /// Kiểm tra xem có đủ câu hỏi để rút trích theo ma trận không.

@@ -8,6 +8,7 @@ namespace BeQuestionBank.Shared.DTOs.CauTraLoi
 {
     public class CreateCauTraLoiDto
     {
+        public Guid? MaCauTraLoi { get; set; }
         public Guid MaCauHoi { get; set; }
         public required string NoiDung { get; set; }
         public int ThuTu { get; set; }

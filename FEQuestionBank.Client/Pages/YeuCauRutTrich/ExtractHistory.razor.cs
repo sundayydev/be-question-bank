@@ -96,7 +96,7 @@ namespace FEQuestionBank.Client.Pages.YeuCau
         protected void OnViewDetail(YeuCauRutTrichDto yc)
         {
             var parameters = new DialogParameters { ["YeuCau"] = yc };
-            DialogService.Show<YeuCauDetailDialog>("Chi tiết yêu cầu", parameters);
+            DialogService.Show<ExtractDetailDialog>("Chi tiết yêu cầu", parameters);
         }
 
         protected void OnViewDeThi(Guid maYeuCau)

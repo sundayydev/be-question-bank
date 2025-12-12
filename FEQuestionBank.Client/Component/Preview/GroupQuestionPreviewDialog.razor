@@ -1,3 +1,4 @@
+@using FEQuestionBank.Client.Component.Other
 @using FEQuestionBank.Client.Pages.CauHoi
 
 <MudDialog>
@@ -12,7 +13,8 @@
                 <MudStack Row="true" Spacing="1" Style="flex-wrap: wrap; gap: 8px;">
                     @if (!string.IsNullOrEmpty(TenKhoa))
                     {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">
+                        <MudChip T="string" Size="Size.Small" Color="Color.Secondary"
+                                 Class="ml-1 px-2 py-0">
                             <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" Class="mr-1"/>
                             @TenKhoa
                         </MudChip>
@@ -48,7 +50,7 @@
                     <b>Nội dung đoạn văn / Ngữ cảnh chung:</b>
                 </MudText>
                 <MudDivider Class="mb-3"/>
-                <LatexContent Content="@ParentContent" Class="question-latex-preview"/>
+                <LatexContent Content="@NoiDungCha" Class="question-latex-preview"/>
             </MudPaper>
 
             <!-- Danh sách câu hỏi con -->
@@ -73,48 +75,55 @@
                             <div class="flex-grow-1">
                                 <MudText Typo="Typo.caption" Class="text-secondary">Câu hỏi @questionNumber</MudText>
                                 <div class="font-bold" style="color: #1976d2;">
-                                    <LatexContent Content="@question.Content"/>
+                                    <LatexContent Content="@question.NoiDung"/>
                                 </div>
-                                @if (question.CLO.HasValue)
-                                {
-                                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Text"
-                                             Class="mt-1 pl-0">
-                                        CLO riêng: @question.CLO.Value.ToString()
-                                    </MudChip>
-                                }
                             </div>
                         </div>
 
                         <!-- Danh sách đáp án -->
                         <MudText Typo="Typo.caption" Class="mb-2 ml-1 font-bold text-secondary">Các lựa chọn:</MudText>
                         <MudGrid Spacing="2">
-                            @for (int aIndex = 0; aIndex < question.Answers.Count; aIndex++)
+                            @for (int aIndex = 0; aIndex < question.CauTraLois.Count; aIndex++)
                             {
-                                var ans = question.Answers[aIndex];
+                                var ans = question.CauTraLois[aIndex];
                                 var label = (char)('A' + aIndex);
-
+                                var canShuffle = ans.HoanVi;
                                 <MudItem xs="12" sm="6">
                                     <MudPaper
-                                        Class="@($"p-3 d-flex align-center transition-all {(ans.IsCorrect ? "answer-correct" : "answer-normal")}")"
+                                        Class="@($"p-3 d-flex align-center transition-all {(ans.LaDapAn ? "answer-correct" : "answer-normal")}")"
                                         Elevation="0">
-                                        <MudAvatar Color="@(ans.IsCorrect ? Color.Success : Color.Default)"
-                                                   Variant="@(ans.IsCorrect ? Variant.Filled : Variant.Outlined)"
+                                        <MudAvatar Color="@(ans.LaDapAn ? Color.Success : Color.Default)"
+                                                   Variant="@(ans.LaDapAn ? Variant.Filled : Variant.Outlined)"
                                                    Size="Size.Medium"
                                                    Class="mr-3 font-bold">
                                             @label
                                         </MudAvatar>
 
                                         <div class="flex-grow-1 answer-latex-content"
-                                             style="@(ans.IsCorrect ? "font-weight: 500;" : "")">
-                                            <LatexContent Content="@ans.Text"/>
+                                             style="@(ans.LaDapAn ? "font-weight: 500;" : "")">
+                                            <LatexContent Content="@ans.NoiDung"/>
                                         </div>
 
-                                        @if (ans.IsCorrect)
+                                        @if (ans.LaDapAn)
                                         {
                                             <MudChip T="string" Size="Size.Small" Color="Color.Success"
                                                      Variant="Variant.Filled" Class="ml-2">
                                                 <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small"/>
                                             </MudChip>
+                                        }
+                                        @if (canShuffle == true)
+                                        {
+                                            <MudTooltip Text="Xáo trộn" Placement="Placement.Top">
+                                                <MudIcon Icon="@Icons.Material.Filled.Shuffle" Color="Color.Primary"
+                                                         Size="Size.Small"/>
+                                            </MudTooltip>
+                                        }
+                                        else
+                                        {
+                                            <MudTooltip Text="Cố định" Placement="Placement.Top">
+                                                <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Default"
+                                                         Size="Size.Small"/>
+                                            </MudTooltip>
                                         }
                                     </MudPaper>
                                 </MudItem>
@@ -186,8 +195,8 @@
 @code {
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
 
-    [Parameter] public string ParentContent { get; set; } = "";
-    [Parameter] public List<CreateGroupQuestionBase.ChildQuestionModel> ChildQuestions { get; set; } = new();
+    [Parameter] public string NoiDungCha { get; set; } = "";
+    [Parameter] public List<CreateGroupQuestionBase.CauHoiCon> ChildQuestions { get; set; } = new();
 
     // Metadata
     [Parameter] public string TenKhoa { get; set; } = "";
