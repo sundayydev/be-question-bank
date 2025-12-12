@@ -117,7 +117,7 @@ namespace FEQuestionBank.Client.Pages
                 ["DialogTitle"] = "Tạo người dùng mới"
             };
 
-            var dialog = DialogService.Show<EditNguoiDungDialog>("Tạo mới", parameters);
+            var dialog = DialogService.Show<EditUserDialog>("Tạo mới", parameters);
             var result = await dialog.Result;
 
             if (!result.Canceled)
@@ -141,7 +141,7 @@ namespace FEQuestionBank.Client.Pages
                 ["DialogTitle"] = "Chỉnh sửa người dùng"
             };
 
-            var dialog = DialogService.Show<EditNguoiDungDialog>("Chỉnh sửa", parameters);
+            var dialog = DialogService.Show<EditUserDialog>("Chỉnh sửa", parameters);
             var result = await dialog.Result;
 
             if (!result.Canceled)
@@ -199,7 +199,7 @@ namespace FEQuestionBank.Client.Pages
         protected void OnViewDetail(NguoiDungDto user)
         {
             var parameters = new DialogParameters { ["NguoiDung"] = user };
-            DialogService.Show<NguoiDungDetailDialog>("Chi tiết người dùng", parameters);
+            DialogService.Show<UserDetailDialog>("Chi tiết người dùng", parameters);
         }
 
         private async Task SaveNguoiDungAsync(NguoiDungDto user, string? password)

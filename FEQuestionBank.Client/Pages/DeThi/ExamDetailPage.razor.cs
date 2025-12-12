@@ -63,7 +63,7 @@ namespace FEQuestionBank.Client.Pages.DeThi
                 FullWidth = true
             };
 
-            var dialog = DialogService.Show<XuatDeThiDialog>("Xuất đề thi", parameters, options);
+            var dialog = DialogService.Show<ExamExportDialog>("Xuất đề thi", parameters, options);
             var result = await dialog.Result;
 
             if (!result.Canceled)

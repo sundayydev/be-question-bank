@@ -144,7 +144,7 @@ namespace FEQuestionBank.Client.Pages
                 ["Phan"] = new PhanDto(),
                 ["DialogTitle"] = "Tạo mới Phần"
             };
-            var dialog = DialogService.Show<EditPhanDialog>("Tạo mới", parameters);
+            var dialog = DialogService.Show<EditPartDialog>("Tạo mới", parameters);
             var result = await dialog.Result;
             if (!result.Canceled)
             {
@@ -160,7 +160,7 @@ namespace FEQuestionBank.Client.Pages
                 ["Phan"] = phan,
                 ["DialogTitle"] = "Chỉnh sửa Phần"
             };
-            var dialog = DialogService.Show<EditPhanDialog>("Chỉnh sửa", parameters);
+            var dialog = DialogService.Show<EditPartDialog>("Chỉnh sửa", parameters);
             var result = await dialog.Result;
             if (!result.Canceled)
             {
@@ -185,7 +185,7 @@ namespace FEQuestionBank.Client.Pages
 
         protected void OnViewDetail(PhanDto phan)
         {
-            DialogService.Show<PhanDetailDialog>("Chi tiết", new DialogParameters { ["Phan"] = phan });
+            DialogService.Show<PartDetailDialog>("Chi tiết", new DialogParameters { ["Phan"] = phan });
         }
 
         protected void OnViewSubjects(PhanDto phan)

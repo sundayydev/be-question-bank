@@ -1,10 +1,12 @@
 ﻿@inject NavigationManager NavigationManager
 
 @code {
+
     protected override void OnInitialized()
     {
         NavigationManager.NavigateTo("/login", forceLoad: true);
     }
+
 }
 
 <p class="text-center">Đang chuyển hướng đến trang đăng nhập...</p>

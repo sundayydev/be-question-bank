@@ -27,7 +27,7 @@ public class CauHoiDto
     public DateTime? NgayTao { get; set; }
     public DateTime? NgaySua { get; set; }
     public EnumCLO? CLO { get; set; }
-    public string LoaiCauHoi { get; set; }
+    public string? LoaiCauHoi { get; set; }
     public List<CauHoiDto> CauHoiCons { get; set; } = new List<CauHoiDto>();
     public List<CauTraLoiDto> CauTraLois { get; set; } = new List<CauTraLoiDto>();
 }

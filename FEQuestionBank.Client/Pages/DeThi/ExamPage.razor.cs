@@ -113,7 +113,7 @@ namespace FEQuestionBank.Client.Pages.DeThi
             };
 
             var options = new DialogOptions { MaxWidth = MaxWidth.Small, CloseButton = true };
-            var dialog = DialogService.Show<EditDeThiDialog>("Tạo mới Đề thi", parameters, options);
+            var dialog = DialogService.Show<EditExamDialog>("Tạo mới Đề thi", parameters, options);
             var result = await dialog.Result;
 
             if (!result.Canceled)
@@ -131,7 +131,7 @@ namespace FEQuestionBank.Client.Pages.DeThi
                 ["DeThi"] = deThi,
                 ["DialogTitle"] = "Chỉnh sửa Đề thi"
             };
-            var dialog = DialogService.Show<EditDeThiDialog>("Chỉnh sửa Đề thi", parameters);
+            var dialog = DialogService.Show<EditExamDialog>("Chỉnh sửa Đề thi", parameters);
             var result = await dialog.Result;
 
             if (!result.Canceled)
@@ -161,7 +161,7 @@ namespace FEQuestionBank.Client.Pages.DeThi
         protected void OnViewDetail(DeThiDto deThi)
         {
             var parameters = new DialogParameters { ["DeThi"] = deThi };
-            DialogService.Show<DeThiDetailDialog>("Chi tiết Đề thi", parameters);
+            DialogService.Show<ExamDetailDialog>("Chi tiết Đề thi", parameters);
         }
 
         private async Task SaveDeThiAsync(DeThiDto deThi)

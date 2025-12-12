@@ -42,14 +42,15 @@ namespace FEQuestionBank.Client.Pages.CauHoi
         protected Guid? SelectedPhanId { get; set; }
         protected EnumCLO SelectedCLO { get; set; } = EnumCLO.CLO1;
         protected short CapDo { get; set; } = 1;
-        protected string QuestionContent { get; set; } = string.Empty;
+        protected bool HoanVi { get; set; } = true;
+        protected string NoiDungCha { get; set; } = string.Empty;
 
-        protected List<CauTraLoiDto> Answers { get; set; } = new()
+        protected List<CauTraLoiDto> CauTraLoi { get; set; } = new()
         {
-            new CauTraLoiDto { NoiDung = "", LaDapAn = true },
-            new CauTraLoiDto { NoiDung = "", LaDapAn = false },
-            new CauTraLoiDto { NoiDung = "", LaDapAn = false },
-            new CauTraLoiDto { NoiDung = "", LaDapAn = false }
+            new CauTraLoiDto { NoiDung = "", LaDapAn = true, HoanVi = true },
+            new CauTraLoiDto { NoiDung = "", LaDapAn = false, HoanVi = false },
+            new CauTraLoiDto { NoiDung = "", LaDapAn = false, HoanVi = true },
+            new CauTraLoiDto { NoiDung = "", LaDapAn = false, HoanVi = false },
         };
 
         protected List<BreadcrumbItem> _breadcrumbs = new()
@@ -66,7 +67,6 @@ namespace FEQuestionBank.Client.Pages.CauHoi
 
         private async Task LoadKhoas()
         {
-            // Gọi API lấy tất cả Khoa
             var res = await KhoaApiClient.GetAllKhoasAsync();
             if (res.Success && res.Data != null)
             {
@@ -85,8 +85,6 @@ namespace FEQuestionBank.Client.Pages.CauHoi
 
             if (khoaId.HasValue)
             {
-                // Giả định MonHocApiClient có hàm lấy theo Khoa
-                // Nếu chưa có, bạn có thể dùng GetPaged và filter, hoặc thêm API GetByKhoa
                 var res = await MonHocApiClient.GetMonHocsByMaKhoaAsync(khoaId.Value);
                 if (res.Success && res.Data != null)
                 {
@@ -99,12 +97,11 @@ namespace FEQuestionBank.Client.Pages.CauHoi
         protected async Task OnMonHocChanged(Guid? monHocId)
         {
             SelectedMonHocId = monHocId;
-            SelectedPhanId = null; // Reset Phần
+            SelectedPhanId = null; 
             Phans.Clear();
 
             if (monHocId.HasValue)
             {
-                // Gọi API lấy danh sách Phần theo Môn (như trong PhanController bạn đã có)
                 var res = await PhanApiClient.GetPhanByMonHocAsync(monHocId.Value);
                 if (res.Success && res.Data != null)
                 {
@@ -115,7 +112,7 @@ namespace FEQuestionBank.Client.Pages.CauHoi
 
         protected async Task SaveQuestion()
         {
-            if (string.IsNullOrWhiteSpace(QuestionContent))
+            if (string.IsNullOrWhiteSpace(NoiDungCha))
             {
                 Snackbar.Add("Vui lòng nhập nội dung câu hỏi", Severity.Error);
                 return;
@@ -126,53 +123,95 @@ namespace FEQuestionBank.Client.Pages.CauHoi
                 return;
             }
 
-            if (!Answers.Any(a => a.LaDapAn))
+            if (!CauTraLoi.Any(a => a.LaDapAn))
             {
                 Snackbar.Add("Vui lòng chọn đáp án đúng", Severity.Error);
                 return;
             }
 
-            var request = new CreateCauHoiWithCauTraLoiDto
+            try
             {
-                NoiDung = QuestionContent,
-                MaPhan = SelectedPhanId.Value, // Lấy ID thật từ Dropdown
-                MaSoCauHoi = 0,
-                HoanVi = true,
-                CapDo = 1,
-                CLO = SelectedCLO,
-                CauTraLois = Answers.Select(a => new CreateCauTraLoiDto
+                if (IsEditMode)
                 {
-                    NoiDung = a.NoiDung,
-                    LaDapAn = a.LaDapAn,
-                    HoanVi = true
-                }).ToList()
-            };
+                    //edit
+                    var updateRequest = new UpdateCauHoiWithCauTraLoiDto
+                    {
+                        NoiDung = NoiDungCha,
+                        MaPhan = SelectedPhanId.Value,
+                        CLO = SelectedCLO,
+                        CapDo = CapDo,
+                        HoanVi = HoanVi,
+                        CauTraLois = CauTraLoi.Select((a, index) => new UpdateCauTraLoiDto
+                        {
+                            MaCauTraLoi = a.MaCauTraLoi,
+                            NoiDung = a.NoiDung,
+                            ThuTu = index + 1,
+                            LaDapAn = a.LaDapAn,
+                            HoanVi = a.HoanVi ?? true
+                        }).ToList()
+                    };
 
-            var result = await CauHoiApiClient.CreateSingleQuestionAsync(request);
+                    var result = await CauHoiApiClient.UpdateSingleQuestionAsync(EditId.Value, updateRequest);
+                    Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(result));
+                    if (result.Success)
+                    {
+                        Snackbar.Add("Cập nhật câu hỏi thành công!", Severity.Success);
+                        Navigation.NavigateTo("/question/list");
+                    }
+                    else
+                    {
+                        Snackbar.Add($"Cập nhật thất bại: {result.Message}", Severity.Error);
+                    }
+                }
+                else
+                {
+                    // === CHẾ ĐỘ TẠO MỚI (giữ nguyên như cũ) ===
+                    var createRequest = new CreateCauHoiWithCauTraLoiDto
+                    {
+                        NoiDung = NoiDungCha,
+                        MaPhan = SelectedPhanId.Value,
+                        CLO = SelectedCLO,
+                        CapDo = CapDo,
+                        HoanVi = HoanVi,
+                        CauTraLois = CauTraLoi.Select(a => new CreateCauTraLoiDto
+                        {
+                            NoiDung = a.NoiDung,
+                            LaDapAn = a.LaDapAn,
+                            HoanVi = a.HoanVi ?? true
+                        }).ToList()
+                    };
 
-            if (result.Success)
-            {
-                Snackbar.Add("Tạo câu hỏi thành công!", Severity.Success);
-                Navigation.NavigateTo("/question/list");
+                    var result = await CauHoiApiClient.CreateSingleQuestionAsync(createRequest);
+                    if (result.Success)
+                    {
+                        Snackbar.Add("Tạo câu hỏi thành công!", Severity.Success);
+                        Navigation.NavigateTo("/question/list");
+                    }
+                    else
+                    {
+                        Snackbar.Add($"Lỗi: {result.Message}", Severity.Error);
+                    }
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Snackbar.Add($"Lỗi: {result.Message}", Severity.Error);
+                Snackbar.Add("Có lỗi xảy ra: " + ex.Message, Severity.Error);
             }
         }
 
-        // ... Các hàm AddAnswer, RemoveAnswer giữ nguyên ...
-        protected void AddAnswer() => Answers.Add(new CauTraLoiDto());
+        protected void AddAnswer() => CauTraLoi.Add(new CauTraLoiDto());
 
         protected void RemoveAnswer(CauTraLoiDto answer)
         {
-            if (Answers.Count > 2) Answers.Remove(answer);
-            else Snackbar.Add("Cần tối thiểu 2 câu trả lời", Severity.Warning);
+            if (CauTraLoi.Count > 2)
+                CauTraLoi.Remove(answer);
+            else
+                Snackbar.Add("Cần tối thiểu 2 câu trả lời", Severity.Warning);
         }
 
         protected void ToggleCorrectAnswer(CauTraLoiDto answer)
         {
-            foreach (var a in Answers) a.LaDapAn = false;
+            foreach (var a in CauTraLoi) a.LaDapAn = false;
             answer.LaDapAn = true;
         }
 
@@ -180,7 +219,7 @@ namespace FEQuestionBank.Client.Pages.CauHoi
         protected async Task PreviewQuestion()
         {
             // Validate sơ bộ
-            if (string.IsNullOrWhiteSpace(QuestionContent))
+            if (string.IsNullOrWhiteSpace(NoiDungCha))
             {
                 Snackbar.Add("Vui lòng nhập nội dung câu hỏi để xem trước", Severity.Warning);
                 return;
@@ -193,16 +232,15 @@ namespace FEQuestionBank.Client.Pages.CauHoi
             var cloName = SelectedCLO.ToString();
 
             // 2. Truyền tham số
-            var parameters = new DialogParameters
+            var parameters = new DialogParameters<QuestionPreviewDialog>
             {
-                ["QuestionContent"] = QuestionContent,
-                ["Answers"] = Answers,
-                // Truyền thêm metadata
-                ["TenKhoa"] = tenKhoa,
-                ["TenMon"] = tenMon,
-                ["TenPhan"] = tenPhan,
-                ["CloName"] = cloName,
-                ["CapDo"] = 1 // Hoặc biến CapDo nếu bạn đã bind từ UI
+                { x => x.NoiDungCha, NoiDungCha },
+                { x => x.CauTraLoi, CauTraLoi },
+                { x => x.TenKhoa, tenKhoa },
+                { x => x.TenMon, tenMon },
+                { x => x.TenPhan, tenPhan },
+                { x => x.CloName, SelectedCLO.ToString() },
+                { x => x.CapDo, 1 }
             };
 
             var options = new DialogOptions
@@ -217,8 +255,7 @@ namespace FEQuestionBank.Client.Pages.CauHoi
             var dialog = DialogService.Show<QuestionPreviewDialog>("Xem trước chi tiết", parameters, options);
             var result = await dialog.Result;
 
-            // Nếu người dùng ấn "Lưu ngay" trong Dialog Preview
-            if (!result.Canceled && result.Data is bool confirm && confirm)
+            if (!result.Canceled && result.Data is true)
             {
                 await SaveQuestion();
             }
@@ -259,7 +296,7 @@ namespace FEQuestionBank.Client.Pages.CauHoi
 
             var q = res.Data;
 
-            QuestionContent = q.NoiDung ?? "";
+            NoiDungCha = q.NoiDung ?? "";
             SelectedCLO = q.CLO ?? EnumCLO.CLO1;
             CapDo = q.CapDo;
             SelectedPhanId = q.MaPhan;
@@ -303,17 +340,18 @@ namespace FEQuestionBank.Client.Pages.CauHoi
             }
 
             // Load đáp án
-            Answers.Clear();
+            CauTraLoi.Clear();
             if (q.CauTraLois != null)
             {
-                for (int i = 0; i < q.CauTraLois.Count; i++)
+                foreach (var a in q.CauTraLois.OrderBy(x => x.ThuTu))
                 {
-                    var a = q.CauTraLois[i];
-                    Answers.Add(new CauTraLoiDto
+                    CauTraLoi.Add(new CauTraLoiDto
                     {
+                        MaCauTraLoi = a.MaCauTraLoi, 
                         NoiDung = a.NoiDung ?? "",
                         LaDapAn = a.LaDapAn,
-                        HoanVi = a.HoanVi ?? true
+                        HoanVi = a.HoanVi ?? true,
+                        ThuTu = a.ThuTu
                     });
                 }
             }

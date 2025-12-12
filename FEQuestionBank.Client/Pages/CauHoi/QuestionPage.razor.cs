@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using BeQuestionBank.Shared.DTOs.Khoa;
 using BeQuestionBank.Shared.DTOs.MonHoc;
 using BeQuestionBank.Shared.DTOs.Phan;
-using FEQuestionBank.Client.Component;
+using FEQuestionBank.Client.Component.DiaLog;
 using FEQuestionBank.Client.Components;
 using FEQuestionBank.Client.Helpers;
 using FEQuestionBank.Client.Services;
@@ -221,7 +221,7 @@ namespace FEQuestionBank.Client.Pages
             await LoadCountsAsync();
         }
 
-        // Hàm chung reload cả 2 bảng
+        // Hàm chung reload cả  bảng
         protected async Task ReloadBothTables()
         {
             await Task.WhenAll(
@@ -234,7 +234,7 @@ namespace FEQuestionBank.Client.Pages
             );
         }
 
-        // Khi chuyển tab, nếu đang có từ khóa thì reload bảng mới
+        // Khi chuyển tab
         protected async Task OnTabChanged(int index)
         {
             if (!string.IsNullOrWhiteSpace(_searchTerm))
@@ -426,18 +426,19 @@ namespace FEQuestionBank.Client.Pages
         {
             var viewType = forceViewType ?? cauHoi.LoaiCauHoi switch
             {
-                "Essay" or "Self" => "GroupEssay", // Tự luận (có hoặc không có câu con)
-                "Single" => "SingleMulti", // Trắc nghiệm chọn 1
-                "MultipleChoice" => "SingleMulti", // Trắc nghiệm chọn nhiều
+                "Essay" or "Self" => "Essay", // Tự luận (có hoặc không có câu con)
+                "Single" => "Single", // Trắc nghiệm chọn 1
+                "MultipleChoice" => "Multi", // Trắc nghiệm chọn nhiều
                 "FillBlank" or "Filling" => "Fill", // Điền từ / điền chỗ trống
-                "Group" => "GroupEssay", // Câu nhóm (có câu con)
+                "Group" => "Group", // Câu nhóm (có câu con)
                 "Pairing" or "Matching" => "Pairing", // Ghép nối
-                _ => "SingleMulti" // Mặc định
+                _ => "Single" // Mặc định
             };
 
             var parameters = new DialogParameters<QuestionDetailDialog>
             {
                 { x => x.CauHoi, cauHoi },
+                //  {x => x.}
                 { x => x.ViewType, viewType }
             };
 
@@ -471,11 +472,11 @@ namespace FEQuestionBank.Client.Pages
 
         protected Color GetLevelColor(short level) => level switch
         {
-            <= 2 => Color.Success,
-            <= 4 => Color.Warning,
-            _ => Color.Error
+            <= 2 => Color.Success, // 1–2: xanh
+            3 => Color.Warning, // 3: vàng
+            >= 4 => Color.Error // 4 trở lên: đỏ
         };
-
+        
         private async Task ReloadAllTables()
         {
             await Task.WhenAll(

@@ -24,7 +24,7 @@
                     Nội dung câu hỏi <span class="text-error ml-1">*</span>
                 </MudText>
 
-                <MudTextField @bind-Value="QuestionContent"
+                <MudTextField @bind-Value="NoiDungCha"
                               Placeholder="Nhập nội dung câu hỏi..."
                               Lines="4"
                               FullWidth="true"
@@ -37,7 +37,8 @@
                     <MudText Typo="Typo.subtitle1" Class="font-bold d-flex align-center">
                         <MudIcon Icon="@Icons.Material.Filled.List" Size="Size.Small" Class="mr-1" />
                         Danh sách đáp án
-                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Class="ml-2">@Answers.Count câu</MudChip>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Class="ml-2">@CauTraLoi.Count câu
+                        </MudChip>
                     </MudText>
 
                     <MudTooltip Text="Thêm lựa chọn mới">
@@ -46,9 +47,9 @@
                 </div>
 
                 <MudPaper Style="max-height:450px; overflow-y:auto; padding:4px;" Class="d-flex flex-column gap-2">
-                    @for (int i = 0; i < Answers.Count; i++)
+                    @for (int i = 0; i < CauTraLoi.Count; i++)
                     {
-                        var answer = Answers[i];
+                        var answer = CauTraLoi[i];
                         var index = i; // Local variable for closure
                         var label = (char)('A' + index); // A, B, C, D...
 
@@ -72,13 +73,16 @@
                                           DisableUnderline="true"
                                           Margin="Margin.Dense"
                                           Class="flex-grow-1 mr-2" />
-
+                            <MudCheckBox
+                                @bind-Value="answer.HoanVi "
+                                Color="Color.Secondary"
+                                Label="Hoán vị"
+                            />
                             <MudTooltip Text="Xóa lựa chọn này">
-                                <MudIconButton Icon="@Icons.Material.Filled.Close"
-                                               Size="Size.Small"
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                                Color="Color.Error"
                                                OnClick="() => RemoveAnswer(answer)"
-                                               Disabled="@(Answers.Count <= 2)" />
+                                               Disabled="@(CauTraLoi.Count <= 2)"/>
                             </MudTooltip>
                         </MudPaper>
                     }

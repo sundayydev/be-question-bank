@@ -1,15 +1,17 @@
 ﻿using BeQuestionBank.Shared.DTOs.CauHoi;
+using BeQuestionBank.Shared.DTOs.CauHoi.Create;
 using BeQuestionBank.Shared.DTOs.Khoa;
 using BeQuestionBank.Shared.DTOs.MonHoc;
 using BeQuestionBank.Shared.DTOs.Phan;
 using BeQuestionBank.Shared.Enums;
+using FEQuestionBank.Client.Component.Preview;
+using FEQuestionBank.Client.Services.Interface;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using System.Text.RegularExpressions;
-using FEQuestionBank.Client.Component.Preview;
+using BeQuestionBank.Shared.DTOs.CauTraLoi;
+using BeQuestionBank.Shared.DTOs.Common;
 using FEQuestionBank.Client.Services;
-using FEQuestionBank.Client.Services.Interface;
-using Microsoft.AspNetCore.WebUtilities;
 
 namespace FEQuestionBank.Client.Pages.CauHoi
 {
@@ -17,6 +19,7 @@ namespace FEQuestionBank.Client.Pages.CauHoi
     {
         [Parameter] public Guid? EditId { get; set; }
         protected bool IsEditMode => EditId.HasValue;
+
         [Inject] protected ICauHoiApiClient CauHoiApiClient { get; set; } = default!;
         [Inject] protected IKhoaApiClient KhoaApiClient { get; set; } = default!;
         [Inject] protected IMonHocApiClient MonHocApiClient { get; set; } = default!;
@@ -25,30 +28,50 @@ namespace FEQuestionBank.Client.Pages.CauHoi
         [Inject] protected ISnackbar Snackbar { get; set; } = default!;
         [Inject] protected IDialogService Dialog { get; set; } = default!;
 
-        // Dropdown data
+        // Dropdown
         protected List<KhoaDto> Khoas = new();
         protected List<MonHocDto> MonHocs = new();
         protected List<PhanDto> Phans = new();
-        protected List<EnumCLO> CLOs { get; set; } = Enum.GetValues(typeof(EnumCLO)).Cast<EnumCLO>().ToList();
+        protected List<EnumCLO> CLOs = Enum.GetValues(typeof(EnumCLO)).Cast<EnumCLO>().ToList();
 
         protected Guid? SelectedKhoaId { get; set; }
         protected Guid? SelectedMonHocId { get; set; }
         protected Guid? SelectedPhanId { get; set; }
         protected EnumCLO SelectedCLO { get; set; } = EnumCLO.CLO1;
+        protected short CapDo { get; set; } = 1;
 
-        protected string QuestionContent { get; set; } = string.Empty;
-        protected List<CreateCauTraLoiDienTuDto> CauTraLoi = new() { new CreateCauTraLoiDienTuDto() };
+        protected string NoiDungCha { get; set; } = string.Empty;
+        protected List<FillBlankAnswer> CauTraLoi { get; set; } = new();
 
-        // Breadcrumb
         protected List<BreadcrumbItem> _breadcrumbs = new()
         {
             new("Trang chủ", "/"),
-            new("Tạo câu hỏi điền từ", "/create-question/create-fill-blank", disabled: true)
+            new("Tạo câu hỏi điền từ", href: null, disabled: true)
         };
 
         protected override async Task OnInitializedAsync()
         {
             await LoadKhoas();
+            // Không thêm đáp án ở đây vì EditId chưa được bind từ route
+        }
+
+        protected override async Task OnParametersSetAsync()
+        {
+            if (IsEditMode && EditId.HasValue)
+            {
+                _breadcrumbs[1] = new("Chỉnh sửa câu hỏi điền từ", href: null, disabled: true);
+                await LoadForEditAsync(EditId.Value);
+            }
+            else
+            {
+                // Chỉ thêm đáp án mới khi chắc chắn không phải edit mode
+                if (CauTraLoi.Count == 0)
+                {
+                    CauTraLoi.Add(new FillBlankAnswer());
+                }
+            }
+
+            await base.OnParametersSetAsync();
         }
 
         private async Task LoadKhoas()
@@ -64,11 +87,10 @@ namespace FEQuestionBank.Client.Pages.CauHoi
             SelectedPhanId = null;
             MonHocs.Clear();
             Phans.Clear();
-
             if (khoaId.HasValue)
             {
                 var res = await MonHocApiClient.GetMonHocsByMaKhoaAsync(khoaId.Value);
-                if (res.Success && res.Data != null) MonHocs = res.Data;
+                if (res.Success) MonHocs = res.Data ?? new();
             }
         }
 
@@ -77,17 +99,15 @@ namespace FEQuestionBank.Client.Pages.CauHoi
             SelectedMonHocId = monHocId;
             SelectedPhanId = null;
             Phans.Clear();
-
             if (monHocId.HasValue)
             {
                 var res = await PhanApiClient.GetPhanByMonHocAsync(monHocId.Value);
-                if (res.Success && res.Data != null) Phans = res.Data;
+                if (res.Success) Phans = res.Data ?? new();
             }
         }
 
-        // Tự động phát hiện số lượng (1), (2)...
-        protected List<int> DetectedBlanks => Regex.Matches(QuestionContent, @"\(\d+\)")
-            .Cast<Match>()
+        // Tự động phát hiện chỗ trống (1), (2)...
+        protected List<int> DetectedBlanks => Regex.Matches(NoiDungCha, @"\(\d+\)")
             .Select(m => int.Parse(Regex.Match(m.Value, @"\d+").Value))
             .OrderBy(x => x)
             .Distinct()
@@ -96,174 +116,151 @@ namespace FEQuestionBank.Client.Pages.CauHoi
         protected void SyncBlanks()
         {
             var count = DetectedBlanks.Count;
-            while (CauTraLoi.Count < count)
-                CauTraLoi.Add(new CreateCauTraLoiDienTuDto());
-            while (CauTraLoi.Count > count)
-                CauTraLoi.RemoveAt(CauTraLoi.Count - 1);
+            while (CauTraLoi.Count < count) CauTraLoi.Add(new FillBlankAnswer());
+            while (CauTraLoi.Count > count) CauTraLoi.RemoveAt(CauTraLoi.Count - 1);
             StateHasChanged();
         }
 
         protected string RenderPreview()
         {
-            var text = QuestionContent;
-            var matches = Regex.Matches(text, @"\(\d+\)").Cast<Match>().OrderByDescending(m => m.Index);
-            foreach (Match m in matches)
-            {
-                text = text.Remove(m.Index, m.Length)
-                    .Insert(m.Index, "<span class='blank-input'>_____</span>");
-            }
-
-            return text.Replace("\n", "<br/>");
+            var text = System.Web.HttpUtility.HtmlEncode(NoiDungCha);
+            return Regex.Replace(text, @"\(\d+\)", "<span class='blank-input'>_____</span>");
         }
-
-        protected async Task SaveQuestion()
-        {
-            if (string.IsNullOrWhiteSpace(QuestionContent))
-            {
-                Snackbar.Add("Vui lòng nhập nội dung câu hỏi", Severity.Error);
-                return;
-            }
-
-            if (!SelectedPhanId.HasValue)
-            {
-                Snackbar.Add("Vui lòng chọn Chương/Phần", Severity.Error);
-                return;
-            }
-
-            var blankCount = DetectedBlanks.Count;
-            var answerCount = CauTraLoi.Count;
-
-            if (blankCount == 0)
-            {
-                Snackbar.Add("Chưa phát hiện chỗ trống nào. Hãy dùng (1), (2)...", Severity.Error);
-                return;
-            }
-
-            //  KIỂM TRA KHỚP SỐ LƯỢNG
-            if (answerCount > blankCount)
-            {
-                Snackbar.Add($"Số đáp án ({answerCount}) NHIỀU HƠN số chỗ trống ({blankCount}). " +
-                             $"Hãy xóa bớt đáp án.", Severity.Error);
-                return;
-            }
-
-            if (answerCount < blankCount)
-            {
-                Snackbar.Add($"Số đáp án ({answerCount}) ÍT HƠN số chỗ trống ({blankCount}). " +
-                             $"Hãy thêm đáp án cho đủ.", Severity.Error);
-                return;
-            }
-
-            // Kiểm tra trống nội dung đáp án
-            if (CauTraLoi.Any(a => string.IsNullOrWhiteSpace(a.NoiDung)))
-            {
-                Snackbar.Add("Tất cả chỗ trống phải có đáp án", Severity.Error);
-                return;
-            }
-
-            //  Tạo dto
-            var dto = new CreateCauHoiDienTuDto
-            {
-                MaPhan = SelectedPhanId.Value,
-                MaSoCauHoi = 0,
-                NoiDung = QuestionContent,
-                CapDo = 1,
-                CLO = SelectedCLO,
-                CauHoiCons = CauTraLoi.Select((answer, i) => new CreateChilDienTu
-                {
-                    NoiDung = $"({i + 1})",
-                    HoanVi = false,
-                    CapDo = 1,
-                    CauTraLois = new List<CreateCauTraLoiDienTuDto> { answer }
-                }).ToList()
-            };
-
-            var result = await CauHoiApiClient.CreateFillingQuestionAsync(dto);
-
-            if (result.Success)
-            {
-                Snackbar.Add("Tạo câu hỏi điền từ thành công!", Severity.Success);
-                Navigation.NavigateTo("/question/list");
-            }
-            else
-            {
-                Snackbar.Add(result.Message ?? "Có lỗi xảy ra", Severity.Error);
-            }
-        }
-
 
         protected async Task PreviewQuestion()
         {
-            if (string.IsNullOrWhiteSpace(QuestionContent))
+            if (string.IsNullOrWhiteSpace(NoiDungCha))
             {
-                Snackbar.Add("Vui lòng nhập nội dung câu hỏi để xem trước", Severity.Warning);
+                Snackbar.Add("Vui lòng nhập nội dung câu hỏi!", Severity.Warning);
                 return;
             }
 
-            if (DetectedBlanks.Count == 0)
+            var dialog = Dialog.Show<QuestionFillBlankPreviewDialog>("Xem trước", new DialogParameters
             {
-                Snackbar.Add("Chưa có chỗ trống nào. Hãy dùng (1), (2)...", Severity.Warning);
-                return;
-            }
+                ["NoiDung"] = NoiDungCha,
+                ["Answers"] = CauTraLoi.Select(x => x.NoiDung).ToList()
+            }, new DialogOptions { FullWidth = true });
 
-            var tenKhoa = Khoas.FirstOrDefault(k => k.MaKhoa == SelectedKhoaId)?.TenKhoa ?? "Chưa chọn";
-            var tenMon = MonHocs.FirstOrDefault(m => m.MaMonHoc == SelectedMonHocId)?.TenMonHoc ?? "Chưa chọn";
-            var tenPhan = Phans.FirstOrDefault(p => p.MaPhan == SelectedPhanId)?.TenPhan ?? "Chưa chọn phần";
-
-            // DÙNG DialogParameters KHÔNG GENERIC → HẾT LỖI INFER NGAY LẬP TỨC
-            var parameters = new DialogParameters
-            {
-                [nameof(QuestionFillBlankPreviewDialog.QuestionContent)] = QuestionContent,
-                [nameof(QuestionFillBlankPreviewDialog.CauTraLoi)] = CauTraLoi,
-                [nameof(QuestionFillBlankPreviewDialog.TenKhoa)] = tenKhoa,
-                [nameof(QuestionFillBlankPreviewDialog.TenMon)] = tenMon,
-                [nameof(QuestionFillBlankPreviewDialog.TenPhan)] = tenPhan,
-                [nameof(QuestionFillBlankPreviewDialog.CloName)] = SelectedCLO.ToString()
-            };
-
-            var options = new DialogOptions
-            {
-                MaxWidth = MaxWidth.Medium,
-                FullWidth = true,
-                CloseButton = true,
-                BackdropClick = false
-            };
-
-            var dialog = Dialog.Show<QuestionFillBlankPreviewDialog>("Xem trước câu hỏi điền từ", parameters, options);
             var result = await dialog.Result;
-
             if (!result.Canceled && result.Data is true)
             {
                 await SaveQuestion();
             }
         }
 
-        protected void GoBack() => Navigation.NavigateTo("/question/list");
-
-        protected override async Task OnParametersSetAsync()
+        protected async Task SaveQuestion()
         {
-            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-            if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("id", out var idStr))
+            if (!Validate()) return;
+
+            // Tạo danh sách câu hỏi con (mỗi chỗ trống là 1 câu con)
+            var cauHoiCons = CauTraLoi.Select((ans, i) => new CreateCauHoiWithCauTraLoiDto
             {
-                EditId = Guid.Parse(idStr!);
+                NoiDung = $"({i + 1})", // Nội dung câu con: (1), (2), (3)...
+                MaPhan = SelectedPhanId.Value,
+                CapDo = CapDo,
+                CLO = SelectedCLO,
+                HoanVi = false,
+                CauTraLois = new List<CreateCauTraLoiDto>
+                {
+                    new CreateCauTraLoiDto
+                    {
+                        NoiDung = ans.NoiDung.Trim(),
+                        LaDapAn = true,
+                        HoanVi = false,
+                        ThuTu = i + 1
+                    }
+                }
+            }).ToList();
+
+            var createDto = new CreateCauHoiNhomDto
+            {
+                NoiDung = NoiDungCha,
+                MaPhan = SelectedPhanId.Value,
+                CapDo = CapDo,
+                CLO = SelectedCLO,
+                HoanVi = false,
+                CauHoiCons = cauHoiCons
+            };
+
+            ApiResponse<object> res;
+
+            if (IsEditMode)
+            {
+                var updateDto = new UpdateDienTuQuestionDto
+                {
+                    MaCauHoi = EditId.Value,
+                    NoiDung = createDto.NoiDung,
+                    MaPhan = createDto.MaPhan,
+                    CapDo = createDto.CapDo,
+                    CLO = createDto.CLO,
+                    HoanVi = createDto.HoanVi,
+                    CauHoiCons = CauTraLoi
+                        .Where(a => a.MaCauHoi.HasValue && a.MaCauHoi != Guid.Empty)
+                        .Select((ans, i) => new CauHoiDto
+                        {
+                            MaCauHoi = ans.MaCauHoi!.Value,
+                            NoiDung = $"({i + 1})",
+                            MaPhan = createDto.MaPhan,
+                            CapDo = createDto.CapDo,
+                            CLO = createDto.CLO,
+                            HoanVi = false,
+                            CauTraLois = new List<CauTraLoiDto>
+                            {
+                                new CauTraLoiDto
+                                {
+                                    MaCauTraLoi = ans.MaCauTraLoi ?? Guid.Empty,
+                                    MaCauHoi = ans.MaCauHoi!.Value,
+                                    NoiDung = ans.NoiDung.Trim(),
+                                    LaDapAn = true,
+                                    HoanVi = ans.HoanVi,
+                                    ThuTu = ans.ThuTu ?? i + 1
+                                }
+                            }
+                        }).ToList()
+                };
+
+                res = await CauHoiApiClient.UpdateDienTuQuestionAsync(EditId.Value, updateDto);
+            }
+            else
+            {
+                res = await CauHoiApiClient.CreateGroupQuestionAsync(createDto);
             }
 
-            if (IsEditMode && EditId.HasValue)
+            if (res.Success)
             {
-                _breadcrumbs[^1] = new BreadcrumbItem(
-                    text: "Chỉnh sửa câu hỏi Multiple Choice",
-                    href: _breadcrumbs[^1].Href,
-                    disabled: _breadcrumbs[^1].Disabled,
-                    icon: _breadcrumbs[^1].Icon
-                );
-
-                await LoadForEdit(EditId.Value);
+                Snackbar.Add(IsEditMode ? "Cập nhật thành công!" : "Tạo câu hỏi điền từ thành công!", Severity.Success);
+                Navigation.NavigateTo("/question/list");
             }
-
-            await base.OnParametersSetAsync();
+            else
+            {
+                Snackbar.Add(res.Message ?? "Lỗi không xác định", Severity.Error);
+            }
         }
 
-        private async Task LoadForEdit(Guid id)
+        private bool Validate()
+        {
+            if (string.IsNullOrWhiteSpace(NoiDungCha))
+            {
+                Snackbar.Add("Chưa nhập nội dung!", Severity.Error);
+                return false;
+            }
+
+            if (!SelectedPhanId.HasValue)
+            {
+                Snackbar.Add("Chưa chọn chương!", Severity.Error);
+                return false;
+            }
+
+            if (CauTraLoi.Any(a => string.IsNullOrWhiteSpace(a.NoiDung)))
+            {
+                Snackbar.Add("Có đáp án trống!", Severity.Error);
+                return false;
+            }
+
+            return true;
+        }
+
+        private async Task LoadForEditAsync(Guid id)
         {
             var res = await CauHoiApiClient.GetByIdAsync(id);
             if (!res.Success || res.Data == null)
@@ -275,77 +272,110 @@ namespace FEQuestionBank.Client.Pages.CauHoi
 
             var q = res.Data;
 
-            // Gán dữ liệu chính
-            QuestionContent = q.NoiDung ?? "";
-            SelectedCLO = q.CLO ?? EnumCLO.CLO1;
+            // Kiểm tra loại câu hỏi
+            if (q.LoaiCauHoi != "DT")
+            {
+                Snackbar.Add("Đây không phải là câu hỏi điền từ!", Severity.Error);
+                Navigation.NavigateTo("/question/list");
+                return;
+            }
+
+            NoiDungCha = StripHtml(q.NoiDung ?? "");
             SelectedPhanId = q.MaPhan;
-
-            // ========= Load Khoa → Môn → Phần =========
-
+            CapDo = q.CapDo;
+            SelectedCLO = q.CLO ?? EnumCLO.CLO1;
+            bool loadSuccess = false;
+            // Load cascading dropdown
             if (q.MaPhan != Guid.Empty)
             {
                 try
                 {
+                    // 1. Lấy Phần
                     var phanRes = await PhanApiClient.GetPhanByIdAsync(q.MaPhan);
                     if (phanRes.Success && phanRes.Data != null)
                     {
                         var phan = phanRes.Data;
                         SelectedMonHocId = phan.MaMonHoc;
 
+                        // 2. Lấy Môn
                         var monRes = await MonHocApiClient.GetMonHocByIdAsync(phan.MaMonHoc);
                         if (monRes.Success && monRes.Data != null)
                         {
                             SelectedKhoaId = monRes.Data.MaKhoa;
 
+                            // 3. Load danh sách theo thứ tự
                             await LoadKhoas();
+
                             var monListRes = await MonHocApiClient.GetMonHocsByMaKhoaAsync(SelectedKhoaId.Value);
                             if (monListRes.Success) MonHocs = monListRes.Data ?? new();
 
                             var phanListRes = await PhanApiClient.GetPhanByMonHocAsync(SelectedMonHocId.Value);
                             if (phanListRes.Success) Phans = phanListRes.Data ?? new();
+
+                            loadSuccess = true;
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[EDIT] Lỗi load Khoa/Môn/Phần: {ex.Message}");
+                    Console.WriteLine($"[EDIT] Lỗi load Khoa/Môn: {ex.Message}");
                 }
             }
 
-            // ========= Load câu trả lời (điền từ) =========
-
+            // Load đáp án điền từ
             CauTraLoi.Clear();
-
             if (q.CauHoiCons != null && q.CauHoiCons.Any())
             {
-                // Sắp xếp các câu hỏi con theo số thứ tự trong (1), (2)...
-                var sortedCons = q.CauHoiCons
-                    .Where(c => c.NoiDung != null && Regex.IsMatch(c.NoiDung, @"\(\d+\)"))
-                    .Select(c => new
-                    {
-                        Child = c,
-                        Number = int.Parse(Regex.Match(c.NoiDung, @"\d+").Value)
-                    })
-                    .OrderBy(x => x.Number)
-                    .ToList();
-
-                foreach (var item in sortedCons)
+                foreach (var child in q.CauHoiCons.OrderBy(x => x.MaSoCauHoi))
                 {
-                    var answer = item.Child.CauTraLois?.FirstOrDefault()?.NoiDung ?? "";
-                    CauTraLoi.Add(new CreateCauTraLoiDienTuDto
+                    var firstAnswer = child.CauTraLois?.OrderBy(a => a.ThuTu).FirstOrDefault();
+                    CauTraLoi.Add(new FillBlankAnswer
                     {
-                        NoiDung = answer
+                        MaCauHoi = child.MaCauHoi,
+                        NoiDungChild = StripHtml(child.NoiDung ?? string.Empty),
+                        NoiDung = StripHtml(firstAnswer?.NoiDung ?? string.Empty),
+                        HoanVi = firstAnswer?.HoanVi ?? true,
+                        MaCauTraLoi = firstAnswer?.MaCauTraLoi,
+                        ThuTu = firstAnswer?.ThuTu
+                    });
+                }
+            }
+            else if (q.CauTraLois != null && q.CauTraLois.Any())
+            {
+                foreach (var a in q.CauTraLois.OrderBy(x => x.ThuTu))
+                {
+                    CauTraLoi.Add(new FillBlankAnswer
+                    {
+                        NoiDung = StripHtml(a.NoiDung ?? string.Empty),
+                        HoanVi = a.HoanVi ?? true,
+                        MaCauTraLoi = a.MaCauTraLoi,
+                        ThuTu = a.ThuTu
                     });
                 }
             }
 
-            // Nếu không có CauHoiCon nào (dữ liệu cũ), thử fallback từ DetectedBlanks
-            if (CauTraLoi.Count == 0)
-            {
-                SyncBlanks(); // Tự động tạo số lượng chỗ trống theo nội dung
-            }
+            if (CauTraLoi.Count == 0) CauTraLoi.Add(new FillBlankAnswer());
 
             StateHasChanged();
+        }
+
+        protected void GoBack() => Navigation.NavigateTo("/question/list");
+
+        // DTO cho UI
+        public class FillBlankAnswer
+        {
+            public Guid? MaCauHoi { get; set; }
+            public Guid? MaCauTraLoi { get; set; }
+            public int? ThuTu { get; set; }
+            public string NoiDungChild { get; set; } = string.Empty;
+            public string NoiDung { get; set; } = "";
+            public bool HoanVi { get; set; } = true;
+        }
+
+        private static string StripHtml(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return string.Empty;
+            return Regex.Replace(input, "<.*?>", string.Empty);
         }
     }
 }

@@ -34,13 +34,14 @@
                 {
                     @if (CauHoi != null)
                     {
-                        <MudDivider />
+                        <MudDivider/>
                         <div>
                             <MudText Typo="Typo.subtitle1" Class="mb-2">Câu hỏi liên kết:</MudText>
                             <MudPaper Elevation="2" Class="pa-4">
                                 <div class="mb-2">
                                     <MudText Typo="Typo.body2" Class="font-weight-bold">Loại câu hỏi:</MudText>
-                                    <MudChip T="string" Size="Size.Small" Color="Color.Info">@CauHoi.LoaiCauHoi</MudChip>
+                                    <MudChip T="string" Size="Size.Small"
+                                             Color="Color.Info">@CauHoi.LoaiCauHoi</MudChip>
                                 </div>
                                 @if (!string.IsNullOrEmpty(CauHoi.NoiDung))
                                 {
@@ -55,7 +56,8 @@
                                 {
                                     <div class="mb-2">
                                         <MudText Typo="Typo.body2" Class="font-weight-bold">CLO:</MudText>
-                                        <MudChip T="string" Size="Size.Small" Color="Color.Success">@CauHoi.CLO</MudChip>
+                                        <MudChip T="string" Size="Size.Small"
+                                                 Color="Color.Success">@CauHoi.CLO</MudChip>
                                     </div>
                                 }
                             </MudPaper>
@@ -63,7 +65,7 @@
                     }
                     else if (IsLoading)
                     {
-                        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+                        <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
                         <MudText Typo="Typo.body2">Đang tải thông tin câu hỏi...</MudText>
                     }
                     else
@@ -83,10 +85,10 @@
         <div class="p-3 d-flex gap-2">
             @if (File?.MaCauHoi != null && CauHoi != null)
             {
-                <MudButton OnClick="OnViewQuestionDetail" 
-                          Color="Color.Primary" 
-                          Variant="Variant.Filled"
-                          StartIcon="@Icons.Material.Filled.Visibility">
+                <MudButton OnClick="OnViewQuestionDetail"
+                           Color="Color.Primary"
+                           Variant="Variant.Filled"
+                           StartIcon="@Icons.Material.Filled.Visibility">
                     Xem chi tiết câu hỏi
                 </MudButton>
             }

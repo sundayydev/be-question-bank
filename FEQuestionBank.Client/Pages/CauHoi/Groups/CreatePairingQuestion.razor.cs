@@ -1,4 +1,5 @@
 ﻿using BeQuestionBank.Shared.DTOs.CauHoi;
+using BeQuestionBank.Shared.DTOs.Common;
 using BeQuestionBank.Shared.DTOs.CauTraLoi;
 using BeQuestionBank.Shared.DTOs.Khoa;
 using BeQuestionBank.Shared.DTOs.MonHoc;
@@ -7,6 +8,7 @@ using BeQuestionBank.Shared.Enums;
 using FEQuestionBank.Client.Component;
 using FEQuestionBank.Client.Component.Preview;
 using FEQuestionBank.Client.Services;
+using FEQuestionBank.Client.Services.Implementation;
 using FEQuestionBank.Client.Services.Interface;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
@@ -35,7 +37,7 @@ public partial class CreatePairingQuestionBase : ComponentBase
     protected Guid? SelectedMonHocId { get; set; }
     protected Guid? SelectedPhanId { get; set; }
     protected EnumCLO SelectedCLO { get; set; } = EnumCLO.CLO1;
-    protected string HuongDanChung { get; set; } = "Ghép các khái niệm ở cột trái với đáp án phù hợp ở cột phải";
+    protected string NoiDungCha { get; set; } = "Ghép các khái niệm ở cột trái với đáp án phù hợp ở cột phải";
     protected short CapDo { get; set; } = 1;
     protected bool HoanVi { get; set; } = true;
 
@@ -111,7 +113,7 @@ public partial class CreatePairingQuestionBase : ComponentBase
         {
             ["Pairs"] = Pairs,
             ["TenPhan"] = tenPhan,
-            ["HuongDanChung"] = HuongDanChung,
+            ["NoiDungCha"] = NoiDungCha,
             ["CapDo"] = CapDo,
             ["HoanVi"] = HoanVi,
             ["CloName"] = SelectedCLO.ToString(),
@@ -141,45 +143,103 @@ public partial class CreatePairingQuestionBase : ComponentBase
             return;
         }
 
-        var dto = new CreateCauHoiGhepNoiDto
+        ApiResponse<object> result;
+
+        if (IsEditMode && EditId.HasValue)
         {
-            MaPhan = SelectedPhanId.Value,
-            NoiDung = HuongDanChung,
-            CapDo = CapDo,
-            HoanVi = HoanVi,
-            CLO = SelectedCLO,
-            CauHoiCons = Pairs.Select(p => new CreateCauHoiWithCauTraLoiDto
+            // Chỉ update các cặp đã có ID (đã tồn tại trong DB)
+            var existingPairs = Pairs
+                .Where(p => p.MaCauHoi.HasValue && p.MaCauHoi != Guid.Empty)
+                .ToList();
+
+            if (existingPairs.Count < 2)
             {
-                NoiDung = p.Question,
+                Snackbar.Add("Cần ít nhất 2 cặp hợp lệ để cập nhật. Câu hỏi/đáp án mới thêm sẽ không được lưu.",
+                    Severity.Warning);
+                return;
+            }
+
+            var updateDto = new UpdateCauHoiNhomDto
+            {
+                MaPhan = SelectedPhanId.Value,
+                NoiDung = NoiDungCha,
                 CapDo = CapDo,
                 HoanVi = HoanVi,
-                CauTraLois = new List<CreateCauTraLoiDto>
+                CLO = SelectedCLO,
+                CauHoiCons = existingPairs.Select(p => new CauHoiWithCauTraLoiDto
                 {
-                    new() { NoiDung = p.Answer, LaDapAn = true }
-                }
-            }).ToList()
-        };
+                    MaCauHoi = p.MaCauHoi!.Value,
+                    NoiDung = p.Question,
+                    CapDo = CapDo,
+                    HoanVi = HoanVi,
+                    CLO = SelectedCLO,
+                    CauTraLois = p.MaCauTraLoi.HasValue && p.MaCauTraLoi != Guid.Empty
+                        ? new List<CauTraLoiDto>
+                        {
+                            new()
+                            {
+                                MaCauTraLoi = p.MaCauTraLoi.Value,
+                                NoiDung = p.Answer,
+                                LaDapAn = true,
+                                HoanVi = HoanVi,
+                                ThuTu = 1
+                            }
+                        }
+                        : new List<CauTraLoiDto>()
+                }).ToList()
+            };
 
-        var result = await CauHoiApiClient.CreatePairingQuestionAsync(dto);
+            result = await CauHoiApiClient.UpdateGhepNoiQuestionAsync(EditId.Value, updateDto);
 
-        if (result.Success)
-        {
-            Snackbar.Add("Tạo câu hỏi ghép nối thành công!", Severity.Success);
-            Navigation.NavigateTo("/question/list");
+            if (result.Success)
+            {
+                Snackbar.Add("Cập nhật câu hỏi ghép nối thành công!", Severity.Success);
+                Navigation.NavigateTo("/question/list");
+            }
+            else
+            {
+                Snackbar.Add(result.Message ?? "Có lỗi xảy ra khi cập nhật", Severity.Error);
+            }
         }
         else
         {
-            Snackbar.Add(result.Message ?? "Có lỗi xảy ra", Severity.Error);
+            // Tạo mới
+            var dto = new CreateCauHoiGhepNoiDto
+            {
+                MaPhan = SelectedPhanId.Value,
+                NoiDung = NoiDungCha,
+                CapDo = CapDo,
+                HoanVi = HoanVi,
+                CLO = SelectedCLO,
+                CauHoiCons = Pairs.Select(p => new CreateCauHoiWithCauTraLoiDto
+                {
+                    NoiDung = p.Question,
+                    CapDo = CapDo,
+                    HoanVi = HoanVi,
+                    CauTraLois = new List<CreateCauTraLoiDto>
+                    {
+                        new() { NoiDung = p.Answer, LaDapAn = true }
+                    }
+                }).ToList()
+            };
+
+            result = await CauHoiApiClient.CreatePairingQuestionAsync(dto);
+
+            if (result.Success)
+            {
+                Snackbar.Add("Tạo câu hỏi ghép nối thành công!", Severity.Success);
+                Navigation.NavigateTo("/question/list");
+            }
+            else
+            {
+                Snackbar.Add(result.Message ?? "Có lỗi xảy ra", Severity.Error);
+            }
         }
     }
 
     protected void GoBack() => Navigation.NavigateTo("/question/list");
 
-    public class PairItem
-    {
-        public string Question { get; set; } = "";
-        public string Answer { get; set; } = "";
-    }
+    
 
     protected override async Task OnParametersSetAsync()
     {
@@ -216,7 +276,7 @@ public partial class CreatePairingQuestionBase : ComponentBase
         var q = res.Data;
 
         // === Gán dữ liệu chung ===
-        HuongDanChung = q.NoiDung ?? "Ghép các khái niệm ở cột trái với đáp án phù hợp ở cột phải";
+        NoiDungCha = q.NoiDung ?? "Ghép các khái niệm ở cột trái với đáp án phù hợp ở cột phải";
         SelectedCLO = q.CLO ?? EnumCLO.CLO1;
         CapDo = q.CapDo;
         HoanVi = q.HoanVi;
@@ -262,12 +322,14 @@ public partial class CreatePairingQuestionBase : ComponentBase
             foreach (var child in q.CauHoiCons.OrderBy(c => c.MaSoCauHoi))
             {
                 var questionText = child.NoiDung ?? "";
-                var answerText = child.CauTraLois?
-                    .FirstOrDefault(a => a.LaDapAn == true)?
-                    .NoiDung ?? "";
+                var correctAnswer = child.CauTraLois?
+                    .FirstOrDefault(a => a.LaDapAn == true);
+                var answerText = correctAnswer?.NoiDung ?? "";
 
                 Pairs.Add(new PairItem
                 {
+                    MaCauHoi = child.MaCauHoi,
+                    MaCauTraLoi = correctAnswer?.MaCauTraLoi,
                     Question = questionText,
                     Answer = answerText
                 });
@@ -279,5 +341,13 @@ public partial class CreatePairingQuestionBase : ComponentBase
             Pairs.Add(new PairItem());
 
         StateHasChanged();
+    }
+
+    public class PairItem
+    {
+        public Guid? MaCauHoi { get; set; } // ID của câu hỏi con (để update)
+        public Guid? MaCauTraLoi { get; set; } // ID của đáp án (để update)
+        public string Question { get; set; } = "";
+        public string Answer { get; set; } = "";
     }
 }

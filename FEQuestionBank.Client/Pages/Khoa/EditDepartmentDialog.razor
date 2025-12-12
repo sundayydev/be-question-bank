@@ -1,21 +1,21 @@
 ﻿@using BeQuestionBank.Shared.DTOs.Khoa
 @using MudBlazor
 
-<MudDialog  FullWidth="true">
+<MudDialog FullWidth="true">
     <TitleContent>
         <MudText Typo="Typo.h6">@_dialogTitle</MudText>
     </TitleContent>
     <DialogContent>
-        <MudTextField Label="Tên Khoa" 
-                      @bind-Value="Khoa.TenKhoa" 
+        <MudTextField Label="Tên Khoa"
+                      @bind-Value="Khoa.TenKhoa"
                       Variant="Variant.Outlined"
                       Required="true"
-                      ErrorText="Tên khoa là bắt buộc" />
+                      ErrorText="Tên khoa là bắt buộc"/>
 
-        <MudTextField Label="Mô Tả" 
-                      @bind-Value="Khoa.MoTa" 
-                      Lines="3" 
-                      Variant="Variant.Outlined" />
+        <MudTextField Label="Mô Tả"
+                      @bind-Value="Khoa.MoTa"
+                      Lines="3"
+                      Variant="Variant.Outlined"/>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel" Color="Color.Secondary" Variant="Variant.Text">
@@ -48,6 +48,7 @@
         {
             return;
         }
+
         await OnSave.InvokeAsync(Khoa);
         MudDialog.Close(DialogResult.Ok(Khoa));
     }

@@ -38,12 +38,6 @@
                     <MudSelectItem Value="@((short)4)">4 - Vận dụng cao</MudSelectItem>
                 </MudSelect>
             </MudItem>
-
-            <MudItem xs="12" sm="6" Class="d-flex align-center">
-                <MudCheckBox @bind-Value="HoanVi"
-                             Label="Cho phép hoán vị thứ tự câu hỏi con"
-                             Color="Color.Primary"/>
-            </MudItem>
         </MudGrid>
     </MudPaper>
 
@@ -55,7 +49,7 @@
                     <MudText Typo="Typo.h6" Class="font-weight-bold">
                         Các câu hỏi tự luận
                         <MudChip T="short" Color="Color.Primary" Size="Size.Small" Class="ml-2">
-                            @Questions.Count câu
+                            @CauHoiCon.Count câu
                         </MudChip>
                     </MudText>
 
@@ -65,7 +59,7 @@
                     </MudButton>
                 </div>
 
-                @if (Questions.Count == 0)
+                @if (CauHoiCon.Count == 0)
                 {
                     <MudAlert Severity="Severity.Info" Class="text-center py-8 rounded-lg">
                         Chưa có câu hỏi nào. Nhấn <strong>Thêm câu hỏi</strong> để bắt đầu!
@@ -73,7 +67,7 @@
                 }
 
                 <div class="d-flex flex-column gap-4">
-                    @foreach (var (q, index) in Questions.Select((x, i) => (x, i)))
+                    @foreach (var (q, index) in CauHoiCon.Select((x, i) => (x, i)))
                     {
                         var color = EssayColors[index % EssayColors.Length];
 

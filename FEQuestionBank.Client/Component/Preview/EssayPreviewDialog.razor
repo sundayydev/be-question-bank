@@ -1,98 +1,113 @@
-﻿@using FEQuestionBank.Client.Pages.CauHoi
+﻿@using FEQuestionBank.Client.Component.Other
+@using FEQuestionBank.Client.Pages.CauHoi
 @inject ISnackbar Snackbar
 
-<MudDialog>
+<MudDialog MaxWidth="MaxWidth.Medium" FullWidth="true" Class="rounded-xl preview-dialog-shadow">
     <TitleContent>
-        <MudText Typo="Typo.h6">
-            <MudIcon Icon="@Icons.Material.Filled.EditNote" Class="mr-2" Color="Color.Success"/>
-            Xem trước câu hỏi tự luận
-        </MudText>
+        <div class="d-flex align-center gap-3 px-1 pt-1 pb-0">
+            <MudIcon Icon="@Icons.Material.Filled.EditNote" Size="Size.Large" Color="Color.Primary"/>
+            <MudText Typo="Typo.h5" Class="font-weight-bold text-neutral">Xem trước câu hỏi tự luận</MudText>
+        </div>
     </TitleContent>
 
     <DialogContent>
-        <MudContainer Style="max-height:80vh;" Class="py-4">
-
-            <!-- HEADER: Đoạn văn chung + Thông tin phân loại -->
-            <MudPaper Class="pa-5 mb-6 rounded-xl" Elevation="4"
-                      Style="background: #94a3b8; color: white;">
-                <MudGrid Spacing="3" AlignItems="Center">
-                    <MudItem xs="12" sm="3">
-                        <MudText><strong>Chương:</strong> @TenPhan</MudText>
-                    </MudItem>
-                    <MudItem xs="12" sm="3">
-                        <MudText>
-                            <strong>CLO:</strong>
-                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled"
-                                     Class="ml-2">
-                                @CloName
-                            </MudChip>
+        <MudContainer Style="max-height:80vh;" Class="pt-4 pb-2 px-0">
+            <MudPaper Class="pa-5 mb-6 rounded-lg info-banner" Elevation="1">
+                <MudGrid Spacing="2" Class="mb-2 info-head-row">
+                    <MudItem xs="12" sm="6" lg="3">
+                        <MudText Typo="Typo.body1" Class="d-flex align-center gap-1">
+                            <MudIcon Icon="@Icons.Material.Filled.Bookmarks" Color="Color.Default" Size="Size.Small"/>
+                            <span class="label">Chương:</span><span>@TenPhan</span>
                         </MudText>
                     </MudItem>
-                    <MudItem xs="12" sm="3">
-                        <MudText><strong>Cấp độ:</strong> @CapDoText</MudText>
+                    <MudItem xs="12" sm="6" lg="3">
+                        <MudText Typo="Typo.body1" Class="d-flex align-center gap-1">
+                            <MudIcon Icon="@Icons.Material.Filled.Flag" Color="Color.Default" Size="Size.Small"/>
+                            <span class="label">CLO:</span>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Secondary"
+                                     Class="ml-1 px-2 py-0">@CloName</MudChip>
+                        </MudText>
                     </MudItem>
-                    <MudItem xs="12" sm="3">
-                        <MudText><strong>Hoán vị:</strong> @(HoanVi ? "Có" : "Không")</MudText>
+                    <MudItem xs="12" sm="6" lg="3">
+                        <MudText Typo="Typo.body1" Class="d-flex align-center gap-1">
+                            <MudIcon Icon="@Icons.Material.Filled.Stairs" Color="Color.Default" Size="Size.Small"/>
+                            <span class="label">Cấp độ:</span><span>@CapDoText</span>
+                        </MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" lg="3">
+                        <MudText Typo="Typo.body1" Class="d-flex align-center gap-1">
+                            <MudIcon Icon="@Icons.Material.Filled.Sync" Color="Color.Default" Size="Size.Small"/>
+                            <span class="label">Hoán vị:</span><span>@(HoanVi ? "Có" : "Không")</span>
+                        </MudText>
                     </MudItem>
                 </MudGrid>
-                <MudText Typo="Typo.h6" Class="mb-3">
-                    <strong>Đoạn văn </strong>
+                <MudDivider Class="my-3" Style="opacity:0.3"/>
+                <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-2" Style="letter-spacing:1px">
+                    <MudIcon Icon="@Icons.Material.Filled.Subject" Color="Color.Info" Class="mr-2"/>
+                    Đoạn văn chung
                 </MudText>
-                <MudText Typo="Typo.body1" Class="mb-4" Style="line-height: 1.8;">
-                    @if (string.IsNullOrWhiteSpace(Passage))
+                <div class="mt-1 px-1 passage-content">
+                    @if (string.IsNullOrWhiteSpace(NoiDungCha))
                     {
-                        <span>Chưa có nội dung</span>
+                        <MudText Typo="Typo.body2" Color="Color.Warning" Class="font-italic">Chưa có nội dung</MudText>
                     }
                     else
                     {
-                        <LatexContent Content="@Passage"/>
+                        <LatexContent Content="@NoiDungCha"/>
                     }
-                </MudText>
-
+                </div>
             </MudPaper>
 
             <!-- DANH SÁCH CÂU HỎI CON -->
-            <MudText Typo="Typo.h6" Class="mb-4 font-bold" Color="Color.Dark">
-                <MudIcon Icon="@Icons.Material.Filled.FormatQuote" Class="mr-2"/>
-                Các câu hỏi tự luận (@Questions.Count câu)
+            <MudText Typo="Typo.h6" Class="mb-4 mt-2 font-weight-bold d-flex align-center gap-2 text-neutral">
+                <MudIcon Icon="@Icons.Material.Filled.FormatQuote" Class="font-lg"/>
+                <span>Các câu hỏi tự luận</span>
+                <MudChip T="int" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default"
+                         Class="ml-2 text-base">
+                    @CauHoiCon.Count
+                </MudChip>
             </MudText>
-
-            @if (!Questions.Any())
+            @if (!CauHoiCon.Any())
             {
-                <MudAlert Severity="Severity.Warning" Class="mb-4">
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Class="mb-5 mt-3 px-3 py-2 rounded-2">
                     Không có câu hỏi con nào được tạo!
                 </MudAlert>
             }
-            <MudGrid Spacing="4">
-                @foreach (var (question, index) in Questions.Select((q, i) => (q, i)))
+            <MudGrid Spacing="3" Class="px-1">
+                @foreach (var (question, index) in CauHoiCon.Select((q, i) => (q, i)))
                 {
                     var color = EssayColors[index % EssayColors.Length];
                     var canShuffle = question.HoanVi;
 
                     <MudItem xs="12">
-                        <MudPaper Class="pa-5 rounded-xl" Elevation="3"
-                                  Style="@($"border-left: 6px solid {color}; background: {color}18;")">
-                            <div class="d-flex align-center justify-space-between mb-3">
-                                <div class="d-flex align-center gap-3">
-                                    <MudText Typo="Typo.subtitle1" Class="font-bold">
-                                        Câu @(index + 1):
-                                    </MudText>
-                                    <LatexContent Content="@question.NoiDung"/>
+                        <MudPaper Class="pa-3 mt-1 mb-2 rounded-lg shadow-xs question-card"
+                                  Style="@($"border-left: 3px solid {color}; background: #fff; border: 1px solid #e5e7eb;")"
+                                  Hovered="true">
+                            <div class="d-flex align-center justify-space-between mb-0 flex-wrap">
+                                <div class="d-flex align-center gap-2 flex-shrink-1">
+                                    <div class="ml-0">
+                                        <MudText Typo="Typo.subtitle2" Class="font-bold mx-1"
+                                                 Style="@($"color: {color};")">
+                                            Câu @(index + 1):
+                                        </MudText>
+
+                                        <span class="question-content mx-1"><LatexContent Content="@question.NoiDung"/></span>
+                                    </div>
                                 </div>
 
-                                <div>
+                                <div class="d-flex align-center gap-2 ml-3">
                                     @if (canShuffle)
                                     {
-                                        <MudTooltip Text="Hoán vị" Placement="Placement.Top">
+                                        <MudTooltip Text="Hoán vị được" Placement="Placement.Top">
                                             <MudIcon Icon="@Icons.Material.Filled.Shuffle" Color="Color.Primary"
-                                                     Size="Size.Small"/>
+                                                     Size="Size.Medium" Style="vertical-align:middle;"/>
                                         </MudTooltip>
                                     }
                                     else
                                     {
-                                        <MudTooltip Text="Cố định" Placement="Placement.Top">
-                                            <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Warning"
-                                                     Size="Size.Small"/>
+                                        <MudTooltip Text="Cố định thứ tự" Placement="Placement.Top">
+                                            <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Error"
+                                                     Size="Size.Medium" Style="vertical-align:middle;"/>
                                         </MudTooltip>
                                     }
                                 </div>
@@ -101,19 +116,22 @@
                     </MudItem>
                 }
             </MudGrid>
-
-
-            <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mt-6">
-                <strong>@Questions.Count câu hỏi tự luận</strong> • Học sinh sẽ trả lời bằng văn bản, giáo viên chấm tay
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined"
+                      Class="mt-6 mb-2 pa-3 d-flex align-center gap-2 rounded-2" Elevation="0">
+                <div>
+                    <strong>@CauHoiCon.Count câu hỏi tự luận</strong> • Học sinh trả lời bằng văn bản, giáo viên chấm
+                    trực tiếp
+                </div>
             </MudAlert>
         </MudContainer>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel" Variant="Variant.Text" Color="Color.Dark">
+        <MudButton OnClick="Cancel" Variant="Variant.Outlined" Color="Color.Primary" Class="mr-3 px-4">
+            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="mr-1"/>
             Sửa lại
         </MudButton>
         <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="Submit"
-                   StartIcon="@Icons.Material.Filled.SaveAlt">
+                   StartIcon="@Icons.Material.Filled.SaveAlt" Class="px-4">
             Xác nhận lưu
         </MudButton>
     </DialogActions>
@@ -122,8 +140,8 @@
 @code {
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
 
-    [Parameter] public string Passage { get; set; } = string.Empty;
-    [Parameter] public List<CreateEssayQuestionBase.EssayQuestionItem> Questions { get; set; } = new();
+    [Parameter] public string NoiDungCha { get; set; } = string.Empty;
+    [Parameter] public List<CreateEssayQuestionBase.EssayQuestionItem> CauHoiCon { get; set; } = new();
     [Parameter] public string TenPhan { get; set; } = "Chưa chọn";
     [Parameter] public string CloName { get; set; } = "N/A";
     [Parameter] public short CapDo { get; set; }
@@ -140,31 +158,58 @@
 
     private readonly string[] EssayColors = new[]
     {
-        "#667eea", "#764ba2", "#f093fb", "#4facfe", "#43e97b", "#fa709a", "#fee140", "#00f2fe"
+        "#4b5563", "#6b7280", "#9ca3af", "#111827", "#374151", "#1f2937"
     };
-
 
     private void Cancel() => MudDialog.Cancel();
     private void Submit() => MudDialog.Close(DialogResult.Ok(true));
-
 }
 
 <style>
-    ::-webkit-scrollbar {
-        width: 8px;
+    .text-neutral {
+        color: #1f2937;
     }
 
-    ::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 10px;
+    /* Banner styling for top info */
+    .info-banner {
+        background: #f8fafc !important;
+        color: #111827 !important;
+        border: 1px solid #e5e7eb;
+        box-shadow: none;
     }
 
-    ::-webkit-scrollbar-thumb {
-        background: #9f7aea;
-        border-radius: 10px;
+    .info-head-row .MudText .label {
+        font-weight: 600;
+        letter-spacing: .02em;
+        opacity: 0.96;
+        margin-right: 0.2rem;
     }
 
-    ::-webkit-scrollbar-thumb:hover {
-        background: #7c5ac2;
+    .passage-content {
+        font-size: 1.02rem;
+        line-height: 1.73;
+        background: #f8fafc;
+        padding: 1rem 1.1rem;
+        border-radius: 7px;
+        color: #1f2937;
+        min-height: 2.2rem;
+        word-break: break-word;
+    }
+
+    .question-card {
+        transition: box-shadow .15s, background .15s;
+    }
+
+    .question-content {
+        font-size: 1.07rem;
+        line-height: 1.8;
+        font-weight: 500;
+        color: #111827;
+        word-break: break-word;
+    }
+
+    .preview-dialog-shadow {
+        box-shadow: 0 6px 24px #1118270b;
+        border-radius: 18px !important;
     }
 </style>

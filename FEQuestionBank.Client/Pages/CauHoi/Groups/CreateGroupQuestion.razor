@@ -1,4 +1,5 @@
 @page "/create-question/group"
+@page "/create-question/group/{EditId:guid}"
 @using BeQuestionBank.Shared.Enums
 @inherits CreateGroupQuestionBase
 
@@ -8,10 +9,10 @@
         border: 1px solid transparent;
     }
 
-        .answer-row:hover {
-            background-color: #f5f5f5 !important;
-            border-color: #e0e0e0;
-        }
+    .answer-row:hover {
+        background-color: #f5f5f5 !important;
+        border-color: #e0e0e0;
+    }
 
     .question-header {
         background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
@@ -21,18 +22,18 @@
         box-shadow: 0 4px 20px rgba(30, 64, 175, 0.15);
     }
 
-        .question-header h1 {
-            margin: 0;
-            font-size: 28px;
-            font-weight: 600;
-            color: white;
-        }
+    .question-header h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+        color: white;
+    }
 
-        .question-header p {
-            margin: 0.5rem 0 0 0;
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 14px;
-        }
+    .question-header p {
+        margin: 0.5rem 0 0 0;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 14px;
+    }
 
     .child-question-panel {
         border: 1px solid #e0e0e0;
@@ -40,10 +41,6 @@
         margin-bottom: 12px;
         transition: all 0.2s;
     }
-
-        .child-question-panel:hover {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
 
     .parent-content-box {
         background: linear-gradient(to bottom, #f8fafc 0%, #ffffff 100%);
@@ -54,11 +51,11 @@
 </style>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-3">
-    <MudBreadcrumbs Items="_breadcrumbs" />
+    <MudBreadcrumbs Items="_breadcrumbs"/>
 
     <div class="question-header">
         <div style="display: flex; align-items: center; gap: 1rem;">
-            <MudIcon Icon="@Icons.Material.Filled.LibraryBooks" Size="Size.Large" Style="color: white;" />
+            <MudIcon Icon="@Icons.Material.Filled.LibraryBooks" Size="Size.Large" Style="color: white;"/>
             <div>
                 <h1>Tạo câu hỏi nhóm</h1>
                 <p>Nhập đoạn văn chung và tạo các câu hỏi liên quan để kiểm tra khả năng đọc hiểu</p>
@@ -69,42 +66,55 @@
     <MudGrid>
         <!-- Main Content Area (Left) -->
         <MudItem xs="12" md="8" Style="display: flex; flex-direction: column;">
-            <MudPaper Class="p-5 rounded-lg shadow-sm mb-4">
+            <MudStack Spacing="1">
+                <MudPaper Class="p-5 rounded-lg shadow-sm">
                 <MudText Typo="Typo.subtitle1" Class="font-bold mb-1 d-flex align-center">
-                    <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Small" Class="mr-1" />
-                    Nội dung đoạn văn / Ngữ cảnh chung <span class="text-error ml-1">*</span>
+                    <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Small" Class="mr-1"/>
+                    Nội dung đoạn văn / Ngữ cảnh chung
                 </MudText>
-                <MudText Typo="Typo.caption" Class="mb-3 text-secondary">
+                    <MudText Typo="Typo.caption" Class="text-secondary">
                     Nhập văn bản, đoạn văn hoặc tình huống làm cơ sở cho các câu hỏi con
                 </MudText>
 
-                <MudTextField @bind-Value="ParentContent"
+                    <MudTextField @bind-Value="NoiDungCha"
                               Placeholder="Ví dụ: Một đoạn văn về lịch sử, một bài đọc tiếng Anh, một tình huống kinh doanh..."
                               Lines="8"
                               FullWidth="true"
                               Variant="Variant.Outlined"
-                              Class="mb-2 bg-white" />
+                                  Class="mb-2 bg-white"/>
+                    <MudItem xs="12" sm="6" Class="d-flex align-center">
+                        <MudSelect T="short" @bind-Value="CapDo" Label="Cấp độ câu hỏi" Variant="Variant.Outlined"
+                                   Dense="true" Margin="Margin.Dense">
+                            <MudSelectItem Value="@((short)1)">1 - Nhận biết</MudSelectItem>
+                            <MudSelectItem Value="@((short)2)">2 - Thông hiểu</MudSelectItem>
+                            <MudSelectItem Value="@((short)3)">3 - Vận dụng</MudSelectItem>
+                            <MudSelectItem Value="@((short)4)">4 - Vận dụng cao</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
             </MudPaper>
 
-            <MudPaper Class="p-5 rounded-lg shadow-sm h-100" Style="position: relative;">
+                <MudPaper Class="p-5 rounded-lg shadow-sm">
                 <div class="d-flex justify-space-between align-center mb-4">
                     <MudText Typo="Typo.subtitle1" Class="font-bold d-flex align-center">
-                        <MudIcon Icon="@Icons.Material.Filled.List" Size="Size.Small" Class="mr-1" />
+                        <MudIcon Icon="@Icons.Material.Filled.List" Size="Size.Small" Class="mr-1"/>
                         Danh sách câu hỏi con
-                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Class="ml-2">@ChildQuestions.Count câu</MudChip>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info"
+                                 Class="ml-2">@ChildQuestions.Count câu
+                        </MudChip>
                     </MudText>
 
                     <MudTooltip Text="Thêm câu hỏi con mới">
-                        <MudIconButton Icon="@Icons.Material.Filled.AddCircle" 
-                                       Color="Color.Primary" 
-                                       OnClick="AddChildQuestion" />
+                        <MudIconButton Icon="@Icons.Material.Filled.AddCircle"
+                                       Color="Color.Primary"
+                                       OnClick="AddChildQuestion"/>
                     </MudTooltip>
                 </div>
 
                 @if (ChildQuestions.Count == 0)
                 {
                     <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="my-4">
-                        <MudText>Chưa có câu hỏi con nào. Hãy bấm nút <strong>Thêm câu hỏi</strong> để bắt đầu.</MudText>
+                        <MudText>Chưa có câu hỏi con nào. Hãy bấm nút <strong>Thêm câu hỏi</strong> để bắt đầu.
+                        </MudText>
                     </MudAlert>
                 }
                 else
@@ -115,9 +125,9 @@
                             {
                                 var index = i;
                                 var question = ChildQuestions[i];
-                                var questionPreview = string.IsNullOrEmpty(question.Content) 
-                                    ? "(Chưa nhập nội dung)" 
-                                    : (question.Content.Length > 60 ? question.Content.Substring(0, 60) + "..." : question.Content);
+                                var questionPreview = string.IsNullOrEmpty(question.NoiDung)
+                                    ? "(Chưa nhập nội dung)"
+                                    : (question.NoiDung.Length > 60 ? question.NoiDung.Substring(0, 60) + "..." : question.NoiDung);
 
                                 <MudExpansionPanel Class="child-question-panel">
                                     <TitleContent>
@@ -126,14 +136,18 @@
                                                 @(index + 1)
                                             </MudAvatar>
                                             <div class="flex-grow-1">
-                                                <MudText Typo="Typo.body2" Class="font-bold">Câu hỏi @(index + 1)</MudText>
-                                                <MudText Typo="Typo.caption" Class="text-secondary">@questionPreview</MudText>
+                                                <MudText Typo="Typo.caption"
+                                                         Class="text-secondary">@questionPreview</MudText>
                                             </div>
-                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
-                                                           Size="Size.Small" 
-                                                           Color="Color.Error" 
-                                                           OnClick="@((e) => RemoveChildQuestion(question))" 
-                                                           Title="Xóa câu này" />
+                                            <MudCheckBox
+                                                @bind-Value="ChildQuestions[index].HoanVi"
+                                                Color="Color.Primary"
+                                                Label="Hoán vị"/>
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                           Size="Size.Small"
+                                                           Color="Color.Error"
+                                                           OnClick="@((e) => RemoveChildQuestion(question))"
+                                                           Title="Xóa câu này"/>
                                         </div>
                                     </TitleContent>
                                     <ChildContent>
@@ -142,67 +156,57 @@
                                                 <MudText Typo="Typo.caption" Class="mb-1 font-bold">
                                                     Nội dung câu hỏi <span class="text-error">*</span>
                                                 </MudText>
-                                                <MudTextField @bind-Value="question.Content"
+                                                <MudTextField @bind-Value="question.NoiDung"
                                                               Placeholder="Nhập nội dung câu hỏi..."
                                                               Variant="Variant.Outlined"
                                                               Lines="2"
                                                               FullWidth="true"
-                                                              Class="bg-white" />
+                                                              Class="bg-white"/>
                                             </div>
 
-                                            <div class="mb-3">
-                                                <MudText Typo="Typo.caption" Class="mb-1 font-bold">
-                                                    CLO riêng (tùy chọn)
-                                                </MudText>
-                                                <MudSelect T="EnumCLO?" @bind-Value="question.CLO"
-                                                           Variant="Variant.Outlined"
-                                                           AnchorOrigin="Origin.BottomCenter"
-                                                           Clearable="true"
-                                                           Placeholder="Để trống sẽ lấy theo cấu hình chung"
-                                                           Class="bg-white">
-                                                    @foreach (var c in CLOs)
-                                                    {
-                                                        <MudSelectItem Value="@((EnumCLO?)c)">@c.ToString()</MudSelectItem>
-                                                    }
-                                                </MudSelect>
-                                            </div>
-
-                                            <MudDivider Class="my-3" />
+                                            <MudDivider Class="my-3"/>
 
                                             <MudText Typo="Typo.caption" Class="mb-2 font-bold d-flex align-center">
-                                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Class="mr-1" />
+                                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small"
+                                                         Class="mr-1"/>
                                                 Các đáp án:
                                             </MudText>
 
-                                            @for (int j = 0; j < question.Answers.Count; j++)
+                                            @for (int j = 0; j < question.CauTraLois.Count; j++)
                                             {
-                                                var ans = question.Answers[j];
+                                                var ans = question.CauTraLois[j];
                                                 var label = (char)('A' + j);
 
-                                                <MudPaper Class="@($"d-flex align-center p-2 rounded-lg answer-row mb-2 {(ans.IsCorrect ? "bg-success-lighten-5" : "bg-white")}")" 
-                                                          Elevation="0">
-                                                    <MudTooltip Text="@(ans.IsCorrect ? "Đây là đáp án đúng" : "Click để chọn làm đáp án đúng")">
-                                                        <MudAvatar Color="@(ans.IsCorrect ? Color.Success : Color.Default)"
-                                                                   Size="Size.Medium"
-                                                                   Class="cursor-pointer font-bold mr-3"
-                                                                   @onclick="() => ToggleCorrectAnswer(question, ans)">
+                                                <MudPaper
+                                                    Class="@($"d-flex align-center p-2 rounded-lg answer-row mb-2 {(ans.LaDapAn ? "bg-success-lighten-5" : "bg-white")}")"
+                                                    Elevation="0">
+                                                    <MudTooltip
+                                                        Text="@(ans.LaDapAn ? "Đây là đáp án đúng" : "Click để chọn làm đáp án đúng")">
+                                                        <MudAvatar
+                                                            Color="@(ans.LaDapAn ? Color.Success : Color.Default)"
+                                                            Size="Size.Medium"
+                                                            Class="cursor-pointer font-bold mr-3"
+                                                            @onclick="() => ToggleCorrectAnswer(question, ans)">
                                                             @label
                                                         </MudAvatar>
                                                     </MudTooltip>
 
-                                                    <MudTextField @bind-Value="ans.Text"
+                                                    <MudTextField @bind-Value="ans.NoiDung"
                                                                   Placeholder="@($"Nhập nội dung đáp án {label}...")"
                                                                   Variant="Variant.Text"
                                                                   DisableUnderLine="true"
                                                                   Margin="Margin.Dense"
-                                                                  Class="flex-grow-1 mr-2" />
-
+                                                                  Class="flex-grow-1 mr-2"/>
+                                                    <MudCheckBox
+                                                        @bind-Value="@ans.HoanVi"
+                                                        Color="Color.Primary"
+                                                        Label="Hoán vị"/>
                                                     <MudTooltip Text="Xóa đáp án này">
                                                         <MudIconButton Icon="@Icons.Material.Filled.Close"
                                                                        Size="Size.Small"
                                                                        Color="Color.Error"
                                                                        OnClick="() => RemoveAnswer(question, ans)"
-                                                                       Disabled="@(question.Answers.Count <= 2)" />
+                                                                       Disabled="@(question.CauTraLois.Count <= 2)"/>
                                                     </MudTooltip>
                                                 </MudPaper>
                                             }
@@ -231,19 +235,20 @@
                     Thêm câu hỏi con
                 </MudButton>
             </MudPaper>
+            </MudStack>
         </MudItem>
 
         <!-- Configuration Sidebar (Right) -->
         <MudItem xs="12" md="4">
-            <MudPaper Class="p-5 rounded-lg shadow-sm bg-grey-lighten-5 h-100 position-sticky" Style="top: 10px;">
+            <MudPaper Class="p-5 rounded-xl shadow-sm position-sticky" Style="top: 55px; background:#fff;">
                 <MudText Typo="Typo.h6" Class="mb-4 font-bold" Color="Color.Dark">Cấu hình chung</MudText>
 
                 <MudStack Spacing="3">
                     <div>
                         <MudText Typo="Typo.caption" Class="mb-1">Khoa quản lý</MudText>
                         <MudSelect T="Guid?" Value="SelectedKhoaId" ValueChanged="OnKhoaChanged"
-                                   Placeholder="-- Chọn khoa --" 
-                                   Variant="Variant.Outlined" 
+                                   Placeholder="-- Chọn khoa --"
+                                   Variant="Variant.Outlined"
                                    AnchorOrigin="Origin.BottomCenter">
                             @foreach (var item in Khoas)
                             {
@@ -255,9 +260,9 @@
                     <div>
                         <MudText Typo="Typo.caption" Class="mb-1">Môn học</MudText>
                         <MudSelect T="Guid?" Value="SelectedMonHocId" ValueChanged="OnMonHocChanged"
-                                   Placeholder="-- Chọn môn --" 
-                                   Variant="Variant.Outlined" 
-                                   Disabled="@(SelectedKhoaId == null)" 
+                                   Placeholder="-- Chọn môn --"
+                                   Variant="Variant.Outlined"
+                                   Disabled="@(SelectedKhoaId == null)"
                                    AnchorOrigin="Origin.BottomCenter">
                             @foreach (var item in MonHocs)
                             {
@@ -269,9 +274,9 @@
                     <div>
                         <MudText Typo="Typo.caption" Class="mb-1">Chương / Phần</MudText>
                         <MudSelect T="Guid?" @bind-Value="SelectedPhanId"
-                                   Placeholder="-- Chọn chương --" 
-                                   Variant="Variant.Outlined" 
-                                   Disabled="@(SelectedMonHocId == null)" 
+                                   Placeholder="-- Chọn chương --"
+                                   Variant="Variant.Outlined"
+                                   Disabled="@(SelectedMonHocId == null)"
                                    AnchorOrigin="Origin.BottomCenter">
                             @foreach (var item in Phans)
                             {
@@ -282,8 +287,8 @@
 
                     <div>
                         <MudText Typo="Typo.caption" Class="mb-1">Chuẩn đầu ra (CLO) chung</MudText>
-                        <MudSelect T="EnumCLO" @bind-Value="SelectedCLO" 
-                                   Variant="Variant.Outlined" 
+                        <MudSelect T="EnumCLO" @bind-Value="SelectedCLO"
+                                   Variant="Variant.Outlined"
                                    AnchorOrigin="Origin.BottomCenter">
                             @foreach (var clo in CLOs)
                             {
@@ -296,7 +301,7 @@
                     </div>
                 </MudStack>
 
-                <MudDivider Class="my-5" />
+                <MudDivider Class="my-5"/>
 
                 <MudStack Row="true" Spacing="2">
                     <MudButton Variant="Variant.Outlined"
@@ -317,9 +322,9 @@
                 </MudStack>
 
                 <div class="mt-3 d-flex justify-center">
-                    <MudButton Variant="Variant.Text" 
-                               Color="Color.Error" 
-                               OnClick="GoBack" 
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Error"
+                               OnClick="GoBack"
                                Size="Size.Small">
                         Hủy bỏ & Quay lại
                     </MudButton>

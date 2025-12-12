@@ -1,7 +1,9 @@
 ﻿@using BeQuestionBank.Shared.DTOs.CauHoi
 @using FEQuestionBank.Client.Pages
-
 @using BeQuestionBank.Shared.DTOs.CauTraLoi
+@using BeQuestionBank.Shared.Enums
+@using FEQuestionBank.Client.Component.Other
+@using FEQuestionBank.Client.Services.Interface
 @namespace FEQuestionBank.Client.Components
 
 <MudDialog>
@@ -28,9 +30,12 @@
                         <MudChip T="short" Color="@GetLevelColor(CauHoi.CapDo)" Size="Size.Small" Class="ml-2">
                             Cấp độ @CauHoi.CapDo
                         </MudChip>
-                        <MudChip T="string" Color="Color.Secondary" Size="Size.Small" Class="ml-2">
-                            CLO: @CauHoi.CLO
-                        </MudChip>
+                        @if (CauHoi.CLO != null)
+                        {
+                            <MudChip T="string" Color="Color.Secondary" Size="Size.Small" Class="ml-2">
+                                @CauHoi.CLO
+                            </MudChip>
+                        }
                         <MudChip T="short" Color="Color.Info" Size="Size.Small" Class="ml-2">
                             Đã dùng: @CauHoi.SoLanDung lần
                         </MudChip>
@@ -39,7 +44,7 @@
 
                 <MudDivider Class="mb-5"/>
 
-                @* ==================== 1. GHÉP NỐI ==================== *@
+                @*  1. GHÉP NỐi*@
                 @if (IsPairing)
                 {
                     <MudText Typo="Typo.h6" GutterBottomMargin Class="mb-3">Nội dung ghép nối:</MudText>
@@ -57,19 +62,16 @@
                             <MudItem xs="12">
                                 <MudPaper Class="pa-4" Elevation="1">
                                     <MudGrid>
-                                        @* CỘT 1: Nội dung câu con *@
                                         <MudItem xs="5">
                                             <LatexContent Content="@sub.NoiDung"/>
                                         </MudItem>
 
-                                        @* CỘT 2: Icon *@
                                         <MudItem xs="2" Class="d-flex align-center justify-center">
-                                            <MudIcon Icon="@Icons.Material.Filled.ArrowForward"
-                                                     Color="Color.Primary"
+                                            <MudIcon Icon="@Icons.Material.Filled.CompareArrows"
+                                                     Color="Color.Secondary" Size="Size.Large"
                                             />
                                         </MudItem>
 
-                                        @* CỘT 3: Đáp án *@
                                         <MudItem xs="5" Class="text-right">
                                             @if (answer != null)
                                             {
@@ -83,7 +85,7 @@
                         }
                     </MudGrid>
                 }
-                @* ==================== 2. ĐIỀN TỪ ==================== *@
+                @* 2. ĐIỀN TỪ  *@
                 else if (IsFillBlank)
                 {
                     <MudText Typo="Typo.h6" Class="mb-3">Đoạn văn cần điền:</MudText>
@@ -136,8 +138,8 @@
 
                     </MudList>
                 }
-                @* ==================== 3. CÂU NHÓM & TỰ LUẬN ==================== *@
-                else if (IsGroupOrEssay)
+                @*  3. CÂU NHÓM   *@
+                else if (IsGroup)
                 {
                     <MudText Typo="Typo.h6" Class="mb-3">Đề bài chính:</MudText>
                     <MudPaper Class="pa-4 mb-5" Elevation="2">
@@ -214,68 +216,236 @@
                         </MudAlert>
                     }
                 }
-                @* ==================== 4. TRẮC NGHIỆM ĐƠN & NHIỀU ĐÁP ÁN ==================== *@
-                else
+                @*  4. tự luận   *@
+                else if (IsEssay)
                 {
-                    <MudText Typo="Typo.h6" Class="mb-3">Câu hỏi:</MudText>
+                    <MudText Typo="Typo.h6" Class="mb-3">Đề bài chính:</MudText>
+                    <MudPaper Class="pa-4 mb-5" Elevation="2">
+                        <LatexContent Content="@CauHoi.NoiDung"/>
+                    </MudPaper>
+
+                    @if (CauHoi.CauHoiCons != null && CauHoi.CauHoiCons.Any())
+                    {
+                        <MudText Typo="Typo.h6" Class="mb-3">
+                            Câu hỏi con (@CauHoi.CauHoiCons.Count câu):
+                        </MudText>
+
+                        <MudExpansionPanels MultiExpansion="true">
+                            @foreach (var subTuple in CauHoi.CauHoiCons.Select((sub, index) => (sub, index)))
+                            {
+                                var sub = subTuple.sub;
+                                var stt = subTuple.index + 1;
+
+                                <MudExpansionPanel>
+                                    <TitleContent>
+                                        <div class="d-flex align-center">
+                                            <strong class="mr-2">Câu @stt:</strong>
+                                            <LatexContent Content="@sub.NoiDung"/>
+                                        </div>
+                                    </TitleContent>
+
+                                    <ChildContent>
+                                        <div class="pa-3">
+                                            @* Đánh ABCD + tô xanh đáp án đúng *@
+                                            @foreach (var ansTuple in sub.CauTraLois.Select((ans, idx) => (ans, idx)))
+                                            {
+                                                var ans = ansTuple.ans;
+                                                char letter = (char)('A' + ansTuple.idx);
+                                                var canShuffle = ans.HoanVi;
+
+                                                <div class="d-flex align-center my-2">
+                                                    <MudChip T="string"
+                                                             Color="@(ans.LaDapAn ? Color.Success : Color.Default)"
+                                                             Class="mr-2">
+                                                        @letter
+                                                    </MudChip>
+
+                                                    <LatexContent Content="@ans.NoiDung"/>
+                                                    <div class="d-flex align-center ml-auto">
+                                                        @if (canShuffle == true)
+                                                        {
+                                                            <MudTooltip Text="Xáo trộn" Placement="Placement.Top">
+                                                                <MudIcon Icon="@Icons.Material.Filled.Shuffle"
+                                                                         Color="Color.Primary"
+                                                                         Size="Size.Small"/>
+                                                            </MudTooltip>
+                                                        }
+                                                        else
+                                                        {
+                                                            <MudTooltip Text="Cố định" Placement="Placement.Top">
+                                                                <MudIcon Icon="@Icons.Material.Filled.Lock"
+                                                                         Color="Color.Warning"
+                                                                         Size="Size.Small"/>
+                                                            </MudTooltip>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </ChildContent>
+                                </MudExpansionPanel>
+                            }
+                        </MudExpansionPanels>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info" Class="mt-3">
+                            Đây là câu hỏi <strong>tự luận</strong>. Học viên sẽ nhập văn bản hoặc nộp file.
+                        </MudAlert>
+                    }
+                }
+                @*  5 multi *@
+                else if (IsMulti)
+                {
+                    <MudText Typo="Typo.h6" Class="mb-3"> Trắc nghiệm nhiều đáp án</MudText>
 
                     <MudPaper Class="pa-4 mb-5" Elevation="2">
                         <LatexContent Content="@CauHoi.NoiDung"/>
                     </MudPaper>
 
                     <MudText Typo="Typo.subtitle1" Class="mb-3">
-                        <b>Đáp án (@(CauHoi.CauTraLois?.Count(x => x.LaDapAn) ?? 0) đáp án đúng):</b>
+                        <b>
+                            Đáp án (@((CauHoi.CauTraLois ?? Enumerable.Empty<CauTraLoiDto>()).Count(x => x.LaDapAn)) đáp
+                            án đúng):
+                        </b>
                     </MudText>
 
-                    @foreach (var ansTuple in (CauHoi.CauTraLois)
-                                  .Select((ans, idx) => (ans, idx)))
+                    @* Nếu không có đáp án thì show alert *@
+                    @if (CauHoi.CauTraLois == null || !CauHoi.CauTraLois.Any())
                     {
-                        var ans = ansTuple.ans;
-                        var canShuffle = ans.HoanVi;
-                        char letter = (char)('A' + ansTuple.idx);
-                        <MudPaper Class="pa-3 mb-2 d-flex align-center"
-                                  Style="@(ans.LaDapAn
-                                             ? "border:2px solid #4caf50; background:#e8f5e9; border-radius:8px;"
-                                             : "border:1px solid #ccc; border-radius:8px;")">
+                        <MudAlert Severity="Severity.Warning">
+                            Không có đáp án nào được đính kèm cho câu hỏi này.
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        @foreach (var ansTuple in (CauHoi.CauTraLois ?? Enumerable.Empty<CauTraLoiDto>()).Select((ans, idx) => (ans, idx)))
+                        {
+                            var ans = ansTuple.ans;
+                            var canShuffle = ans?.HoanVi;
+                            char letter = (char)('A' + ansTuple.idx);
 
-                            <MudChip T="string"
-                                     Color="@(ans.LaDapAn ? Color.Success : Color.Default)"
-                                     Class="mr-3">
-                                @letter
-                            </MudChip>
+                            <MudPaper Class="pa-3 mb-2 d-flex align-center"
+                                      Style="@(ans?.LaDapAn == true
+                                                 ? "border:2px solid #4caf50; background:#e8f5e9; border-radius:8px;"
+                                                 : "border:1px solid #ccc; border-radius:8px;")">
 
-                            <div class="flex-grow-1 d-flex align-center">
-                                <LatexContent Content="@ans.NoiDung"/>
+                                <MudChip T="string"
+                                         Color="@(ans?.LaDapAn == true ? Color.Success : Color.Default)"
+                                         Class="mr-3">
+                                    @letter
+                                </MudChip>
 
-                                <div class="d-flex align-center ml-auto">
-                                    @if (ans.LaDapAn)
-                                    {
-                                        <MudChip T="string" Size="Size.Small"
-                                                 Color="Color.Success"
-                                                 Class="mr-2">
-                                            Đáp án đúng
-                                        </MudChip>
-                                    }
+                                <div class="flex-grow-1 d-flex align-center">
+                                    <LatexContent Content="@ans?.NoiDung"/>
 
-                                    @if (canShuffle == true)
-                                    {
-                                        <MudTooltip Text="Xáo trộn" Placement="Placement.Top">
-                                            <MudIcon Icon="@Icons.Material.Filled.Shuffle"
-                                                     Color="Color.Primary"
-                                                     Size="Size.Small"/>
-                                        </MudTooltip>
-                                    }
-                                    else
-                                    {
-                                        <MudTooltip Text="Cố định" Placement="Placement.Top">
-                                            <MudIcon Icon="@Icons.Material.Filled.Lock"
-                                                     Color="Color.Warning"
-                                                     Size="Size.Small"/>
-                                        </MudTooltip>
-                                    }
+                                    <div class="d-flex align-center ml-auto">
+                                        @if (ans?.LaDapAn == true)
+                                        {
+                                            <MudChip T="string" Size="Size.Small"
+                                                     Color="Color.Success"
+                                                     Class="mr-2">
+                                                Đáp án đúng
+                                            </MudChip>
+                                        }
+
+                                        @if (canShuffle == true)
+                                        {
+                                            <MudTooltip Text="Xáo trộn" Placement="Placement.Top">
+                                                <MudIcon Icon="@Icons.Material.Filled.Shuffle"
+                                                         Color="Color.Primary"
+                                                         Size="Size.Small"/>
+                                            </MudTooltip>
+                                        }
+                                        else
+                                        {
+                                            <MudTooltip Text="Cố định" Placement="Placement.Top">
+                                                <MudIcon Icon="@Icons.Material.Filled.Lock"
+                                                         Color="Color.Warning"
+                                                         Size="Size.Small"/>
+                                            </MudTooltip>
+                                        }
+                                    </div>
                                 </div>
-                            </div>
-                        </MudPaper>
+                            </MudPaper>
+                        }
+                    }
+                }
+                @* 4. TRẮC NGHIỆM ĐƠN*@
+                else
+                {
+                    <MudText Typo="Typo.h6" Class="mb-3"> Trắc nghiệm đơn đáp án</MudText>
+
+                    <MudPaper Class="pa-4 mb-5" Elevation="2">
+                        <LatexContent Content="@CauHoi.NoiDung"/>
+                    </MudPaper>
+
+                    <MudText Typo="Typo.subtitle1" Class="mb-3">
+                        <b>
+                            Đáp án (@((CauHoi.CauTraLois ?? Enumerable.Empty<CauTraLoiDto>()).Count(x => x.LaDapAn)) đáp
+                            án đúng):
+                        </b>
+                    </MudText>
+
+                    @* Nếu không có đáp án thì show alert *@
+                    @if (CauHoi.CauTraLois == null || !CauHoi.CauTraLois.Any())
+                    {
+                        <MudAlert Severity="Severity.Warning">
+                            Không có đáp án nào được đính kèm cho câu hỏi này.
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        @foreach (var ansTuple in (CauHoi.CauTraLois ?? Enumerable.Empty<CauTraLoiDto>()).Select((ans, idx) => (ans, idx)))
+                        {
+                            var ans = ansTuple.ans;
+                            var canShuffle = ans?.HoanVi;
+                            char letter = (char)('A' + ansTuple.idx);
+
+                            <MudPaper Class="pa-3 mb-2 d-flex align-center"
+                                      Style="@(ans?.LaDapAn == true
+                                                 ? "border:2px solid #4caf50; background:#e8f5e9; border-radius:8px;"
+                                                 : "border:1px solid #ccc; border-radius:8px;")">
+
+                                <MudChip T="string"
+                                         Color="@(ans?.LaDapAn == true ? Color.Success : Color.Default)"
+                                         Class="mr-3">
+                                    @letter
+                                </MudChip>
+
+                                <div class="flex-grow-1 d-flex align-center">
+                                    <LatexContent Content="@ans?.NoiDung"/>
+
+                                    <div class="d-flex align-center ml-auto">
+                                        @if (ans?.LaDapAn == true)
+                                        {
+                                            <MudChip T="string" Size="Size.Small"
+                                                     Color="Color.Success"
+                                                     Class="mr-2">
+                                                Đáp án đúng
+                                            </MudChip>
+                                        }
+
+                                        @if (canShuffle == true)
+                                        {
+                                            <MudTooltip Text="Xáo trộn" Placement="Placement.Top">
+                                                <MudIcon Icon="@Icons.Material.Filled.Shuffle"
+                                                         Color="Color.Primary"
+                                                         Size="Size.Small"/>
+                                            </MudTooltip>
+                                        }
+                                        else
+                                        {
+                                            <MudTooltip Text="Cố định" Placement="Placement.Top">
+                                                <MudIcon Icon="@Icons.Material.Filled.Lock"
+                                                         Color="Color.Warning"
+                                                         Size="Size.Small"/>
+                                            </MudTooltip>
+                                        }
+                                    </div>
+                                </div>
+                            </MudPaper>
+                        }
                     }
                 }
             }
@@ -291,20 +461,25 @@
 
     [Parameter] public CauHoiDto CauHoi { get; set; } = new();
 
-    [Parameter] public string ViewType { get; set; } = "SingleMulti"; // SingleMulti | Fill | Pairing | GroupEssay
+    [Parameter] public string ViewType { get; set; } = "Single"; // SingleMulti | Fill | Pairing | GroupEssay
 
     private int? _dummy; // để MudRadioGroup không báo lỗi khi không bind
-
+    private EnumCLO? CloValue { get; set; }
     private bool IsPairing => ViewType == "Pairing";
     private bool IsFillBlank => ViewType == "Fill";
-    private bool IsGroupOrEssay => ViewType == "GroupEssay";
+    private bool IsGroup => ViewType == "Group";
+    private bool IsEssay => ViewType == "Essay";
+    private bool IsMulti => ViewType == "Multi";
 
     private string GetQuestionTypeName() => ViewType switch
     {
         "Pairing" => "Ghép nối",
         "Fill" => "Điền từ / Điền chỗ trống",
-        "GroupEssay" => CauHoi.CauHoiCons?.Any() == true ? "Câu hỏi nhóm" : "Tự luận",
-        _ => CauHoi.LoaiCauHoi?.Contains("Multiple") == true ? "Trắc nghiệm nhiều đáp án" : "Trắc nghiệm chọn một"
+        "Group" => "Câu hỏi nhóm",
+        "Essay" => "Tự luận",
+        "Single" => "Trắc nghiệm đơn đáp án",
+        "Multiple" => "Trắc nghiệm nhiều đáp án",
+        _ => null
     };
 
     private Color GetLevelColor(short level) => level switch

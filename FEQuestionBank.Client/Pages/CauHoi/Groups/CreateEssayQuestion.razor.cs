@@ -1,9 +1,11 @@
 ﻿using BeQuestionBank.Shared.DTOs.CauHoi;
 using BeQuestionBank.Shared.DTOs.CauHoi.Create;
+using BeQuestionBank.Shared.DTOs.CauHoi.TuLuan;
 using BeQuestionBank.Shared.DTOs.Khoa;
 using BeQuestionBank.Shared.DTOs.MonHoc;
 using BeQuestionBank.Shared.DTOs.Phan;
 using BeQuestionBank.Shared.Enums;
+using BeQuestionBank.Shared.DTOs.CauHoi;
 using FEQuestionBank.Client.Component;
 using FEQuestionBank.Client.Component.Preview;
 using FEQuestionBank.Client.Services;
@@ -27,13 +29,13 @@ public partial class CreateEssayQuestionBase : ComponentBase
     [Inject] protected NavigationManager Navigation { get; set; } = default!;
     [Inject] protected ISnackbar Snackbar { get; set; } = default!;
     [Inject] protected IDialogService Dialog { get; set; } = default!;
-    
+
     protected List<EnumCLO> CLOs { get; set; } = Enum.GetValues(typeof(EnumCLO)).Cast<EnumCLO>().ToList();
-    
+
     protected List<KhoaDto> Khoas { get; set; } = new();
     protected List<MonHocDto> MonHocs { get; set; } = new();
     protected List<PhanDto> Phans { get; set; } = new();
-    
+
     protected Guid? SelectedKhoaId { get; set; }
     protected Guid? SelectedMonHocId { get; set; }
     protected Guid? SelectedPhanId { get; set; }
@@ -48,7 +50,7 @@ public partial class CreateEssayQuestionBase : ComponentBase
         set => NoiDung = HtmlLatexHelper.ToRichHtml(value);
     }
 
-    protected List<EssayQuestionItem> Questions { get; set; } = new()
+    protected List<EssayQuestionItem> CauHoiCon { get; set; } = new()
     {
         new EssayQuestionItem(),
         new EssayQuestionItem()
@@ -100,8 +102,8 @@ public partial class CreateEssayQuestionBase : ComponentBase
         }
     }
 
-    protected void AddQuestion() => Questions.Add(new EssayQuestionItem());
-    protected void RemoveQuestion(int index) => Questions.RemoveAt(index);
+    protected void AddQuestion() => CauHoiCon.Add(new EssayQuestionItem());
+    protected void RemoveQuestion(int index) => CauHoiCon.RemoveAt(index);
 
     protected static async Task<string> ReadFileContent(IBrowserFile file)
     {
@@ -109,7 +111,7 @@ public partial class CreateEssayQuestionBase : ComponentBase
         using var reader = new StreamReader(stream);
         return (await reader.ReadToEndAsync()).Trim();
     }
-
+    
     protected async Task PreviewQuestion()
     {
         if (string.IsNullOrWhiteSpace(NoiDung))
@@ -117,20 +119,20 @@ public partial class CreateEssayQuestionBase : ComponentBase
             Snackbar.Add("Vui lòng nhập hướng dẫn chung (đoạn văn)", Severity.Warning);
             return;
         }
-        
+
         var tenPhan = Phans.FirstOrDefault(p => p.MaPhan == SelectedPhanId)?.TenPhan ?? "Chưa chọn";
 
-        var parameters = new DialogParameters
+        var parameters = new DialogParameters<EssayPreviewDialog>
         {
-            ["Passage"] = NoiDung,
-            ["Questions"] = Questions.Where(q => !string.IsNullOrWhiteSpace(q.NoiDung)).ToList(),
-            ["TenPhan"] = tenPhan,
-            ["CloName"] = SelectedCLO.ToString(),
-            ["CapDo"] = CapDo
+            { x => x.NoiDungCha, NoiDung },
+            { x => x.CauHoiCon, CauHoiCon.Where(q => !string.IsNullOrWhiteSpace(q.NoiDung)).ToList() },
+            { x => x.TenPhan, tenPhan },
+            { x => x.CloName, SelectedCLO.ToString() },
+            { x => x.CapDo, CapDo }
         };
 
         var dialog = Dialog.Show<EssayPreviewDialog>("Xem trước câu hỏi tự luận", parameters,
-            new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.Large });
+            new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.Medium, });
 
         var result = await dialog.Result;
         if (!result.Canceled && result.Data is true)
@@ -151,32 +153,77 @@ public partial class CreateEssayQuestionBase : ComponentBase
             return;
         }
 
-        var dto = new CreateCauHoiTuLuanDto
+        try
         {
-            MaPhan = SelectedPhanId.Value,
-            MaSoCauHoi = 0,
-            NoiDung = NoiDung,
-            CapDo = CapDo,
-            HoanVi = HoanVi,
-            CLO = SelectedCLO,
-            CauHoiCons = Questions
-                .Where(q => !string.IsNullOrWhiteSpace(q.NoiDung))
-                .Select(q => new CreateCauHoiDto
+            if (IsEditMode)
+            {
+                // === CHẾ ĐỘ CHỈNH SỬA ===
+                var updateDto = new UpdateCauHoiTuLuanDto
                 {
-                    NoiDung = q.NoiDung,
+                    NoiDung = NoiDung,
+                    MaPhan = SelectedPhanId.Value,
                     CapDo = CapDo,
                     HoanVi = HoanVi,
-                    CLO = SelectedCLO
-                }).ToList()
-        };
+                    CLO = SelectedCLO,
+                    CauHoiCons = CauHoiCon.Where(q => !string.IsNullOrWhiteSpace(q.NoiDung))
+                        .Select((q, idx) => new UpdateCauHoiDto()
+                        {
+                            MaCauHoi = q.MaCauHoi ?? Guid.Empty,
+                            NoiDung = q.NoiDung,
+                            CapDo = CapDo,
+                            HoanVi = q.HoanVi,
+                            CLO = SelectedCLO
+                        }).ToList()
+                };
 
-        var res = await CauHoiApiClient.CreateEssayQuestionAsync(dto);
-        if (res.Success)
-        {
-            Snackbar.Add("Tạo câu hỏi tự luận thành công!", Severity.Success);
-            Navigation.NavigateTo("/question/list");
+                var res = await CauHoiApiClient.UpdateEssayQuestionAsync(EditId!.Value, updateDto);
+                if (res.Success)
+                {
+                    Snackbar.Add("Cập nhật câu hỏi tự luận thành công!", Severity.Success);
+                    Navigation.NavigateTo("/question/list");
+                }
+                else
+                {
+                    Snackbar.Add(res.Message ?? "Cập nhật thất bại!", Severity.Error);
+                }
+            }
+            else
+            {
+                // === CHẾ ĐỘ TẠO MỚI ===
+                var createDto = new CreateCauHoiTuLuanDto
+                {
+                    MaPhan = SelectedPhanId.Value,
+                    NoiDung = NoiDung,
+                    CapDo = CapDo,
+                    HoanVi = HoanVi,
+                    CLO = SelectedCLO,
+                    CauHoiCons = CauHoiCon
+                        .Where(q => !string.IsNullOrWhiteSpace(q.NoiDung))
+                        .Select(q => new CreateCauHoiDto
+                        {
+                            NoiDung = q.NoiDung,
+                            CapDo = CapDo,
+                            HoanVi = q.HoanVi,
+                            CLO = SelectedCLO
+                        }).ToList()
+                };
+
+                var res = await CauHoiApiClient.CreateEssayQuestionAsync(createDto);
+                if (res.Success)
+                {
+                    Snackbar.Add("Tạo câu hỏi tự luận thành công!", Severity.Success);
+                    Navigation.NavigateTo("/question/list");
+                }
+                else
+                {
+                    Snackbar.Add(res.Message ?? "Lỗi tạo câu hỏi!", Severity.Error);
+                }
+            }
         }
-        else Snackbar.Add(res.Message ?? "Lỗi!", Severity.Error);
+        catch (Exception ex)
+        {
+            Snackbar.Add("Lỗi: " + ex.Message, Severity.Error);
+        }
     }
 
     protected void GoBack() => Navigation.NavigateTo("/question/list");
@@ -188,6 +235,7 @@ public partial class CreateEssayQuestionBase : ComponentBase
     // }
     public class EssayQuestionItem
     {
+        public Guid? MaCauHoi { get; set; } 
         public string NoiDung { get; set; } = string.Empty;
 
         public string NoiDungPlain
@@ -195,6 +243,7 @@ public partial class CreateEssayQuestionBase : ComponentBase
             get => HtmlLatexHelper.ToPlainText(NoiDung);
             set => NoiDung = HtmlLatexHelper.ToRichHtml(value);
         }
+
         public bool HoanVi { get; set; }
     }
 
@@ -270,12 +319,12 @@ public partial class CreateEssayQuestionBase : ComponentBase
             }
         }
 
-        Questions.Clear();
+        CauHoiCon.Clear();
         if (q.CauHoiCons != null)
         {
             foreach (var child in q.CauHoiCons)
             {
-                Questions.Add(new EssayQuestionItem
+                CauHoiCon.Add(new EssayQuestionItem
                 {
                     NoiDung = child.NoiDung ?? "",
                     HoanVi = child.HoanVi

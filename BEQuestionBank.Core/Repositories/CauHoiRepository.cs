@@ -44,7 +44,6 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
     public async Task<CauHoi?> GetByIdWithChildrenAsync(Guid maCauHoi)
     {
         return await _context.CauHois
-            .AsNoTracking()
             .Include(c => c.Phan)
             .ThenInclude(p => p.MonHoc)
             .ThenInclude(m => m.Khoa)
@@ -149,6 +148,14 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<CauHoi>> GetAllEssayAsync()
+    {
+        return await _context.CauHois
+            .Where(c => c.LoaiCauHoi == "TL" && c.MaCauHoiCha == null)
+            .Include(c => c.CauHoiCons) // load câu hỏi con
+            .AsSplitQuery() // <--- đây
+            .ToListAsync();
+    }
 
     public async Task<CauHoi> AddWithAnswersAsync(CauHoi cauHoi)
     {
@@ -295,7 +302,7 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
         if (phanId.HasValue) query = query.Where(c => c.MaPhan == phanId);
         if (monHocId.HasValue)
             query = query.Where(c => c.Phan != null && c.Phan.MaMonHoc == monHocId);
-        
+
         // Logic: Câu hỏi -> Phần -> Môn -> Khoa
         if (khoaId.HasValue)
             query = query.Where(c => c.Phan != null && c.Phan.MonHoc != null && c.Phan.MonHoc.MaKhoa == khoaId);
@@ -307,7 +314,7 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
                 c.MaCauHoi.ToString().Contains(search)
             );
         }
-        
+
         // Sort
         query = ApplySorting(query, sort);
 
@@ -317,6 +324,7 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
             MaPhan = c.MaPhan,
             TenPhan = c.Phan.TenPhan,
             MaSoCauHoi = c.MaSoCauHoi,
+            CapDo = c.CapDo,
             NoiDung = c.NoiDung,
             NgayTao = c.NgayTao,
             SoLanDung = c.SoLanDung,
@@ -325,6 +333,7 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
             {
                 MaCauHoi = cc.MaCauHoi,
                 MaPhan = cc.MaPhan,
+                CapDo = cc.CapDo,
                 TenPhan = cc.Phan.TenPhan,
                 MaSoCauHoi = cc.MaSoCauHoi,
                 NoiDung = cc.NoiDung,
@@ -418,7 +427,7 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
         if (phanId.HasValue) query = query.Where(c => c.MaPhan == phanId);
         if (monHocId.HasValue)
             query = query.Where(c => c.Phan != null && c.Phan.MaMonHoc == monHocId);
-        
+
         // Logic: Câu hỏi -> Phần -> Môn -> Khoa
         if (khoaId.HasValue)
             query = query.Where(c => c.Phan != null && c.Phan.MonHoc != null && c.Phan.MonHoc.MaKhoa == khoaId);
@@ -485,8 +494,7 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
                 c.MaCauHoi.ToString().Contains(search)
             );
         }
-
-
+        
         query = ApplySorting(query, sort);
 
         var result = query.Select(c => new CauHoiDto
@@ -716,6 +724,18 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
 
     public async Task DeleteRangeChildrenAsync(IEnumerable<CauHoi> children)
         => _context.CauHois.RemoveRange(children);
+
+    // Trong repository
+    public async Task<int> GetNextMaSoCauHoiAsync(Guid maPhan)
+    {
+        // Lấy Max MaSoCauHoi hiện có trong cùng MaPhan
+        var maxMaSo = await _context.CauHois
+            .Where(c => c.MaPhan == maPhan)
+            .MaxAsync(c => (int?)c.MaSoCauHoi); // cast sang int? để Max không lỗi khi chưa có câu hỏi
+
+        // Nếu chưa có câu hỏi nào => bắt đầu từ 1, ngược lại +1
+        return (maxMaSo ?? 0) + 1;
+    }
 
     public Task<int> SaveChangesAsync()
     {

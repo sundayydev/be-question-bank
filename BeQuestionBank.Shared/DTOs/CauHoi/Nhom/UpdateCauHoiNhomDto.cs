@@ -28,5 +28,5 @@ public class UpdateCauHoiNhomDto
     // Danh sách các câu hỏi con nằm trong nhóm này
     [Required]
     [MinLength(1, ErrorMessage = "Câu hỏi nhóm phải có ít nhất 1 câu hỏi con.")]
-    public List<CreateCauHoiWithCauTraLoiDto> CauHoiCons { get; set; } = new();
+    public List<CauHoiWithCauTraLoiDto> CauHoiCons { get; set; } = new List<CauHoiWithCauTraLoiDto>();
 }
