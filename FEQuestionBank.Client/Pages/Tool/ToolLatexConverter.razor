@@ -1,0 +1,209 @@
+﻿@page "/tools/tool-latex-converter"
+@using FEQuestionBank.Client.Component.Other
+@using FEQuestionBank.Client.Services.Interface
+@using MudBlazor
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+    <MudBreadcrumbs Items="_breadcrumbs"/>
+    <MudGrid Justify="Justify.Center">
+        <MudItem xs="12" lg="10">
+
+            <!-- Hero Section -->
+            <div class="hero-section">
+                <div class="hero-content text-center ;position: relative;">
+                    <div class="feature-badge">
+                        <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Size="Size.Small"/>
+                        <span>Công cụ chuyên nghiệp</span>
+                    </div>
+                    <div class="hero-decoration"
+                         Style="position: absolute; top: -50px; right: -50px; width: 300px; height: 300px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                    <div class="hero-decoration"
+                         Style="position: absolute; bottom: -80px; left: 50px; width: 250px; height: 250px; background: rgba(255,255,255,0.08); border-radius: 50%;"></div>
+                    <MudText Typo="Typo.h3" Class="fw-bold mb-3 mt-2">Chuyển đổi LaTeX sang HTML</MudText>
+                    <MudText Typo="Typo.h6" Style="color: rgba(255,255,255,0.9); font-weight: 400;">
+                        Nhập công thức toán học LaTeX → Nhận HTML đẹp với MathJax hỗ trợ hiển thị ngay lập tức
+                    </MudText>
+                    <div
+                        style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <div class="stat-badge">
+                            <MudIcon Icon="@Icons.Material.Filled.Functions" Size="Size.Small"/>
+                            Hỗ trợ đầy đủ LaTeX
+                        </div>
+                        <div class="stat-badge">
+                            <MudIcon Icon="@Icons.Material.Filled.Preview" Size="Size.Small"/>
+                            Xem trước tức thì
+                        </div>
+                        <div class="stat-badge">
+                            <MudIcon Icon="@Icons.Material.Filled.Code" Size="Size.Small"/>
+                            Sẵn dùng trong editor
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input LaTeX -->
+            <MudPaper Elevation="0" Class="mb-4 modern-card">
+                <div class="card-header-custom">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div
+                            style="width: 40px; height: 40px; background: #6366f1; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                            <MudIcon Icon="@Icons.Material.Filled.Edit" Size="Size.Medium" Style="color: white;"/>
+                        </div>
+                        <MudText Typo="Typo.h6" Class="fw-bold" Style="color: white;">Nhập công thức LaTeX</MudText>
+                        <MudButton StartIcon="@Icons.Material.Filled.Warning"
+                                   Color="Color.Warning"
+                                   Style="margin-left: auto"
+                                   OnClick="OpenWarningDialog">
+                        </MudButton>
+                    </div>
+                </div>
+                <MudCardContent Style="padding: 1.5rem;">
+                    <MudTextField @bind-Value="LatexInput"
+                                  Placeholder="Ví dụ: $$ x = \begin{cases} a & x = 0\\b & x > 0\end{cases}$$"
+                                  Lines="10"
+                                  Variant="Variant.Outlined"
+                                  FullWidth="true"
+                                  Style="font-family: 'Courier New', monospace; font-size: 1rem;"/>
+
+                    <div class="mt-4 d-flex justify-end gap-3">
+                        <MudSwitch T="string" @bind-Checked="MergeSpans" Color="Color.Primary"
+                                   Label="Gộp span text-content (khuyến khích)"/>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ConvertLatexAsync"
+                                   Disabled="@string.IsNullOrWhiteSpace(LatexInput)">
+                            Chuyển đổi ngay
+                        </MudButton>
+                    </div>
+                </MudCardContent>
+            </MudPaper>
+
+            @if (IsConverted)
+            {
+                <!-- Preview kết quả -->
+                <MudPaper Elevation="0" Class="modern-card mb-4">
+                    <div class="card-header-custom">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div
+                                style="width: 40px; height: 40px; background: #6366f1; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                <MudIcon Icon="@Icons.Material.Filled.Visibility" Size="Size.Medium"
+                                         Style="color: white;"/>
+                            </div>
+                            <MudText Typo="Typo.h6" Class="fw-bold" Style="color: white;">Xem trước kết quả</MudText>
+                        </div>
+                    </div>
+                    <MudCardContent>
+                        <div class="preview-container">
+                            <LatexContent Content="@HtmlOutput"/>
+                        </div>
+                    </MudCardContent>
+                </MudPaper>
+
+                <!-- HTML Output -->
+                <MudPaper Elevation="0" Class="modern-card mb-4">
+                    <div class="card-header-custom">
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div
+                                    style="width: 40px; height: 40px; background: #6366f1; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                    <MudIcon Icon="@Icons.Material.Filled.Html" Size="Size.Medium"
+                                             Style="color: white;"/>
+                                </div>
+                                <MudText Typo="Typo.h6" Class="fw-bold" Style="color: white;">Mã HTML đã chuyển đổi
+                                </MudText>
+                            </div>
+                            <button class="copy-button-custom" @onclick="() => CopyToClipboard(HtmlOutput)">
+                                <MudIcon Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" Class="me-1"/>
+                                Sao chép
+                            </button>
+                        </div>
+                    </div>
+                    <MudCardContent Style="padding: 1.5rem;">
+                        <MudTextField T="string"
+                                      Value="@HtmlOutput"
+                                      ReadOnly="true"
+                                      Lines="12"
+                                      Variant="Variant.Outlined"
+                                      FullWidth="true"
+                                      Style="font-family: 'Courier New', monospace; font-size: 0.875rem; background: #f8f9fa;"/>
+                    </MudCardContent>
+                </MudPaper>
+            }
+
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+<style>
+    .hero-section {
+        background: #0a53be;
+        border-radius: 24px;
+        padding: 3rem 2rem;
+        margin-bottom: 2.5rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 400px;
+        height: 400px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        filter: blur(60px);
+    }
+
+    .feature-badge, .stat-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        padding: 0.5rem 1rem;
+        border-radius: 100px;
+        font-size: 0.875rem;
+    }
+
+    .hero-decoration {
+        transition: all 3s ease;
+    }
+
+    .modern-card {
+        border-radius: 16px;
+        border: 1px solid rgba(99, 102, 241, 0.1);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    .card-header-custom {
+        background: #0a53be;
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+    }
+
+    .copy-button-custom {
+        background: #6366f1;
+        color: white;
+        border: none;
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .preview-container {
+        background: linear-gradient(145deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 2.5rem;
+        min-height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        font-size: 1.1rem;
+    }
+</style>

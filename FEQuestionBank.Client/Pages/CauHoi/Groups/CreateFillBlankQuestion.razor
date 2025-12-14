@@ -21,7 +21,7 @@
     <MudGrid>
         <!-- Cột trái: Nội dung + Đáp án -->
         <MudItem xs="12" md="8">
-            <MudPaper Class="pa-6 rounded-xl" Elevation="3">
+            <MudPaper Class="pa-6 rounded-xl">
                 <!-- Nội dung câu hỏi -->
                 <MudText Typo="Typo.subtitle1" Class="mb-2 font-weight-bold">
                     Nội dung câu hỏi
@@ -43,6 +43,15 @@
                         @((MarkupString)RenderPreview())
                     </MudPaper>
                 }
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="short" @bind-Value="CapDo" Label="Cấp độ câu hỏi"
+                               Variant="Variant.Outlined" Margin="Margin.Dense">
+                        <MudSelectItem Value="@((short)1)">1 - Nhận biết</MudSelectItem>
+                        <MudSelectItem Value="@((short)2)">2 - Thông hiểu</MudSelectItem>
+                        <MudSelectItem Value="@((short)3)">3 - Vận dụng</MudSelectItem>
+                        <MudSelectItem Value="@((short)4)">4 - Vận dụng cao</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
 
                 <MudDivider Class="my-8"/>
 
