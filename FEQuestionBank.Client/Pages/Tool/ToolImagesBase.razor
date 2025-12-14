@@ -1,0 +1,260 @@
+﻿@page "/tools/tool-images-base"
+@using FEQuestionBank.Client.Component.Other
+@using FEQuestionBank.Client.Services.Interface
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+    <MudBreadcrumbs Items="_breadcrumbs"/>
+    <MudGrid Justify="Justify.Center">
+        <MudItem xs="12" lg="10">
+
+            <!-- Hero Section -->
+            <div class="hero-section">
+                <div class="hero-content text-center position: relative;">
+                    <div class="feature-badge">
+                        <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Size="Size.Small"/>
+                        <span>Công cụ chuyên nghiệp</span>
+                    </div>
+                    <div class="hero-decoration"
+                         Style="position: absolute; top: -50px; right: -50px; width: 300px; height: 300px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                    <div class="hero-decoration"
+                         Style="position: absolute; bottom: -80px; left: 50px; width: 250px; height: 250px; background: rgba(255,255,255,0.08); border-radius: 50%;"></div>
+                    <MudText Typo="Typo.h3" Class="fw-bold mb-3 mt-2">Chuyển đổi hình ảnh sang Base64</MudText>
+                    <MudText Typo="Typo.h6" Style="color: rgba(255,255,255,0.9); font-weight: 400;">
+                        Upload hình ảnh và nhận mã Base64 cùng HTML code ngay lập tức
+                    </MudText>
+                    <div
+                        style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <div class="stat-badge">
+                            <MudIcon Icon="@Icons.Material.Filled.Speed" Size="Size.Small"/>
+                            Nhanh chóng
+                        </div>
+                        <div class="stat-badge">
+                            <MudIcon Icon="@Icons.Material.Filled.Security" Size="Size.Small"/>
+                            An toàn
+                        </div>
+                        <div class="stat-badge">
+                            <MudIcon Icon="@Icons.Material.Filled.Code" Size="Size.Small"/>
+                            Sẵn dùng
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <MudPaper Elevation="0" Class="mb-4">
+                <div class="upload-zone">
+                    <div class="upload-icon-wrapper">
+                        <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Large" Style="color: white;"/>
+                    </div>
+                    <MudText Typo="Typo.h6" Class="fw-bold mb-2" Style="color: #6366f1;">
+                        Kéo thả hoặc chọn hình ảnh
+                    </MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+                        Hỗ trợ: JPG, PNG, GIF, WebP (tối đa 5MB)
+                    </MudText>
+                    <MudFileUpload T="IBrowserFile"
+                                   FilesChanged="UploadFile"
+                                   Accept=".png,.jpg,.jpeg,.webp"
+                                   MaximumFileCount="1">
+                        <ActivatorContent>
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary">
+                                Chọn hình ảnh
+                            </MudButton>
+                        </ActivatorContent>
+                    </MudFileUpload>
+                </div>
+            </MudPaper>
+            <!-- Preview Image -->
+            @if (!string.IsNullOrEmpty(HtmlContent))
+            {
+                <MudPaper Elevation="0" Class="modern-card mb-4">
+                    <div class="card-header-custom">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div
+                                style="width: 40px; height: 40px; background:  #6366f1 ; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                <MudIcon Icon="@Icons.Material.Filled.Visibility" Size="Size.Medium"
+                                         Style="color: white;"/>
+                            </div>
+                            <MudText Typo="Typo.h6" Class="fw-bold" Style="color: white;">Xem trước hình ảnh</MudText>
+                        </div>
+                    </div>
+                    <MudCardContent>
+                        <div class="preview-container">
+                            <LatexContent Content="@HtmlContent"/>
+                        </div>
+                    </MudCardContent>
+                </MudPaper>
+            }
+
+            <!-- Base64 Output -->
+            @if (!string.IsNullOrEmpty(Base64String))
+            {
+                <MudPaper Elevation="0" Class="modern-card mb-4">
+                    <div class="card-header-custom">
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div
+                                    style="width: 40px; height: 40px; background: #6366f1 ; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                    <MudIcon Icon="@Icons.Material.Filled.Code" Size="Size.Medium"
+                                             Style="color: white;"/>
+                                </div>
+                                <MudText Typo="Typo.h6" Class="fw-bold" Style="color: white;">Chuỗi Base64</MudText>
+                            </div>
+                            <button class="copy-button-custom" @onclick="() => CopyToClipboard(Base64String)">
+                                <MudIcon Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" Class="me-1"/>
+                                Sao chép
+                            </button>
+                        </div>
+                    </div>
+                    <MudCardContent Style="padding: 1.5rem;">
+                        <MudTextField T="string"
+                                      Value="@Base64String"
+                                      ReadOnly="true"
+                                      Lines="8"
+                                      Variant="Variant.Outlined"
+                                      FullWidth="true"
+                                      Style="font-family: 'Courier New', monospace; font-size: 0.875rem; background: #f8f9fa;"/>
+                    </MudCardContent>
+                </MudPaper>
+
+                <!-- HTML Output -->
+                <MudPaper Elevation="0" Class="modern-card mb-4">
+                    <div class="card-header-custom">
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div
+                                    style="width: 40px; height: 40px; background:  #6366f1 ; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                    <MudIcon Icon="@Icons.Material.Filled.Html" Size="Size.Medium"
+                                             Style="color: white;"/>
+                                </div>
+                                <MudText Typo="Typo.h6" Class="fw-bold" Style="color: white;">HTML với Base64
+                                </MudText>
+                            </div>
+                            <button class="copy-button-custom" @onclick="() => CopyToClipboard(HtmlContent)">
+                                <MudIcon Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" Class="me-1"/>
+                                Sao chép
+                            </button>
+                        </div>
+                    </div>
+                    <MudCardContent Style="padding: 1.5rem;">
+                        <MudTextField T="string"
+                                      Value="@HtmlContent"
+                                      ReadOnly="true"
+                                      Lines="6"
+                                      Variant="Variant.Outlined"
+                                      FullWidth="true"
+                                      Style="font-family: 'Courier New', monospace; font-size: 0.875rem; background: #f8f9fa;"/>
+                    </MudCardContent>
+                </MudPaper>
+            }
+
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+<style>
+    .upload-zone {
+        background: linear-gradient(145deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%);
+        border: 2px dashed rgba(86, 89, 223, 0.3);
+        border-radius: 16px;
+        padding: 3rem 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .upload-icon-wrapper {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        background: #5154ba;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25);
+    }
+
+    .hero-decoration {
+        transition: all 3s ease;
+    }
+
+
+    .hero-section {
+        background: #0a53be;
+        border-radius: 24px;
+        padding: 3rem 2rem;
+        margin-bottom: 2.5rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 400px;
+        height: 400px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        filter: blur(60px);
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .feature-badge, .stat-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        padding: 0.5rem 1rem;
+        border-radius: 100px;
+        font-size: 0.875rem;
+    }
+
+    .modern-card {
+        border-radius: 16px;
+        border: 1px solid rgba(99, 102, 241, 0.1);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+
+    .card-header-custom {
+        background: #0a53be;
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+    }
+
+    .copy-button-custom {
+        background: #6366f1;
+        color: white;
+        border: none;
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+
+    .preview-container {
+        background: linear-gradient(145deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 2rem;
+        min-height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+</style>

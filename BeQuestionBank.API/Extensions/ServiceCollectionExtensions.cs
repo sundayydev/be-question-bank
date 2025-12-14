@@ -51,6 +51,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IFileRepository, FileRepository>();
         services.AddScoped<FileService>();
 
+        //Tool
+        services.AddScoped<ToolService>();
+
         return services;
     }
 }

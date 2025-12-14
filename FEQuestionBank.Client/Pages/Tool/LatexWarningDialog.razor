@@ -1,0 +1,25 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+            <MudText Typo="Typo.body2">
+                • Bạn phải để nội dung latex vào các thẻ thì mới convert được<br/>
+                • Dùng <b>$...$</b> cho công thức inline<br/>
+                • Dùng <b>$$...$$</b> cho công thức block<br/>
+                • Không dùng ký tự $ cho giá tiền (ví dụ: \$100)
+
+            </MudText>
+        </MudAlert>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Close">
+            Đã hiểu
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    void Close() => MudDialog.Close();
+}

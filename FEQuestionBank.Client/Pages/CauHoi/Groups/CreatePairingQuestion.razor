@@ -17,7 +17,7 @@
     </div>
 
     <!-- Vùng nhập thông tin chung -->
-    <MudPaper Class="p-4 mb-2 rounded-4" Elevation="2" Style="background: #fafafa;">
+    <MudPaper Class="p-4 mb-2 rounded-4" Elevation="1" Style="background: #fafafa;">
         <MudGrid Spacing="4">
             <MudItem xs="12">
                 <MudTextField @bind-Value="NoiDungCha"
@@ -29,7 +29,8 @@
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudSelect T="short" @bind-Value="CapDo" Label="Cấp độ câu hỏi" Variant="Variant.Outlined">
+                <MudSelect T="short" @bind-Value="CapDo" Label="Cấp độ câu hỏi"
+                           Variant="Variant.Outlined" Margin="Margin.Dense">
                     <MudSelectItem Value="@((short)1)">1 - Nhận biết</MudSelectItem>
                     <MudSelectItem Value="@((short)2)">2 - Thông hiểu</MudSelectItem>
                     <MudSelectItem Value="@((short)3)">3 - Vận dụng</MudSelectItem>

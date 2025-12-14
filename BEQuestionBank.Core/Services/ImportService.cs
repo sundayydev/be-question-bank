@@ -1288,8 +1288,10 @@ namespace BEQuestionBank.Core.Services
                 string beforeMatch = content.Substring(Math.Max(0, matchIndex - 150), Math.Min(150, matchIndex));
                 
                 // Đếm số lượng <span class='math-display'> và </span> trước match
-                int openMathSpans = Regex.Matches(beforeMatch, @"<span[^>]*class=['""]math-display['""][^>]*>", RegexOptions.IgnoreCase).Count;
-                int closeSpans = Regex.Matches(beforeMatch, @"</span>", RegexOptions.IgnoreCase).Count;
+                int openMathSpans = Regex.Matches(beforeMatch,
+                    @"<span[^>]*class=['""]math-display['""][^>]*>", RegexOptions.IgnoreCase).Count;
+                int closeSpans = Regex.Matches(beforeMatch,
+                    @"</span>", RegexOptions.IgnoreCase).Count;
                 
                 // Nếu có <span class='math-display'> chưa đóng, đã được convert rồi
                 if (openMathSpans > closeSpans)
@@ -1325,9 +1327,11 @@ namespace BEQuestionBank.Core.Services
             {
                 int matchIndex = match.Index;
                 string beforeMatch = content.Substring(Math.Max(0, matchIndex - 150), Math.Min(150, matchIndex));
-                
-                int openMathSpans = Regex.Matches(beforeMatch, @"<span[^>]*class=['""]math-(?:inline|display)['""][^>]*>", RegexOptions.IgnoreCase).Count;
-                int closeSpans = Regex.Matches(beforeMatch, @"</span>", RegexOptions.IgnoreCase).Count;
+
+                int openMathSpans = Regex.Matches(beforeMatch,
+                    @"<span[^>]*class=['""]math-(?:inline|display)['""][^>]*>", RegexOptions.IgnoreCase).Count;
+                int closeSpans = Regex.Matches(beforeMatch,
+                    @"</span>", RegexOptions.IgnoreCase).Count;
                 
                 if (openMathSpans > closeSpans)
                 {

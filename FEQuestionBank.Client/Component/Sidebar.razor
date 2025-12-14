@@ -1,14 +1,16 @@
 ﻿<MudDrawer @bind-Open="Open"
            Elevation="1"
-           Color="Color.Surface"
-           Variant="DrawerVariant.Responsive">
+           Variant="@DrawerVariant.Responsive">
     <!-- Logo -->
+    <MudDrawerHeader>
     <div style="text-align: center; padding: 10px;">
         <img src="/images/LogoHutechFull.png" alt="HUTECH Logo" style="max-width: 100%; height: 60px;"/>
     </div>
+    </MudDrawerHeader>
     <MudNavMenu Color="Color.Info" Bordered="true">
         <!-- Trang chủ -->
-        <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" Class="custom-link" OnClick="HandleClose">Trang chủ
+        <MudNavLink Href="/" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Home" Class="custom-link"
+                    OnClick="HandleClose">Trang chủ
         </MudNavLink>
 
         <!-- Dashboard -->
@@ -61,6 +63,12 @@
             </MudNavLink>
             <MudNavLink Href="/tools/extract-history" Icon="@Icons.Material.Filled.History" OnClick="HandleClose">Lịch
                 sử rút trích
+            </MudNavLink>
+            <MudNavLink Href="/tools/tool-images-base" Icon="@Icons.Material.Filled.InsertPhoto" OnClick="HandleClose">
+                Chuyển đổi ảnh
+            </MudNavLink>
+            <MudNavLink Href="/tools/tool-latex-converter" Icon="@Icons.Material.Filled.AutoMode" OnClick="HandleClose">
+                Chuyển đổi latex
             </MudNavLink>
         </MudNavGroup>
 
