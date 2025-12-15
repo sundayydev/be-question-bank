@@ -283,8 +283,8 @@
         try
         {
             // 1. Gọi các API song song để lấy tổng số lượng
-            var taskUsers = NguoiDungService.GetNguoiDungsPagedAsync(1, 5, "CreatedDate desc"); // Lấy trang 1 để lấy TotalCount và 5 user mới nhất
-            var taskDeThi = DeThiService.GetPagedAsync(1, 100, "NgayTao desc"); // Lấy 100 đề mới nhất để vẽ biểu đồ và hiện list
+            var taskUsers = NguoiDungService.GetNguoiDungsPagedAsync(1, 10, "NgayTao,desc"); // Lấy trang 1 để lấy TotalCount và 5 user mới nhất
+            var taskDeThi = DeThiService.GetPagedAsync(1, 10, "NgayTao,desc"); // Lấy 100 đề mới nhất để vẽ biểu đồ và hiện list
             var taskMonHoc = MonHocService.GetMonHocsPagedAsync(1, 1); // Chỉ cần TotalCount
             var taskCauHoi = CauHoiService.GetAllAsync(); // Lấy tất cả (hoặc chuyển sang API paging nếu có)
 

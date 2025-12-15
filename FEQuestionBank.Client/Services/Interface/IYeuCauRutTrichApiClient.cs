@@ -51,6 +51,8 @@ public interface IYeuCauRutTrichApiClient
     /// </summary>
     Task<ApiResponse<YeuCauRutTrichResultDto>> CreateAndRutTrichDeThiAsync(CreateYeuCauRutTrichDto dto);
 
+    Task<ApiResponse<YeuCauRutTrichResultDto>> CreateAndRutTrichDeThiTuLuanAsync(CreateTuLuanRequestDto dto);
+
     /// <summary>
     /// Cập nhật yêu cầu (chỉ dùng cho admin)
     /// </summary>

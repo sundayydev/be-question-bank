@@ -22,7 +22,8 @@ public class DeThiRepository : GenericRepository<DeThi>, IDeThiRepository
             .Include(dt => dt.ChiTietDeThis)
             .Include(dt => dt.MonHoc)
             .ThenInclude(mh => mh.Khoa)
-            .FirstOrDefaultAsync(dt => dt.MaDeThi == id);
+            .FirstOrDefaultAsync(dt => dt.MaDeThi == id)
+            ;
 
         return deThi;
     }

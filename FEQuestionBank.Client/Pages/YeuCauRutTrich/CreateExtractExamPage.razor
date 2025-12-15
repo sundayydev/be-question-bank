@@ -1,0 +1,209 @@
+﻿@page "/tools/exam-extract"
+@inherits CreateExtractExamPageBase
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+    <!-- Breadcrumbs -->
+    <MudBreadcrumbs Items="_breadcrumbs" Style="margin-bottom: 32px;"></MudBreadcrumbs>
+
+    <!-- Modern minimalist header with gradient text -->
+    <div class="modern-header">
+        <div class="header-badge">
+            <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Size="Size.Small"/>
+            <span>Tạo đề thi</span>
+        </div>
+        <h1 class="gradient-title">Chọn loại dạng rút trích</h1>
+        <p class="header-subtitle">
+            Chọn phương thức phù hợp để tạo đề thi rút trích cho học sinh của bạn
+        </p>
+    </div>
+
+    <!-- Modern card grid with illustrations and better visual hierarchy -->
+    <MudGrid Justify="Justify.Center" Spacing="6" Style="margin-top: 64px;">
+        <!-- Single Answer Card -->
+        <MudItem xs="12" md="6">
+            <div class="modern-method-card " @onclick="@(() => SelectQuestionType("single"))">
+                <div class="card-glow "></div>
+                <div class="card-content">
+                    <div class="icon-wrapper wrapper-violet">
+                        <MudIcon Icon="@Icons.Material.Filled.ChatBubbleOutline" Size="Size.Large"/>
+                    </div>
+                    <h2 class="card-title">Rút trích trắc nghiệm</h2>
+                    <p class="card-description">
+                        Tạo câu hỏi trắc nghiệm với nhiều đáp án lựa chọn, phù hợp cho bài kiểm tra nhanh và đánh giá
+                        kiến thức
+                    </p>
+                    <div class="card-arrow">
+                        <MudIcon Icon="@Icons.Material.Filled.ArrowForward"/>
+                    </div>
+                </div>
+            </div>
+        </MudItem>
+
+        <!-- Essay Card -->
+        <MudItem xs="12" md="6">
+            <div class="modern-method-card " @onclick="@(() => SelectQuestionType("essay"))">
+                <div class="card-glow "></div>
+                <div class="card-content">
+                    <div class="icon-wrapper wrapper-emerald">
+                        <MudIcon Icon="@Icons.Material.Filled.DriveFileRenameOutline" Size="Size.Large"/>
+                    </div>
+                    <h2 class="card-title">Rút trích tự luận</h2>
+                    <p class="card-description">
+                        Tạo câu hỏi tự luận yêu cầu trả lời chi tiết, phát triển tư duy phản biện và kỹ năng viết
+                    </p>
+                    <div class="card-arrow">
+                        <MudIcon Icon="@Icons.Material.Filled.ArrowForward"/>
+                    </div>
+                </div>
+            </div>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+<style>
+    /* Modern header with gradient text and clean design */
+    .modern-header {
+        text-align: center;
+        max-width: 700px;
+        margin: 0 auto 48px;
+    }
+
+    .header-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #667eea;
+        color: white;
+        padding: 8px 20px;
+        border-radius: 50px;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .gradient-title {
+        font-size: 48px;
+        font-weight: 800;
+        margin: 0 0 16px 0;
+        background: #667eea;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
+    }
+
+    .header-subtitle {
+        font-size: 18px;
+        color: #64748b;
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    /* Modern cards with glassmorphism and hover effects */
+    .modern-method-card {
+        position: relative;
+        background: white;
+        border-radius: 24px;
+        padding: 40px;
+        height: 100%;
+        min-height: 320px;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 2px solid #f1f5f9;
+        overflow: hidden;
+    }
+
+    .modern-method-card:hover {
+        transform: translateY(-12px);
+        border-color: transparent;
+        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.12);
+    }
+
+    .modern-method-card:hover::before {
+        opacity: 1;
+    }
+
+    .card-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    /* Icon styling */
+    .icon-wrapper {
+        width: 72px;
+        height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 20px;
+        margin-bottom: 24px;
+        font-size: 36px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .wrapper-violet {
+        background: #667eea;
+        color: white;
+    }
+
+    .wrapper-emerald {
+        background: #10b981;
+        color: white;
+    }
+
+    .modern-method-card:hover .icon-wrapper {
+        transform: scale(1.1) rotate(-5deg);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Text styling */
+    .card-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin: 0 0 12px 0;
+        color: #1e293b;
+    }
+
+    .card-description {
+        font-size: 15px;
+        color: #64748b;
+        line-height: 1.7;
+        margin: 0 0 auto 0;
+    }
+
+    /* Arrow indicator */
+    .card-arrow {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        margin-top: 24px;
+        color: #94a3b8;
+        transition: all 0.3s ease;
+    }
+
+    .modern-method-card:hover .card-arrow {
+        transform: translateX(8px);
+        color: #667eea;
+    }
+
+    /* Responsive design */
+    @@media (max-width: 960px) {
+        .gradient-title {
+            font-size: 36px;
+        }
+
+        .header-subtitle {
+            font-size: 16px;
+        }
+
+        .modern-method-card {
+            min-height: 280px;
+            padding: 32px;
+        }
+    }
+</style>

@@ -53,6 +53,9 @@ public static class ServiceCollectionExtensions
 
         //Tool
         services.AddScoped<ToolService>();
+        services.AddScoped<RutTrichTuLuanService>();
+        services.AddScoped<DeThiExportForStudentService>();
+        services.AddScoped<DeThiTuLuanExportService>();
 
         return services;
     }

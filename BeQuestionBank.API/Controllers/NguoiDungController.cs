@@ -259,6 +259,8 @@ public class NguoiDungController(NguoiDungService service, ILogger<NguoiDungCont
                     ("HoTen", "desc") => query.OrderByDescending(u => u.HoTen),
                     ("Email", "asc") => query.OrderBy(u => u.Email),
                     ("Email", "desc") => query.OrderByDescending(u => u.Email),
+                    ("NgayTao", "asc") => query.OrderBy(k => k.NgayTao),
+                    ("NgayTao", "desc") => query.OrderByDescending(k => k.NgayTao),
                     _ => query.OrderBy(u => u.HoTen)
                 };
             }

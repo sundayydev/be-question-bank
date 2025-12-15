@@ -1,0 +1,178 @@
+﻿@page "/tools/exam-extract/essay"
+@using BeQuestionBank.Shared.Enums
+@using BeQuestionBank.Shared.DTOs.YeuCauRutTrich
+@using BeQuestionBank.Shared.DTOs.Phan
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+
+    <MudBreadcrumbs Items="_breadcrumbs"/>
+    <div class="create-question-header" style="position: relative;">
+        <div class="hero-decoration "
+             Style="position: absolute; top: -30px; right: -20px; width: 300px; height: 300px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+        <div class="hero-decoration"
+             Style="position: absolute; bottom: -60px; left: -20px; width: 150px; height: 150px; background: rgba(255,255,255,0.08); border-radius: 50%;"></div>
+        <h1 class="create-question-title"> Rút trích đề thi TỰ LUẬN</h1>
+        <p style="color: rgba(255,255,255,0.85); margin-top: 8px; margin-bottom: 0; font-size: 16px;">
+            Chọn đủ các thuộc tính bên dưới để rút trích
+        </p>
+    </div>
+
+    <MudGrid Spacing="4">
+        <MudItem xs="12" md="4">
+            <MudSelect T="Guid?" Value="SelectedKhoaId" ValueChanged="OnKhoaChanged"
+                       Label="Khoa quản lý" Placeholder="-- Chọn khoa --" Variant="Variant.Outlined"
+                       AnchorOrigin="Origin.BottomCenter">
+                @foreach (var item in Khoas)
+                {
+                    <MudSelectItem Value="@((Guid?)item.MaKhoa)">@item.TenKhoa</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+
+        <MudItem xs="12" md="4">
+            <MudSelect T="Guid?" Value="SelectedMonHocId" ValueChanged="OnMonHocChanged"
+                       Label="Môn học" Placeholder="-- Chọn môn --" Variant="Variant.Outlined"
+                       Disabled="@(SelectedKhoaId == null)" AnchorOrigin="Origin.BottomCenter">
+                @foreach (var item in MonHocs)
+                {
+                    <MudSelectItem Value="@((Guid?)item.MaMonHoc)">@item.TenMonHoc</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+
+        <MudItem xs="12" md="4">
+            <MudTextField @bind-Value="_model.NoiDungRutTrich" Label="Nội dung rút trích"
+                          Variant="Variant.Outlined" Placeholder="Ví dụ: Giữa kỳ 1"/>
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudTextField @bind-Value="_model.GhiChu" Label="Ghi chú" Variant="Variant.Outlined" Lines="2"/>
+        </MudItem>
+    </MudGrid>
+
+    <MudDivider Class="my-8"/>
+
+    <div class="d-flex justify-space-between align-center mb-4">
+        <MudText Typo="Typo.h6">Cấu hình Ma trận</MudText>
+        <MudNumericField @bind-Value="_model.MaTranTuLuan.TotalQuestions"
+                         Label="Tổng số câu cần rút"
+                         Variant="Variant.Outlined" Margin="Margin.Dense"
+                         Min="1" Style="width: 200px;"/>
+    </div>
+
+    <MudButton StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Variant="Variant.Filled"
+               OnClick="AddPart" Disabled="@(Phans.Count == 0)" Class="mb-4">
+        Thêm Phần vào Ma trận
+    </MudButton>
+
+    @if (_model.MaTranTuLuan.Parts != null)
+    {
+        int pIndex = 0;
+        @foreach (var part in _model.MaTranTuLuan.Parts)
+        {
+            var currentPIndex = pIndex;
+            <MudCard Class="mb-4 pa-3" Elevation="2" Style="border-left: 5px solid #594AE2; background: #fdfdfd;">
+                <MudCardContent>
+                    <MudGrid>
+                        <MudItem xs="12" md="4">
+                            <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-1">Chọn Chương/Phần
+                            </MudText>
+                            <MudSelect T="Guid" @bind-Value="part.Part"
+                                       Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter"
+                                       Placeholder="Chọn phần...">
+                                @foreach (var p in Phans)
+                                {
+                                    <MudSelectItem Value="@p.MaPhan">@p.TenPhan</MudSelectItem>
+                                }
+                            </MudSelect>
+
+                            <MudButton StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                       Variant="Variant.Text" Class="mt-2"
+                                       OnClick="@(() => RemovePart(currentPIndex))">
+                                Xóa Phần này
+                            </MudButton>
+                        </MudItem>
+
+                        <MudItem xs="12" md="8">
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Chi tiết (CLO : Số câu)</MudText>
+
+                            @if (part.Clos != null)
+                            {
+                                int cIndex = 0;
+                                @foreach (var clo in part.Clos)
+                                {
+                                    var currentCIndex = cIndex;
+                                    <div class="d-flex gap-3 align-center mb-2">
+                                        <MudSelect T="int" @bind-Value="clo.Clo" Label="CLO"
+                                                   Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true"
+                                                   Style="width: 120px;">
+                                            @foreach (EnumCLO item in Enum.GetValues(typeof(EnumCLO)))
+                                            {
+                                                <MudSelectItem Value="@((int)item)">@item.ToString()</MudSelectItem>
+                                            }
+                                        </MudSelect>
+
+                                        <MudNumericField @bind-Value="clo.Num" Label="Số câu"
+                                                         Variant="Variant.Outlined" Margin="Margin.Dense" Min="1"
+                                                         Style="width: 100px;"/>
+
+                                        <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                                       Color="Color.Default"
+                                                       OnClick="@(() => RemoveClo(part, currentCIndex))"/>
+                                    </div>
+                                    cIndex++;
+                                }
+                            }
+
+                            <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.Add"
+                                       OnClick="@(() => AddClo(part))">
+                                Thêm dòng CLO
+                            </MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+            pIndex++;
+        }
+    }
+
+    <MudDivider Class="my-6"/>
+    <MudGrid>
+        <MudItem xs="6">
+            <MudButton Variant="Variant.Outlined" Color="Color.Info" FullWidth="true" OnClick="PreviewMaTran">
+                Xem JSON Preview
+            </MudButton>
+        </MudItem>
+        <MudItem xs="6">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true"
+                       Disabled="@(_isLoading || SelectedMonHocId == null)" OnClick="SubmitAsync">
+                @(_isLoading ? "Đang xử lý..." : "Rút trích ngay")
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+
+    @if (!string.IsNullOrEmpty(_previewJson))
+    {
+        <MudPaper Class="pa-4 mt-4" Outlined="true" Style="background: #f5f5f5;">
+            <pre style="font-size: 12px; white-space: pre-wrap;">@_previewJson</pre>
+        </MudPaper>
+    }
+
+</MudContainer>
+<style>
+    .create-question-header {
+        background: #0a53be; /* màu trơn */
+        padding: 40px 20px;
+        border-radius: 16px;
+        margin-bottom: 40px;
+        box-shadow: 0 8px 24px rgba(108, 92, 231, 0.15);
+        color: white;
+    }
+
+    .create-question-title {
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        margin: 0;
+        font-size: 28px;
+    }
+</style>
