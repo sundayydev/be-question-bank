@@ -63,6 +63,14 @@ public class YeuCauRutTrichApiClient : BaseApiClient, IYeuCauRutTrichApiClient
         throw new NotImplementedException();
     }
 
+    public async Task<ApiResponse<YeuCauRutTrichResultDto>> CreateAndRutTrichDeThiTuLuanAsync(
+        CreateTuLuanRequestDto dto)
+    {
+        var res = await _httpClient.PostAsJsonAsync("api/yeucauruttrich/tu-luan", dto);
+        return await res.Content.ReadFromJsonAsync<ApiResponse<YeuCauRutTrichResultDto>>()
+               ?? new ApiResponse<YeuCauRutTrichResultDto>(500, "Error");
+    }
+
 
     // public async Task<ApiResponse<YeuCauRutTrichResultDto>> CreateAndRutTrichDeThiAsync(CreateYeuCauRutTrichDto dto)
     // {

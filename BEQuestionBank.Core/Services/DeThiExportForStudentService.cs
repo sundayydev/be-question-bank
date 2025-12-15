@@ -35,7 +35,7 @@ namespace BEQuestionBank.Core.Services
             _logger = logger;
         }
 
-        #region Word Export
+       
         public async Task<byte[]> ExportWordAsync(YeuCauXuatDeThiDto request)
         {
             var deThi = await _deThiRepository.GetFullForExportAsync(request.MaDeThi)
@@ -228,10 +228,9 @@ namespace BEQuestionBank.Core.Services
             // Decode các ký tự HTML như &nbsp;, &gt;, v.v.
             return System.Net.WebUtility.HtmlDecode(html).Trim();
         }
+        
 
-        #endregion
-
-        #region PDF Export
+        
         public async Task<byte[]> ExportPdfAsync(YeuCauXuatDeThiDto request)
         {
             byte[] wordBytes = await ExportWordAsync(request);
@@ -243,7 +242,7 @@ namespace BEQuestionBank.Core.Services
             pdf.Save(output);
             return output.ToArray();
         }
-        #endregion
+        
 
         #region Helpers
         private List<string> BuildQuestionLines(DeThi deThi, bool hoanVi)

@@ -17,12 +17,16 @@ public class DeThiController : ControllerBase
 {
     private readonly DeThiExportForStudentService _exportService;
     private readonly DeThiService _service;
+    private readonly DeThiTuLuanExportService _tuLuanExportService;
     private readonly ILogger<DeThiController> _logger;
 
-    public DeThiController(DeThiService service, DeThiExportForStudentService exportService, ILogger<DeThiController> logger)
+    public DeThiController(DeThiService service,
+        DeThiTuLuanExportService tuLuanExportService, DeThiExportForStudentService exportService,
+        ILogger<DeThiController> logger)
     {
         _service = service;
         _exportService = exportService;
+        _tuLuanExportService = tuLuanExportService;
         _logger = logger;
     }
 
@@ -334,6 +338,8 @@ public class DeThiController : ControllerBase
                 {
                     "TenDeThi" when direction == "asc" => query.OrderBy(k => k.TenDeThi),
                     "TenDeThi" when direction == "desc" => query.OrderByDescending(k => k.TenDeThi),
+                    "NgayTao" when direction == "asc" => query.OrderBy(k => k.NgayTao),
+                    "NgayTao" when direction == "desc" => query.OrderByDescending(k => k.NgayTao),
                     _ => query.OrderBy(k => k.TenDeThi)
                 };
             }
@@ -427,5 +433,33 @@ public class DeThiController : ControllerBase
         var request = new YeuCauXuatDeThiDto { MaDeThi = id };
         byte[] ezpBytes = await _exportService.ExportEzpAsync(request, password);
         return File(ezpBytes, "application/octet-stream", $"DeThi_{id}.ezp");
+    }
+
+    [HttpPost("{id}/export-tuluan-word")]
+    [SwaggerOperation("Xuất đề thi tự luận ra file Word")]
+    public async Task<IActionResult> ExportTuLuanWord(Guid id)
+    {
+        try
+        {
+            // Gọi đúng service _tuLuanExportService thay vì _deThiService
+            var result = await _tuLuanExportService.ExportTuLuanToWordAsync(id);
+
+            if (!result.Success)
+            {
+                return BadRequest(ApiResponseFactory.ValidationError<object>(result.Message));
+            }
+
+            // Trả về file
+            return File(
+                result.FileStream,
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                result.FileName
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi xuất file word tự luận");
+            return StatusCode(500, ApiResponseFactory.ServerError("Lỗi server: " + ex.Message));
+        }
     }
 }

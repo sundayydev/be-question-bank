@@ -22,7 +22,7 @@ public class YeuCauRutTrichController : ControllerBase
     }
 
     // GET: api/YeuCauRutTrich/{id}
-    [HttpGet("{id}")]
+    [HttpGet("{id}", Name = "GetYeuCauRutTrichById")]
     [SwaggerOperation("Lấy yêu cầu rút trích theo ID")]
     public async Task<IActionResult> GetByIdAsync(Guid id)
     {
@@ -301,6 +301,70 @@ public class YeuCauRutTrichController : ControllerBase
                 ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
     }
+
+    [HttpPost("tu-luan")]
+    [SwaggerOperation("Tạo yêu cầu rút trích đề TỰ LUẬN và tạo đề thi")]
+    public async Task<IActionResult> CreateTuLuanAsync([FromBody] CreateTuLuanRequestDto dto)
+    {
+        if (dto == null || dto.MaNguoiDung == Guid.Empty || dto.MaMonHoc == Guid.Empty || dto.MaTranTuLuan == null)
+        {
+            return BadRequest(ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ."));
+        }
+
+        try
+        {
+            // 1. Tạo yêu cầu rút trích
+            var (success, message, maYeuCau) = await _service.CreateTuLuanRequestAsync(
+                dto.MaNguoiDung,
+                dto.MaMonHoc,
+                dto.MaTranTuLuan,
+                dto.NoiDungRutTrich,
+                dto.GhiChu);
+
+            if (!success)
+                return BadRequest(ApiResponseFactory.ValidationError<object>(message));
+
+            // 2. Sinh tên đề thi
+            int year = DateTime.Now.Year;
+            string namHoc = $"{year}-{year + 1}";
+            string tenDeThi = $"Đề tự luận {namHoc} - YC_{maYeuCau.ToString().Substring(0, 8)}";
+
+            // 3. Sửa ở đây: Inject và gọi đúng service
+            var rutTrichTuLuanService = HttpContext.RequestServices.GetService<RutTrichTuLuanService>();
+            if (rutTrichTuLuanService == null)
+            {
+                await _service.DeleteAsync(maYeuCau);
+                return StatusCode(500, ApiResponseFactory.ServerError("Không thể khởi tạo RutTrichTuLuanService."));
+            }
+
+            var (deThiSuccess, deThiMessage, maDeThi) =
+                await rutTrichTuLuanService.RutTrichTuLuanAsync(maYeuCau, tenDeThi); // ← Gọi đúng phương thức
+
+            if (!deThiSuccess)
+            {
+                await _service.DeleteAsync(maYeuCau);
+                return BadRequest(ApiResponseFactory.ValidationError<object>(deThiMessage));
+            }
+
+            // 4. Response
+            return CreatedAtRoute(
+                "GetYeuCauRutTrichById",
+                new { id = maYeuCau },
+                ApiResponseFactory.Success(new
+                {
+                    MaYeuCau = maYeuCau,
+                    TenDeThi = tenDeThi,
+                    MaDeThi = maDeThi
+                }, "Tạo yêu cầu và đề thi tự luận thành công")
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi tạo đề thi tự luận");
+            return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
+        }
+    }
+
     /// <summary>
     /// Upload Excel để đọc Ma Trận
     /// </summary>
@@ -442,5 +506,6 @@ public class YeuCauRutTrichController : ControllerBase
             ApiResponseFactory.ServerError("Đã xảy ra lỗi khi xử lý yêu cầu."));
     }
 }
+    
 }
 

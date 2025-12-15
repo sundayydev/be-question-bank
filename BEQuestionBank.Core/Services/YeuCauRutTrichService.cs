@@ -227,6 +227,50 @@ public class YeuCauRutTrichService
             Parts = parts
         };
     }
+
+    /// <summary>
+    /// Tạo yêu cầu rút trích TỰ LUẬN từ ma trận JSON (frontend gửi trực tiếp)
+    /// </summary>
+    public async Task<(bool Success, string Message, Guid MaYeuCau)> CreateTuLuanRequestAsync(
+        Guid maNguoiDung,
+        Guid maMonHoc,
+        MaTranTuLuan maTranTuLuan,
+        string? noiDungRutTrich = null,
+        string? ghiChu = null)
+    {
+        try
+        {
+            if (maTranTuLuan == null)
+                return (false, "Ma trận tự luận không được để trống.", Guid.Empty);
+
+            if (maTranTuLuan.Parts == null || !maTranTuLuan.Parts.Any() ||
+                !maTranTuLuan.Parts.Any(p => p.Clos?.Any() == true))
+                return (false, "Ma trận tự luận phải có ít nhất một phần và một yêu cầu CLO.", Guid.Empty);
+
+            if (maTranTuLuan.TotalQuestions <= 0)
+                return (false, "Tổng số câu hỏi phải lớn hơn 0.", Guid.Empty);
+
+            var entity = new YeuCauRutTrich
+            {
+                MaYeuCau = Guid.NewGuid(),
+                MaNguoiDung = maNguoiDung,
+                MaMonHoc = maMonHoc,
+                NoiDungRutTrich = noiDungRutTrich ?? "Yêu cầu rút trích đề tự luận có phần",
+                GhiChu = ghiChu,
+                NgayYeuCau = DateTime.UtcNow,
+                DaXuLy = false,
+                MaTran = JsonConvert.SerializeObject(maTranTuLuan)
+            };
+
+            await _repository.AddAsync(entity);
+
+            return (true, "Tạo yêu cầu rút trích tự luận thành công.", entity.MaYeuCau);
+        }
+        catch (Exception ex)
+        {
+            return (false, $"Lỗi khi tạo yêu cầu tự luận: {ex.Message}", Guid.Empty);
+        }
+    }
     // public async Task<MaTranDto> ReadMaTranFromExcelAndSaveAsync(
     //     string filePath,
     //     Guid maMonHoc,
