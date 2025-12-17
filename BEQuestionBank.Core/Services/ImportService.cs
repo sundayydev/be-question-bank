@@ -878,10 +878,8 @@ namespace BEQuestionBank.Core.Services
             {
                 string extractedType = typeMatch.Groups["type"].Value.ToUpper();
                 // Câu hỏi con trong nhóm NH có thể là TN hoặc MN
-                if (extractedType == "TN" || extractedType == "MN")
-                {
-                    questionType = extractedType;
-                }
+                    // Cho phép tất cả loại câu hỏi: TN, MN, DT, GN, TL (nếu có tag rõ ràng)
+                questionType = extractedType;
             }
             
             // Nếu nhóm có loại câu hỏi, kế thừa loại từ nhóm (nếu chưa có loại từ tag)
@@ -1185,6 +1183,18 @@ namespace BEQuestionBank.Core.Services
                         </span>";
                     audioSb.Append(audioPlayerHtml);
                 }
+                else
+                {
+                    // Lưu thông tin file audio không tìm thấy để cảnh báo trong validation
+                    if (currentQuestion != null)
+                    {
+                        currentQuestion.MissingAudioFiles.Add(audioFileName);
+                    }
+                    else if (currentGroup != null)
+                    {
+                        currentGroup.MissingAudioFiles.Add(audioFileName);
+                    }
+                }
 
                 // Xóa thẻ [<audio>] cũ khỏi text hiển thị
                 html = html.Replace(match.Value, "");
@@ -1380,9 +1390,10 @@ namespace BEQuestionBank.Core.Services
                 var imagePart = (ImagePart)mainPart.GetPartById(rId);
                 using var stream = imagePart.GetStream();
 
-                // Đọc bytes ảnh
-                byte[] imageBytes = new byte[stream.Length];
-                stream.Read(imageBytes, 0, imageBytes.Length);
+                // Đọc bytes ảnh - đảm bảo đọc hết tất cả bytes
+                using var memoryStream = new MemoryStream();
+                stream.CopyTo(memoryStream);
+                byte[] imageBytes = memoryStream.ToArray();
                 string contentType = imagePart.ContentType;
 
                 // LƯU ẢNH DƯỚI DẠNG BASE64 NHÚNG TRỰC TIẾP VÀO HTML
@@ -1402,41 +1413,69 @@ namespace BEQuestionBank.Core.Services
         {
             try
             {
-                // relativePath VD: audio/47-49.mp3
-                string sourcePath = Path.Combine(sourceMediaFolder, relativePath.Replace("/", Path.DirectorySeparatorChar.ToString()));
-
-                if (File.Exists(sourcePath))
+                // relativePath VD: audio/47-49.mp3 hoặc 0.mp3
+                // Normalize đường dẫn (thay / thành \)
+                string normalizedPath = relativePath.Replace("/", Path.DirectorySeparatorChar.ToString());
+                
+                // Thử tìm file theo đường dẫn trực tiếp trước
+                string sourcePath = Path.Combine(sourceMediaFolder, normalizedPath);
+                
+                // Nếu không tìm thấy, tìm trong tất cả các folder con
+                if (!File.Exists(sourcePath))
                 {
-                    string newFileName = $"{Guid.NewGuid()}{Path.GetExtension(sourcePath)}";
-                    string destFolder = Path.Combine(_storagePath, "media");
-
-                    if (!Directory.Exists(destFolder)) Directory.CreateDirectory(destFolder);
-
-                    string destPath = Path.Combine(destFolder, newFileName);
-                    File.Copy(sourcePath, destPath, true);
-
-                    // Lưu thông tin file audio vào database
-                    var fileData = new FileData
+                    string fileName = Path.GetFileName(normalizedPath);
+                    string? foundPath = null;
+                    
+                    // Tìm file trong tất cả các folder con (recursive search)
+                    if (Directory.Exists(sourceMediaFolder))
                     {
-                        FileName = newFileName,
-                        FileType = FileType.Audio,
-                        FilePath = $"/media/{newFileName}" // Lưu đường dẫn
-                    };
-
-                    if (question != null) question.Files.Add(fileData);
-                    else if (group != null) group.Files.Add(fileData);
-
-                    return newFileName;
+                        var allFiles = Directory.GetFiles(sourceMediaFolder, fileName, SearchOption.AllDirectories);
+                        if (allFiles.Length > 0)
+                        {
+                            foundPath = allFiles[0];
+                            _logger.LogInformation($"Tìm thấy file audio trong folder con: {foundPath} (từ {relativePath})");
+                        }
+                    }
+                    
+                    if (foundPath != null)
+                    {
+                        sourcePath = foundPath;
+                    }
+                    else
+                    {
+                        // Nếu vẫn không tìm thấy, log cảnh báo chi tiết
+                        _logger.LogWarning($"Không tìm thấy file audio: {relativePath}. " +
+                            $"Đã tìm trong: {sourceMediaFolder} và tất cả các folder con. " +
+                            $"Vui lòng đảm bảo file audio nằm trong cùng folder với file Word hoặc trong folder con.");
+                        return string.Empty;
+                    }
                 }
-                else
+
+                // Copy file audio
+                string newFileName = $"{Guid.NewGuid()}{Path.GetExtension(sourcePath)}";
+                string destFolder = Path.Combine(_storagePath, "media");
+
+                if (!Directory.Exists(destFolder)) Directory.CreateDirectory(destFolder);
+
+                string destPath = Path.Combine(destFolder, newFileName);
+                File.Copy(sourcePath, destPath, true);
+
+                // Lưu thông tin file audio vào database
+                var fileData = new FileData
                 {
-                    _logger.LogWarning($"Không tìm thấy file audio: {sourcePath}");
-                    return string.Empty;
-                }
+                    FileName = newFileName,
+                    FileType = FileType.Audio,
+                    FilePath = $"/media/{newFileName}" // Lưu đường dẫn
+                };
+
+                if (question != null) question.Files.Add(fileData);
+                else if (group != null) group.Files.Add(fileData);
+
+                return newFileName;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi copy audio file");
+                _logger.LogError(ex, "Lỗi copy audio file: {RelativePath}", relativePath);
                 return string.Empty;
             }
         }
@@ -1765,6 +1804,50 @@ namespace BEQuestionBank.Core.Services
                     result.Errors.Add("Nhóm câu hỏi không có nội dung dẫn");
                     result.IsValid = false;
                 }
+                else
+                {
+                    // Kiểm tra audio trong nội dung nhóm (NoiDungNhom)
+                    // Kiểm tra nhiều format: <audio>, audio-player-wrapper, <source>, [<audio>], và Files
+                    string noiDungNhom = question.NoiDungNhom ?? string.Empty;
+                    string noiDungNhomLower = noiDungNhom.ToLower();
+                    
+                    // Kiểm tra bằng regex để tìm pattern audio (case-insensitive)
+                    bool hasAudioInContent = Regex.IsMatch(noiDungNhom, @"<audio[^>]*>", RegexOptions.IgnoreCase) ||
+                                           Regex.IsMatch(noiDungNhom, @"audio-player-wrapper", RegexOptions.IgnoreCase) ||
+                                           Regex.IsMatch(noiDungNhom, @"<source[^>]*src\s*=\s*['""]/media/", RegexOptions.IgnoreCase) ||
+                                           Regex.IsMatch(noiDungNhom, @"/media/[^'""\s>]+\.(mp3|wav|ogg|m4a)", RegexOptions.IgnoreCase) ||
+                                           _audioPattern.IsMatch(noiDungNhom);
+                    
+                    bool hasAudioInFiles = question.Files != null && question.Files.Any(f => f.FileType == FileType.Audio);
+                    
+                    if (hasAudioInContent || hasAudioInFiles)
+                    {
+                        result.HasAudio = true;
+                    }
+                    
+                    // Kiểm tra ảnh trong nội dung nhóm
+                    if (question.NoiDungNhom.Contains("<img", StringComparison.OrdinalIgnoreCase))
+                    {
+                        result.HasImages = true;
+                    }
+                    
+                    // Kiểm tra LaTeX trong nội dung nhóm
+                    if (question.NoiDungNhom.Contains("$") || question.NoiDungNhom.Contains("\\(") || question.NoiDungNhom.Contains("\\["))
+                    {
+                        result.HasLatex = true;
+                    }
+                    
+                    // Cảnh báo nếu có file audio không tìm thấy
+                    if (question.MissingAudioFiles != null && question.MissingAudioFiles.Any())
+                    {
+                        foreach (var missingFile in question.MissingAudioFiles)
+                        {
+                            result.Warnings.Add($"Không tìm thấy file audio: {missingFile}. " +
+                                $"Vui lòng đảm bảo file audio nằm trong cùng folder với file Word hoặc trong folder con. " +
+                                $"Cấu trúc ZIP đúng: [TênFolder]/file.docx và [TênFolder]/audio/file.mp3 (hoặc file.mp3 trực tiếp trong [TênFolder])");
+                        }
+                    }
+                }
 
                 // Nhóm câu hỏi cần có câu hỏi con (trừ TL có thể không có câu hỏi con nếu chỉ có nội dung nhóm)
                 // TL có thể có câu hỏi con hoặc chỉ có nội dung nhóm
@@ -1791,6 +1874,14 @@ namespace BEQuestionBank.Core.Services
                         
                         if (!subValidation.IsValid)
                             result.IsValid = false;
+                        
+                        // Nếu câu hỏi con có audio, ảnh hoặc LaTeX, cập nhật vào kết quả nhóm
+                        if (subValidation.HasAudio)
+                            result.HasAudio = true;
+                        if (subValidation.HasImages)
+                            result.HasImages = true;
+                        if (subValidation.HasLatex)
+                            result.HasLatex = true;
                     }
                 }
             }
@@ -1825,7 +1916,8 @@ namespace BEQuestionBank.Core.Services
             };
 
             // Lấy loại câu hỏi để sử dụng trong validation
-            // Câu hỏi con trong nhóm NH có LoaiCauHoi là null, dùng "TN" làm mặc định cho validation
+            // Câu hỏi con trong nhóm NH có thể có LoaiCauHoi là TN hoặc MN (từ tag [<TN>] hoặc [<MN>])
+            // Nếu không có loại, mặc định là "TN" cho validation
             string loaiCauHoi = question.LoaiCauHoi?.ToUpper() ?? "TN";
 
             // 1. Validate nội dung câu hỏi
@@ -1960,6 +2052,17 @@ namespace BEQuestionBank.Core.Services
                     {
                         result.Warnings.Add($"Câu {identifier}: File audio không có tên file");
                     }
+                }
+            }
+            
+            // 5. Cảnh báo nếu có file audio không tìm thấy
+            if (question.MissingAudioFiles != null && question.MissingAudioFiles.Any())
+            {
+                foreach (var missingFile in question.MissingAudioFiles)
+                {
+                    result.Warnings.Add($"Câu {identifier}: Không tìm thấy file audio '{missingFile}'. " +
+                        $"Vui lòng đảm bảo file audio nằm trong cùng folder với file Word hoặc trong folder con. " +
+                        $"Cấu trúc ZIP đúng: [TênFolder]/file.docx và [TênFolder]/audio/file.mp3 (hoặc file.mp3 trực tiếp trong [TênFolder])");
                 }
             }
 
@@ -2135,6 +2238,9 @@ namespace BEQuestionBank.Core.Services
 
             public List<AnswerData> Answers { get; set; } = new List<AnswerData>();
             public List<FileData> Files { get; set; } = new List<FileData>();
+            
+            // Lưu danh sách file audio không tìm thấy để cảnh báo trong validation
+            public List<string> MissingAudioFiles { get; set; } = new List<string>();
         }
 
         public class AnswerData

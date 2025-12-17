@@ -509,7 +509,7 @@ public class DeThiService
                     MaCauTraLoi = ctl.MaCauTraLoi,
                     MaCauHoi = ctl.MaCauHoi,
                     NoiDung = ctl.NoiDung,
-                    LaDapAn= ctl.LaDapAn,
+                    LaDapAn = ctl.LaDapAn,
                     ThuTu = ctl.ThuTu,
                     // Thêm các field khác của CauTraLoiDto nếu có
                     // Ví dụ: GhepNoiId = ctl.GhepNoiId, ...
@@ -545,20 +545,20 @@ public class DeThiService
                     int available = 0;
 
                     // TN, MN, DT, GN: đếm câu hỏi cha
-                    if (questionType.Loai == "TN" || questionType.Loai == "MN" || 
+                    if (questionType.Loai == "TN" || questionType.Loai == "MN" ||
                         questionType.Loai == "DT" || questionType.Loai == "GN")
                     {
                         available = await _cauHoiRepository.CountAsync(ch =>
-                            ch.MaPhan == part.MaPhan &&
+                        ch.MaPhan == part.MaPhan &&
                             ch.Phan != null &&
-                            ch.Phan.MaMonHoc == maMonHoc &&
-                            ch.XoaTam == false &&
+                        ch.Phan.MaMonHoc == maMonHoc &&
+                        ch.XoaTam == false &&
                             ch.MaCauHoiCha == null &&
                             ch.CLO == cloEnum &&
-                            (
-                                (questionType.Loai == "TN" && ch.LoaiCauHoi == "TN") ||
-                                (questionType.Loai == "DT" && ch.LoaiCauHoi == "DT") ||
-                                (questionType.Loai == "GN" && ch.LoaiCauHoi == "GN") ||
+                        (
+                            (questionType.Loai == "TN" && ch.LoaiCauHoi == "TN") ||
+                            (questionType.Loai == "DT" && ch.LoaiCauHoi == "DT") ||
+                            (questionType.Loai == "GN" && ch.LoaiCauHoi == "GN") ||
                                 (questionType.Loai == "MN" && ch.LoaiCauHoi != null && ch.LoaiCauHoi.StartsWith("MN") && ch.LoaiCauHoi != "MN")
                             )
                         );
@@ -593,8 +593,8 @@ public class DeThiService
 
                     if (available < required)
                     {
-                        string countingType = (questionType.Loai == "TL" || questionType.Loai == "NH") 
-                            ? "câu hỏi con" 
+                        string countingType = (questionType.Loai == "TL" || questionType.Loai == "NH")
+                            ? "câu hỏi con"
                             : "câu hỏi cha";
                         return (false,
                             $"Không đủ câu hỏi cho phần {partName}, CLO {clo.Clo}, loại {questionType.Loai}. " +
@@ -640,18 +640,18 @@ public class DeThiService
                 int available = 0;
 
                 // TN, MN, DT, GN: đếm câu hỏi cha
-                if (questionType.Loai == "TN" || questionType.Loai == "MN" || 
+                if (questionType.Loai == "TN" || questionType.Loai == "MN" ||
                     questionType.Loai == "DT" || questionType.Loai == "GN")
                 {
                     available = await _cauHoiRepository.CountAsync(ch =>
                         ch.Phan != null &&
-                        ch.Phan.MaMonHoc == maMonHoc &&
-                        ch.XoaTam == false &&
+                    ch.Phan.MaMonHoc == maMonHoc &&
+                    ch.XoaTam == false &&
                         ch.MaCauHoiCha == null &&
                         ch.CLO == cloEnum &&
-                        (
-                            (questionType.Loai == "TN" && ch.LoaiCauHoi == "TN") ||
-                            (questionType.Loai == "DT" && ch.LoaiCauHoi == "DT") ||
+                    (
+                        (questionType.Loai == "TN" && ch.LoaiCauHoi == "TN") ||
+                        (questionType.Loai == "DT" && ch.LoaiCauHoi == "DT") ||
                             (questionType.Loai == "GN" && ch.LoaiCauHoi == "GN") ||
                             (questionType.Loai == "MN" && ch.LoaiCauHoi == "MN")
                         )
@@ -686,8 +686,8 @@ public class DeThiService
 
                 if (available < required)
                 {
-                    string countingType = (questionType.Loai == "TL" || questionType.Loai == "NH") 
-                        ? "câu hỏi con" 
+                    string countingType = (questionType.Loai == "TL" || questionType.Loai == "NH")
+                        ? "câu hỏi con"
                         : "câu hỏi cha";
                     return (false,
                         $"Không đủ câu hỏi cho CLO {clo.Clo}, loại {questionType.Loai}. " +
@@ -744,24 +744,24 @@ public class DeThiService
                     List<CauHoi> selected = new List<CauHoi>();
 
                     // TN, MN, DT, GN: chọn câu hỏi cha
-                    if (questionType.Loai == "TN" || questionType.Loai == "MN" || 
+                    if (questionType.Loai == "TN" || questionType.Loai == "MN" ||
                         questionType.Loai == "DT" || questionType.Loai == "GN")
                     {
                         var questions = await _cauHoiRepository.FindAsync(ch =>
                             ch.MaPhan == part.MaPhan &&
-                            ch.Phan != null &&
+                                ch.Phan != null &&
                             ch.Phan.MaMonHoc == maMonHoc &&
                             ch.XoaTam == false &&
-                            ch.MaCauHoiCha == null &&
-                            ch.CLO == cloEnum &&
-                            !usedQuestionIds.Contains(ch.MaCauHoi) &&
+                                ch.MaCauHoiCha == null &&
+                                ch.CLO == cloEnum &&
+                                !usedQuestionIds.Contains(ch.MaCauHoi) &&
                             (
                                 (questionType.Loai == "TN" && ch.LoaiCauHoi == "TN") ||
                                 (questionType.Loai == "DT" && ch.LoaiCauHoi == "DT") ||
                                 (questionType.Loai == "GN" && ch.LoaiCauHoi == "GN") ||
-                                (questionType.Loai == "MN" && ch.LoaiCauHoi != null && ch.LoaiCauHoi.StartsWith("MN") && ch.LoaiCauHoi != "MN")
-                            )
-                        );
+                                    (questionType.Loai == "MN" && ch.LoaiCauHoi != null && ch.LoaiCauHoi.StartsWith("MN") && ch.LoaiCauHoi != "MN")
+                                )
+                            );
 
                         selected = questions.OrderBy(x => Guid.NewGuid()).Take(numQuestions).ToList();
                     }
@@ -779,20 +779,20 @@ public class DeThiService
                             (
                                 (questionType.Loai == "TL" && ch.LoaiCauHoi == "TL") ||
                                 (questionType.Loai == "NH" && ch.LoaiCauHoi == "NH")
-                            )
-                        );
+                        )
+                    );
 
                         // Chọn các câu hỏi cha sao cho tổng số câu con đạt yêu cầu
                         var shuffledParents = parentQuestions.OrderBy(x => Guid.NewGuid()).ToList();
                         int totalChildren = 0;
-                        
+
                         foreach (var parent in shuffledParents)
                         {
                             var childrenCount = await _cauHoiRepository.CountAsync(ch =>
                                 ch.MaCauHoiCha == parent.MaCauHoi &&
                                 ch.XoaTam == false
                             );
-                            
+
                             if (totalChildren + childrenCount <= numQuestions || selected.Count == 0)
                             {
                                 selected.Add(parent);
@@ -806,7 +806,7 @@ public class DeThiService
                     foreach (var parent in selected)
                     {
                         usedQuestionIds.Add(parent.MaCauHoi);
-                        
+
                         // Thêm câu hỏi cha
                         chiTietDeThis.Add(new ChiTietDeThi
                         {
@@ -893,7 +893,7 @@ public class DeThiService
                 List<CauHoi> selected = new List<CauHoi>();
 
                 // TN, MN, DT, GN: chọn câu hỏi cha
-                if (questionType.Loai == "TN" || questionType.Loai == "MN" || 
+                if (questionType.Loai == "TN" || questionType.Loai == "MN" ||
                     questionType.Loai == "DT" || questionType.Loai == "GN")
                 {
                     var questions = await _cauHoiRepository.FindAsync(ch =>
@@ -932,14 +932,14 @@ public class DeThiService
                     // Chọn các câu hỏi cha sao cho tổng số câu con đạt yêu cầu
                     var shuffledParents = parentQuestions.OrderBy(x => Guid.NewGuid()).ToList();
                     int totalChildren = 0;
-                    
+
                     foreach (var parent in shuffledParents)
                     {
                         var childrenCount = await _cauHoiRepository.CountAsync(ch =>
                             ch.MaCauHoiCha == parent.MaCauHoi &&
                             ch.XoaTam == false
                         );
-                        
+
                         if (totalChildren + childrenCount <= numQuestions || selected.Count == 0)
                         {
                             selected.Add(parent);
@@ -953,7 +953,7 @@ public class DeThiService
                 foreach (var parent in selected)
                 {
                     usedQuestionIds.Add(parent.MaCauHoi);
-                    
+
                     // Thêm câu hỏi cha
                     chiTietDeThis.Add(new ChiTietDeThi
                     {
@@ -1077,6 +1077,33 @@ public class DeThiService
             //         null);
             // }
 
+            // Tính tổng số câu hỏi thực tế (bao gồm cả câu con)
+            // Câu đơn (SoCauHoiCon == 0 hoặc null) = 1 câu
+            // Câu nhóm (SoCauHoiCon > 0) = SoCauHoiCon câu
+            int soCauHoiThucTe = 0;
+            foreach (var ct in chiTietDeThis)
+            {
+                var cauHoi = await _cauHoiRepository.GetByIdAsync(ct.MaCauHoi);
+                if (cauHoi != null)
+                {
+                    if (cauHoi.SoCauHoiCon > 0)
+                    {
+                        // Câu hỏi nhóm: đếm số câu con
+                        soCauHoiThucTe += cauHoi.SoCauHoiCon;
+                    }
+                    else
+                    {
+                        // Câu hỏi đơn: đếm là 1
+                        soCauHoiThucTe += 1;
+                    }
+                }
+                else
+                {
+                    // Nếu không tìm thấy câu hỏi, tính là 1
+                    soCauHoiThucTe += 1;
+                }
+            }
+
             // Tạo đề thi
             var deThi = new DeThi
             {
@@ -1084,7 +1111,7 @@ public class DeThiService
                 MaMonHoc = yeuCau.MaMonHoc,
                 TenDeThi = tenDeThi,
                 DaDuyet = false,
-                SoCauHoi = chiTietDeThis.Count,
+                SoCauHoi = soCauHoiThucTe, // Sử dụng số câu hỏi thực tế đã tính
                 NgayTao = DateTime.UtcNow,
                 NgayCapNhat = DateTime.UtcNow,
                 ChiTietDeThis = chiTietDeThis

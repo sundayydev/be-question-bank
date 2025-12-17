@@ -25,24 +25,61 @@ namespace FEQuestionBank.Client.Pages.DeThi
         protected CreateYeuCauRutTrichDto _model = new();
         protected MaTranDto _maTran = new()
         {
-            TotalQuestions = 10, // Mặc định 10 câu
+            TotalQuestions = 0,
             CloPerPart = false,
             Clos = new(),
             QuestionTypes = new(),
             Parts = new()
         };
-        protected int CalculatedTotalQuestions() => _maTran.Parts.Sum(p => p.NumQuestions);
 
         protected List<MonHocDto> _monHocs = new();
         protected List<PhanDto> _availableParts = new();
         protected HashSet<Guid> _selectedPartIds = new();
+
+        // Ma trận CLO x Loại câu hỏi
+        protected List<int> _matrixClos = new() { 1, 2, 3 }; // CLO1, CLO2, CLO3 mặc định
+        protected Dictionary<(int clo, string loai), int> _matrixData = new();
+
+        // Các loại câu hỏi cần hiển thị
+        // NH: Câu hỏi nhóm - đếm số câu hỏi con + số câu đơn
+        // TL: Tự luận - đếm số câu hỏi con
+        // TN, MN, GN, DT: Mỗi câu tính là 1
+        protected Dictionary<string, string> _questionTypes = new()
+        {
+            { "NH", "Câu hỏi nhóm" },
+            { "TL", "Tự luận" },
+            { "TN", "Trắc nghiệm 1 đáp án" },
+            { "MN", "Trắc nghiệm nhiều đáp án" },
+            { "GN", "Ghép nối" },
+            { "DT", "Điền từ" }
+        };
+
+        // Các loại câu hỏi đếm theo câu con (NH, TL)
+        // NH: đếm số câu hỏi con + số câu đơn trong nhóm
+        // TL: đếm số câu hỏi con
+        protected static readonly HashSet<string> _countChildQuestionTypes = new() { "NH", "TL" };
+
+        // Số câu hỏi con trung bình cho mỗi loại (NH, TL)
+        // Key: loại câu hỏi, Value: số câu con trung bình
+        protected Dictionary<string, int> _childQuestionCounts = new()
+        {
+            { "NH", 3 }, // Mặc định mỗi nhóm có 3 câu con
+            { "TL", 2 }  // Mặc định mỗi câu TL có 2 câu con
+        };
+
+        // Ma trận theo phần: Dictionary<MaPhan, Dictionary<(clo, loai), int>>
+        protected Dictionary<Guid, Dictionary<(int clo, string loai), int>> _partMatrixData = new();
+        protected Dictionary<Guid, List<int>> _partClos = new(); // CLO cho từng phần
 
         // State management
         protected bool _isChecking = false;
         protected bool _isProcessing = false;
         protected bool _isValidated = false;
         protected string? _validationMessage = null;
-        
+
+        // Expected question count
+        protected int? _expectedTotalQuestions = null;
+
         protected List<BreadcrumbItem> _breadcrumbs = new()
         {
             new("Trang chủ", href: "/"),
@@ -58,24 +95,14 @@ namespace FEQuestionBank.Client.Pages.DeThi
 
             if (user.Identity?.IsAuthenticated ?? false)
             {
-                // Lấy claim
                 var userIdClaim = user.FindFirst("UserId") ?? user.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out var userId))
                 {
                     _model.MaNguoiDung = userId;
-                    Console.WriteLine($"Current user id: {_model.MaNguoiDung}");
                 }
-                else
-                {
-                    Console.WriteLine("WARNING: No valid user id claim found.");
-                }
-            }
-            else
-            {
-                Console.WriteLine("User is not authenticated.");
             }
 
-            // Load môn học, etc.
+            // Load môn học
             var res = await MonHocApi.GetAllMonHocsAsync();
             if (res.Success && res.Data != null && res.Data.Any())
             {
@@ -84,92 +111,382 @@ namespace FEQuestionBank.Client.Pages.DeThi
                 await OnMonHocChanged(_model.MaMonHoc);
             }
 
-            InitializeDefaultData();
+            InitializeDefaultMatrix();
         }
 
-        private void InitializeDefaultData()
+        private void InitializeDefaultMatrix()
         {
-            // Bước 2: Khởi tạo ma trận mặc định (không theo phần)
-            if (!_maTran.CloPerPart)
+            // Khởi tạo ma trận mặc định với giá trị 0
+            foreach (var clo in _matrixClos)
             {
-                _maTran.TotalQuestions = 10; // Mặc định 10 câu
-                if (_maTran.Clos.Count == 0) AddClo();
-                if (_maTran.QuestionTypes.Count == 0) AddQuestionType();
+                foreach (var loai in _questionTypes.Keys)
+                {
+                    _matrixData[(clo, loai)] = 0;
+                }
             }
         }
 
-        protected void AddClo() => _maTran.Clos.Add(new CloDto { Clo = 1, Num = 0 });
-        protected void RemoveClo(CloDto x)
+        #region Logic đếm câu hỏi
+
+        /// <summary>
+        /// Kiểm tra xem loại câu hỏi có đếm theo câu con không
+        /// NH: đếm số câu hỏi con + số câu đơn trong nhóm
+        /// TL: đếm số câu hỏi con
+        /// </summary>
+        protected bool IsCountingChildQuestions(string loai)
         {
-            _maTran.Clos.Remove(x);
-            _isValidated = false; // Reset validation khi thay đổi
+            return _countChildQuestionTypes.Contains(loai);
         }
 
-        protected void AddQuestionType() => _maTran.QuestionTypes.Add(new QuestionTypeDto { Loai = "TN", Num = 0 });
-        protected void RemoveQuestionType(QuestionTypeDto x)
+        /// <summary>
+        /// Lấy màu cho icon info dựa trên loại câu hỏi
+        /// </summary>
+        protected Color GetQuestionTypeInfoColor(string loai)
         {
-            _maTran.QuestionTypes.Remove(x);
+            return IsCountingChildQuestions(loai) ? Color.Warning : Color.Info;
+        }
+
+        #endregion
+
+        #region Ma trận toàn đề
+
+        protected int GetMatrixValue(int clo, string loai)
+        {
+            return _matrixData.TryGetValue((clo, loai), out var val) ? val : 0;
+        }
+
+        protected void SetMatrixValue(int clo, string loai, int value)
+        {
+            _matrixData[(clo, loai)] = value;
             _isValidated = false;
+            UpdateMaTranFromMatrix();
+            StateHasChanged();
         }
 
-        protected void AddPart()
+        protected void AddClo()
         {
-            var newPart = new PartDto
+            var nextClo = _matrixClos.Any() ? _matrixClos.Max() + 1 : 1;
+            if (nextClo <= 5) // Giới hạn CLO từ 1-5
             {
-                MaPhan = Guid.NewGuid(),
-                NumQuestions = 0,
-                Clos = new List<CloDto> { new() { Clo = 1, Num = 0 } },
-                QuestionTypes = new List<QuestionTypeDto> { new() { Loai = "TN", Num = 0 } }
-            };
-            _maTran.Parts.Add(newPart);
-            _selectedPartIds.Add(newPart.MaPhan);
-            _isValidated = false;
+                _matrixClos.Add(nextClo);
+                foreach (var loai in _questionTypes.Keys)
+                {
+                    _matrixData[(nextClo, loai)] = 0;
+                }
+                _isValidated = false;
+                StateHasChanged();
+            }
+            else
+            {
+                Snackbar.Add("CLO tối đa là 5!", Severity.Warning);
+            }
         }
 
-        protected void RemovePart(PartDto part)
+        protected void RemoveCloCloumn(int clo)
         {
-            _maTran.Parts.Remove(part);
-            _selectedPartIds.Remove(part.MaPhan);
+            if (_matrixClos.Count <= 1)
+            {
+                Snackbar.Add("Phải có ít nhất 1 CLO!", Severity.Warning);
+                return;
+            }
+
+            _matrixClos.Remove(clo);
+            foreach (var loai in _questionTypes.Keys)
+            {
+                _matrixData.Remove((clo, loai));
+            }
+            _isValidated = false;
+            UpdateMaTranFromMatrix();
+            StateHasChanged();
+        }
+
+        protected int GetRowTotal(string loai)
+        {
+            return _matrixClos.Sum(clo => GetMatrixValue(clo, loai));
+        }
+
+        /// <summary>
+        /// Lấy tổng số câu hỏi thực tế của một loại (đã nhân với số câu con nếu là NH/TL)
+        /// </summary>
+        protected int GetRowTotalWithChildren(string loai)
+        {
+            var rawTotal = GetRowTotal(loai);
+            if (IsCountingChildQuestions(loai))
+            {
+                var childCount = GetChildQuestionCount(loai);
+                return rawTotal * childCount;
+            }
+            return rawTotal;
+        }
+
+        protected int GetColumnTotal(int clo)
+        {
+            return _questionTypes.Keys.Sum(loai => GetMatrixValue(clo, loai));
+        }
+
+        /// <summary>
+        /// Lấy tổng số câu hỏi thực tế của một CLO (đã tính số câu con)
+        /// </summary>
+        protected int GetColumnTotalWithChildren(int clo)
+        {
+            return _questionTypes.Keys.Sum(loai =>
+            {
+                var value = GetMatrixValue(clo, loai);
+                if (IsCountingChildQuestions(loai))
+                {
+                    return value * GetChildQuestionCount(loai);
+                }
+                return value;
+            });
+        }
+
+        /// <summary>
+        /// Lấy tổng số câu hỏi gốc (chưa tính câu con)
+        /// </summary>
+        protected int GetGrandTotal()
+        {
+            return _matrixData.Values.Sum();
+        }
+
+        /// <summary>
+        /// Lấy tổng số câu hỏi thực tế (đã tính câu con cho NH/TL)
+        /// </summary>
+        protected int GetGrandTotalWithChildren()
+        {
+            return _questionTypes.Keys.Sum(loai => GetRowTotalWithChildren(loai));
+        }
+
+        /// <summary>
+        /// Lấy số câu con cho loại câu hỏi
+        /// </summary>
+        protected int GetChildQuestionCount(string loai)
+        {
+            return _childQuestionCounts.TryGetValue(loai, out var count) ? count : 1;
+        }
+
+        /// <summary>
+        /// Đặt số câu con cho loại câu hỏi
+        /// </summary>
+        protected void SetChildQuestionCount(string loai, int count)
+        {
+            if (count < 1) count = 1;
+            _childQuestionCounts[loai] = count;
             _isValidated = false;
             StateHasChanged();
         }
 
-        private void UpdateMaTranParts()
+        private void UpdateMaTranFromMatrix()
         {
-            var toRemove = _maTran.Parts.Where(p => !_selectedPartIds.Contains(p.MaPhan)).ToList();
-            foreach (var p in toRemove) _maTran.Parts.Remove(p);
-
-            foreach (var id in _selectedPartIds)
-            {
-                if (!_maTran.Parts.Any(p => p.MaPhan == id))
+            // Cập nhật _maTran từ ma trận
+            _maTran.Clos = _matrixClos
+                .Select(clo => new CloDto
                 {
-                    _maTran.Parts.Add(new PartDto
-                    {
-                        MaPhan = id,
-                        NumQuestions = 0,
-                        Clos = new() { new CloDto { Clo = 1, Num = 0 } },
-                        QuestionTypes = new() { new QuestionTypeDto { Loai = "TN", Num = 0 } }
-                    });
+                    Clo = clo,
+                    Num = GetColumnTotal(clo)
+                })
+                .Where(c => c.Num > 0)
+                .ToList();
+
+            _maTran.QuestionTypes = _questionTypes.Keys
+                .Select(loai => new QuestionTypeDto
+                {
+                    Loai = loai,
+                    Num = GetRowTotal(loai)
+                })
+                .Where(q => q.Num > 0)
+                .ToList();
+
+            _maTran.TotalQuestions = GetGrandTotal();
+        }
+
+        #endregion
+
+        #region Ma trận theo phần
+
+        protected List<int> GetPartClos(PartDto part)
+        {
+            if (!_partClos.ContainsKey(part.MaPhan))
+            {
+                _partClos[part.MaPhan] = new List<int> { 1, 2, 3 };
+            }
+            return _partClos[part.MaPhan];
+        }
+
+        protected void AddPartClo(PartDto part)
+        {
+            var clos = GetPartClos(part);
+            var nextClo = clos.Any() ? clos.Max() + 1 : 1;
+            if (nextClo <= 5)
+            {
+                clos.Add(nextClo);
+                if (!_partMatrixData.ContainsKey(part.MaPhan))
+                {
+                    _partMatrixData[part.MaPhan] = new Dictionary<(int clo, string loai), int>();
+                }
+                foreach (var loai in _questionTypes.Keys)
+                {
+                    _partMatrixData[part.MaPhan][(nextClo, loai)] = 0;
+                }
+                _isValidated = false;
+                StateHasChanged();
+            }
+            else
+            {
+                Snackbar.Add("CLO tối đa là 5!", Severity.Warning);
+            }
+        }
+
+        protected void RemovePartClo(PartDto part, int clo)
+        {
+            var clos = GetPartClos(part);
+            if (clos.Count <= 1)
+            {
+                Snackbar.Add("Phải có ít nhất 1 CLO!", Severity.Warning);
+                return;
+            }
+
+            clos.Remove(clo);
+            if (_partMatrixData.ContainsKey(part.MaPhan))
+            {
+                foreach (var loai in _questionTypes.Keys)
+                {
+                    _partMatrixData[part.MaPhan].Remove((clo, loai));
                 }
             }
             _isValidated = false;
+            UpdatePartMaTranFromMatrix(part);
             StateHasChanged();
         }
 
-        protected async Task OnPartSelectionChanged(IEnumerable<Guid> selectedIds)
+        protected int GetPartMatrixValue(PartDto part, int clo, string loai)
         {
-            _selectedPartIds = selectedIds?.ToHashSet() ?? new HashSet<Guid>();
-            UpdateMaTranParts();
+            if (_partMatrixData.TryGetValue(part.MaPhan, out var matrix))
+            {
+                return matrix.TryGetValue((clo, loai), out var val) ? val : 0;
+            }
+            return 0;
         }
+
+        protected void SetPartMatrixValue(PartDto part, int clo, string loai, int value)
+        {
+            if (!_partMatrixData.ContainsKey(part.MaPhan))
+            {
+                _partMatrixData[part.MaPhan] = new Dictionary<(int clo, string loai), int>();
+            }
+            _partMatrixData[part.MaPhan][(clo, loai)] = value;
+            _isValidated = false;
+            UpdatePartMaTranFromMatrix(part);
+            StateHasChanged();
+        }
+
+        protected int GetPartRowTotal(PartDto part, string loai)
+        {
+            var clos = GetPartClos(part);
+            return clos.Sum(clo => GetPartMatrixValue(part, clo, loai));
+        }
+
+        /// <summary>
+        /// Lấy tổng số câu hỏi thực tế của một loại trong phần (đã nhân với số câu con nếu là NH/TL)
+        /// </summary>
+        protected int GetPartRowTotalWithChildren(PartDto part, string loai)
+        {
+            var rawTotal = GetPartRowTotal(part, loai);
+            if (IsCountingChildQuestions(loai))
+            {
+                return rawTotal * GetChildQuestionCount(loai);
+            }
+            return rawTotal;
+        }
+
+        protected int GetPartColumnTotal(PartDto part, int clo)
+        {
+            return _questionTypes.Keys.Sum(loai => GetPartMatrixValue(part, clo, loai));
+        }
+
+        /// <summary>
+        /// Lấy tổng số câu hỏi thực tế của một CLO trong phần (đã tính số câu con)
+        /// </summary>
+        protected int GetPartColumnTotalWithChildren(PartDto part, int clo)
+        {
+            return _questionTypes.Keys.Sum(loai =>
+            {
+                var value = GetPartMatrixValue(part, clo, loai);
+                if (IsCountingChildQuestions(loai))
+                {
+                    return value * GetChildQuestionCount(loai);
+                }
+                return value;
+            });
+        }
+
+        protected int GetPartTotal(PartDto part)
+        {
+            if (_partMatrixData.TryGetValue(part.MaPhan, out var matrix))
+            {
+                return matrix.Values.Sum();
+            }
+            return 0;
+        }
+
+        /// <summary>
+        /// Lấy tổng số câu hỏi thực tế của phần (đã tính câu con cho NH/TL)
+        /// </summary>
+        protected int GetPartTotalWithChildren(PartDto part)
+        {
+            return _questionTypes.Keys.Sum(loai => GetPartRowTotalWithChildren(part, loai));
+        }
+
+        protected int GetAllPartsTotal()
+        {
+            return _maTran.Parts?.Sum(p => GetPartTotal(p)) ?? 0;
+        }
+
+        /// <summary>
+        /// Lấy tổng số câu hỏi thực tế của tất cả các phần (đã tính câu con cho NH/TL)
+        /// </summary>
+        protected int GetAllPartsTotalWithChildren()
+        {
+            return _maTran.Parts?.Sum(p => GetPartTotalWithChildren(p)) ?? 0;
+        }
+
+        private void UpdatePartMaTranFromMatrix(PartDto part)
+        {
+            var clos = GetPartClos(part);
+
+            part.Clos = clos
+                .Select(clo => new CloDto
+                {
+                    Clo = clo,
+                    Num = GetPartColumnTotal(part, clo)
+                })
+                .Where(c => c.Num > 0)
+                .ToList();
+
+            part.QuestionTypes = _questionTypes.Keys
+                .Select(loai => new QuestionTypeDto
+                {
+                    Loai = loai,
+                    Num = GetPartRowTotal(part, loai)
+                })
+                .Where(q => q.Num > 0)
+                .ToList();
+
+            part.NumQuestions = GetPartTotal(part);
+            _maTran.TotalQuestions = GetAllPartsTotal();
+        }
+
+        #endregion
+
+        #region Event Handlers
+
         protected async Task OnMonHocChanged(Guid maMonHoc)
         {
-
             _model.MaMonHoc = maMonHoc;
 
-            // RESET HOÀN TOÀN KHI ĐỔI MÔN – BẮT BUỘC PHẢI LÀM THẾ NÀY
+            // Reset hoàn toàn
             _maTran = new MaTranDto
             {
-                TotalQuestions = 10,
+                TotalQuestions = 0,
                 CloPerPart = false,
                 Clos = new List<CloDto>(),
                 QuestionTypes = new List<QuestionTypeDto>(),
@@ -178,6 +495,10 @@ namespace FEQuestionBank.Client.Pages.DeThi
 
             _selectedPartIds = new HashSet<Guid>();
             _availableParts = new List<PhanDto>();
+            _matrixData = new Dictionary<(int clo, string loai), int>();
+            _partMatrixData = new Dictionary<Guid, Dictionary<(int clo, string loai), int>>();
+            _partClos = new Dictionary<Guid, List<int>>();
+            _matrixClos = new List<int> { 1, 2, 3 };
             _isValidated = false;
             _validationMessage = null;
 
@@ -197,45 +518,187 @@ namespace FEQuestionBank.Client.Pages.DeThi
                     .ThenBy(p => p.NgayTao)
                     .ToList();
 
-                Snackbar.Add($"Đã tải {_availableParts.Count} phần.", Severity.Info);
-                
+                Snackbar.Add($"Đã tải {_availableParts.Count} chương/phần.", Severity.Info);
             }
             else
             {
-                Snackbar.Add("Môn này chưa có phần → Tự động dùng chế độ toàn đề.", Severity.Info);
+                Snackbar.Add("Môn này chưa có chương/phần → Dùng chế độ toàn đề.", Severity.Info);
             }
 
-            // TẠO LẠI DỮ LIỆU MẶC ĐỊNH CHO CHẾ ĐỘ TOÀN ĐỀ
-            AddClo();
-            AddQuestionType();
-
+            InitializeDefaultMatrix();
             StateHasChanged();
         }
 
-        // Bước 3: Xem trước ma trận
+        protected void OnCloPerPartChanged(bool newValue)
+        {
+            if (newValue && (!_availableParts?.Any() ?? true))
+            {
+                Snackbar.Add("Môn này chưa có chương/phần nào → Tự động dùng chế độ toàn đề.", Severity.Info);
+                _maTran.CloPerPart = false;
+                return;
+            }
+
+            _maTran.CloPerPart = newValue;
+
+            if (newValue)
+            {
+                // Chuyển sang theo phần
+                _maTran.Clos?.Clear();
+                _maTran.QuestionTypes?.Clear();
+                _matrixData.Clear();
+
+                if (_selectedPartIds.Any())
+                {
+                    UpdateMaTranParts();
+                }
+            }
+            else
+            {
+                // Chuyển về toàn đề
+                _maTran.Parts?.Clear();
+                _selectedPartIds.Clear();
+                _partMatrixData.Clear();
+                _partClos.Clear();
+                _matrixClos = new List<int> { 1, 2, 3 };
+                InitializeDefaultMatrix();
+            }
+
+            _isValidated = false;
+            _validationMessage = null;
+            StateHasChanged();
+        }
+
+        protected async Task OnPartSelectionChanged(IEnumerable<Guid> selectedIds)
+        {
+            _selectedPartIds = selectedIds?.ToHashSet() ?? new HashSet<Guid>();
+            UpdateMaTranParts();
+        }
+
+        private void UpdateMaTranParts()
+        {
+            var toRemove = _maTran.Parts?.Where(p => !_selectedPartIds.Contains(p.MaPhan)).ToList() ?? new();
+            foreach (var p in toRemove)
+            {
+                _maTran.Parts?.Remove(p);
+                _partMatrixData.Remove(p.MaPhan);
+                _partClos.Remove(p.MaPhan);
+            }
+
+            foreach (var id in _selectedPartIds)
+            {
+                if (_maTran.Parts?.Any(p => p.MaPhan == id) != true)
+                {
+                    var newPart = new PartDto
+                    {
+                        MaPhan = id,
+                        NumQuestions = 0,
+                        Clos = new List<CloDto>(),
+                        QuestionTypes = new List<QuestionTypeDto>()
+                    };
+                    _maTran.Parts?.Add(newPart);
+
+                    // Khởi tạo ma trận cho phần mới
+                    _partClos[id] = new List<int> { 1, 2, 3 };
+                    _partMatrixData[id] = new Dictionary<(int clo, string loai), int>();
+                    foreach (var clo in _partClos[id])
+                    {
+                        foreach (var loai in _questionTypes.Keys)
+                        {
+                            _partMatrixData[id][(clo, loai)] = 0;
+                        }
+                    }
+                }
+            }
+
+            _isValidated = false;
+            StateHasChanged();
+        }
+
+        protected void RemovePart(PartDto part)
+        {
+            _maTran.Parts?.Remove(part);
+            _selectedPartIds.Remove(part.MaPhan);
+            _partMatrixData.Remove(part.MaPhan);
+            _partClos.Remove(part.MaPhan);
+            _isValidated = false;
+            StateHasChanged();
+        }
+
+        protected void ResetPage()
+        {
+            _selectedPartIds.Clear();
+            _maTran.Parts?.Clear();
+            _maTran.CloPerPart = false;
+            _maTran.Clos?.Clear();
+            _maTran.QuestionTypes?.Clear();
+            _matrixData.Clear();
+            _partMatrixData.Clear();
+            _partClos.Clear();
+            _matrixClos = new List<int> { 1, 2, 3 };
+            _isValidated = false;
+            _validationMessage = null;
+            InitializeDefaultMatrix();
+            StateHasChanged();
+        }
+
+        #endregion
+
+        #region Helpers
+
+        protected Color GetQuestionTypeColor(string loai)
+        {
+            return loai switch
+            {
+                "NH" => Color.Warning,
+                "TL" => Color.Primary,
+                "TN" => Color.Success,
+                "MN" => Color.Info,
+                "GN" => Color.Secondary,
+                "DT" => Color.Tertiary,
+                _ => Color.Default
+            };
+        }
+
+        protected string GetQuestionTypeTooltip(string loai)
+        {
+            return loai switch
+            {
+                "NH" => "Câu hỏi nhóm: Nhập TỔNG SỐ CÂU HỎI CON + SỐ CÂU ĐƠN trong các nhóm. Hệ thống sẽ chọn các nhóm câu hỏi phù hợp.",
+                "TL" => "Tự luận: Nhập TỔNG SỐ CÂU HỎI CON trong các câu hỏi cha TL. Hệ thống sẽ chọn các câu cha có đủ số câu con.",
+                "TN" => "Trắc nghiệm 1 đáp án: Mỗi câu hỏi tính là 1. Nhập số lượng câu hỏi cần rút trích.",
+                "MN" => "Trắc nghiệm nhiều đáp án: Mỗi câu hỏi tính là 1. Nhập số lượng câu hỏi cần rút trích.",
+                "GN" => "Ghép nối: Mỗi câu hỏi tính là 1. Nhập số lượng câu hỏi cần rút trích.",
+                "DT" => "Điền từ: Mỗi câu hỏi tính là 1. Nhập số lượng câu hỏi cần rút trích.",
+                _ => ""
+            };
+        }
+
+        #endregion
+
+        #region Actions
+
         protected async Task XemTruocMaTran()
         {
-            var json = System.Text.Json.JsonSerializer.Serialize(_maTran, new System.Text.Json.JsonSerializerOptions 
-            { 
+            // Cập nhật ma trận trước khi xem
+            if (!_maTran.CloPerPart)
+            {
+                UpdateMaTranFromMatrix();
+            }
+
+            var json = System.Text.Json.JsonSerializer.Serialize(_maTran, new System.Text.Json.JsonSerializerOptions
+            {
                 WriteIndented = true,
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             });
 
-            var parameters = new DialogParameters
+            var options = new DialogOptions
             {
-                ["ContentText"] = json,
-                ["ButtonText"] = "Đóng",
-                ["Color"] = Color.Primary
-            };
-
-            var options = new DialogOptions 
-            { 
                 MaxWidth = MaxWidth.Medium,
                 CloseButton = true
             };
 
             await DialogService.ShowMessageBox(
-                "Xem trước ma trận (JSON)", 
+                "Xem trước ma trận (JSON)",
                 (MarkupString)$"<pre style='background: #f5f5f5; padding: 16px; border-radius: 4px; overflow: auto; max-height: 60vh; font-size: 13px;'>{json}</pre>",
                 "Đóng",
                 null,
@@ -244,13 +707,18 @@ namespace FEQuestionBank.Client.Pages.DeThi
             );
         }
 
-        // Bước 4: Kiểm tra ma trận
         protected async Task KiemTraMaTran()
         {
             if (_model.MaMonHoc == Guid.Empty)
             {
                 Snackbar.Add("Vui lòng chọn môn học!", Severity.Warning);
                 return;
+            }
+
+            // Cập nhật ma trận trước khi kiểm tra
+            if (!_maTran.CloPerPart)
+            {
+                UpdateMaTranFromMatrix();
             }
 
             // Validate logic cơ bản
@@ -267,10 +735,9 @@ namespace FEQuestionBank.Client.Pages.DeThi
             try
             {
                 var res = await DeThiApi.CheckQuestionsAsync(_maTran, _model.MaMonHoc);
-    
+
                 _isValidated = res.Success;
 
-                // Trích thông điệp nếu res.Message chứa JSON
                 string messageToShow;
                 try
                 {
@@ -279,20 +746,18 @@ namespace FEQuestionBank.Client.Pages.DeThi
                 }
                 catch
                 {
-                    // Nếu không phải JSON thì dùng thẳng
                     messageToShow = res.Message ?? "Ma trận không hợp lệ!";
                 }
 
                 _validationMessage = messageToShow;
 
-                // Hiển thị kết quả kiểm tra
                 if (res.Success)
                 {
-                    Snackbar.Add($" {messageToShow}", Severity.Success);
+                    Snackbar.Add($"✓ {messageToShow}", Severity.Success);
                 }
                 else
                 {
-                    Snackbar.Add($"{messageToShow}", Severity.Error);
+                    Snackbar.Add($"✗ {messageToShow}", Severity.Error);
                 }
             }
             catch (Exception ex)
@@ -313,161 +778,60 @@ namespace FEQuestionBank.Client.Pages.DeThi
 
             if (!_maTran.CloPerPart)
             {
-                // Kiểm tra chế độ toàn đề
-                if (_maTran.TotalQuestions <= 0)
+                var total = GetGrandTotal();
+                if (total <= 0)
                 {
-                    errorMessage = "Tổng số câu hỏi phải lớn hơn 0";
+                    errorMessage = "Tổng số câu hỏi phải lớn hơn 0. Hãy nhập số lượng vào các ô trong ma trận.";
                     return false;
                 }
 
-                if (!_maTran.Clos.Any())
+                // Kiểm tra có ít nhất 1 CLO có giá trị
+                bool hasClolValue = _matrixClos.Any(clo => GetColumnTotal(clo) > 0);
+                if (!hasClolValue)
                 {
-                    errorMessage = "Vui lòng thêm ít nhất một CLO";
+                    errorMessage = "Vui lòng nhập số câu hỏi cho ít nhất 1 CLO";
                     return false;
                 }
 
-                if (!_maTran.QuestionTypes.Any())
+                // Kiểm tra có ít nhất 1 loại câu hỏi có giá trị
+                bool hasTypeValue = _questionTypes.Keys.Any(loai => GetRowTotal(loai) > 0);
+                if (!hasTypeValue)
                 {
-                    errorMessage = "Vui lòng thêm ít nhất một loại câu hỏi";
+                    errorMessage = "Vui lòng nhập số câu hỏi cho ít nhất 1 loại câu hỏi";
                     return false;
-                }
-
-                // Kiểm tra mỗi CLO và loại câu hỏi có giá trị hợp lệ
-                foreach (var clo in _maTran.Clos)
-                {
-                    if (clo.Clo < 1 || clo.Clo > 5)
-                    {
-                        errorMessage = $"CLO phải từ 1 đến 5";
-                        return false;
-                    }
-                    if (clo.Num <= 0)
-                    {
-                        errorMessage = $"Số câu hỏi cho CLO {clo.Clo} phải lớn hơn 0";
-                        return false;
-                    }
-                }
-
-                foreach (var qt in _maTran.QuestionTypes)
-                {
-                    if (qt.Num <= 0)
-                    {
-                        errorMessage = $"Số câu hỏi cho loại {qt.Loai} phải lớn hơn 0";
-                        return false;
-                    }
                 }
             }
             else
             {
-                // Kiểm tra chế độ theo phần
-                if (!_maTran.Parts.Any())
+                if (_maTran.Parts == null || !_maTran.Parts.Any())
                 {
-                    errorMessage = "Vui lòng chọn ít nhất một phần";
+                    errorMessage = "Vui lòng chọn ít nhất một chương/phần";
                     return false;
                 }
 
-                if (_maTran.TotalQuestions <= 0)
+                var allPartsTotal = GetAllPartsTotal();
+                if (allPartsTotal <= 0)
                 {
-                    errorMessage = "Tổng số câu hỏi phải lớn hơn 0";
+                    errorMessage = "Tổng số câu hỏi của tất cả các chương phải lớn hơn 0";
                     return false;
                 }
 
                 foreach (var part in _maTran.Parts)
                 {
-                    if (part.NumQuestions <= 0)
+                    var partTotal = GetPartTotal(part);
+                    if (partTotal <= 0)
                     {
-                        errorMessage = $"Số câu hỏi của phần phải lớn hơn 0";
+                        var phanInfo = _availableParts.FirstOrDefault(p => p.MaPhan == part.MaPhan);
+                        var tenPhan = phanInfo?.TenPhan ?? "Chương";
+                        errorMessage = $"Chương '{tenPhan}' phải có ít nhất 1 câu hỏi";
                         return false;
-                    }
-
-                    if (!part.Clos.Any())
-                    {
-                        errorMessage = $"Phần phải có ít nhất một CLO";
-                        return false;
-                    }
-
-                    if (!part.QuestionTypes.Any())
-                    {
-                        errorMessage = $"Phần phải có ít nhất một loại câu hỏi";
-                        return false;
-                    }
-
-                    // Kiểm tra mỗi CLO và loại câu hỏi trong phần
-                    foreach (var clo in part.Clos)
-                    {
-                        if (clo.Clo < 1 || clo.Clo > 5)
-                        {
-                            errorMessage = $"CLO phải từ 1 đến 5";
-                            return false;
-                        }
-                        if (clo.Num <= 0)
-                        {
-                            errorMessage = $"Số câu hỏi cho CLO {clo.Clo} trong phần phải lớn hơn 0";
-                            return false;
-                        }
-                    }
-
-                    foreach (var qt in part.QuestionTypes)
-                    {
-                        if (qt.Num <= 0)
-                        {
-                            errorMessage = $"Số câu hỏi cho loại {qt.Loai} trong phần phải lớn hơn 0";
-                            return false;
-                        }
                     }
                 }
             }
 
             return true;
         }
-        
-        protected string GetQuestionTypeLabel(string loai)
-        {
-            return loai switch
-            {
-                "TN" => "Số câu hỏi cha",
-                "MN" => "Số câu hỏi cha",
-                "DT" => "Số câu hỏi cha",
-                "GN" => "Số câu hỏi cha",
-                "TL" => "Số câu hỏi con",
-                "NH" => "Số câu hỏi con",
-                _ => "Số câu"
-            };
-        }
-        
-        protected string GetQuestionTypeHelperText(string loai)
-        {
-            return loai switch
-            {
-                "TN" => "Đếm số câu hỏi cha (tự động lấy tất cả câu con)",
-                "MN" => "Đếm số câu hỏi cha (tự động lấy tất cả câu con)",
-                "DT" => "Đếm số câu hỏi cha (tự động lấy tất cả câu con)",
-                "GN" => "Đếm số câu hỏi cha (tự động lấy tất cả câu con)",
-                "TL" => "⚠ Đếm số CÂU HỎI CON (không phải câu cha). Hệ thống sẽ kiểm tra số câu hỏi con có sẵn.",
-                "NH" => "⚠ Đếm số CÂU HỎI CON (không phải câu cha). Hệ thống sẽ kiểm tra số câu hỏi con có sẵn.",
-                _ => ""
-            };
-        }
-        
-        protected string GetQuestionTypeTooltip(string loai)
-        {
-            return loai switch
-            {
-                "TN" => "Trắc nghiệm: Đếm số câu hỏi cha. Khi chọn câu hỏi cha, tất cả câu hỏi con sẽ tự động được thêm vào đề thi.",
-                "MN" => "Nhiều đáp án: Đếm số câu hỏi cha. Khi chọn câu hỏi cha, tất cả câu hỏi con sẽ tự động được thêm vào đề thi.",
-                "DT" => "Điền từ: Đếm số câu hỏi cha. Khi chọn câu hỏi cha, tất cả câu hỏi con sẽ tự động được thêm vào đề thi.",
-                "GN" => "Ghép nối: Đếm số câu hỏi cha. Khi chọn câu hỏi cha, tất cả câu hỏi con sẽ tự động được thêm vào đề thi.",
-                "TL" => "Tự luận: ⚠ QUAN TRỌNG - Đếm TỔNG SỐ CÂU HỎI CON trong các câu hỏi cha TL (KHÔNG đếm câu hỏi cha). Hệ thống sẽ kiểm tra số câu hỏi con có sẵn trước khi rút trích. Khi chọn câu hỏi cha, tất cả câu hỏi con sẽ tự động được thêm vào đề thi.",
-                "NH" => "Nhóm: ⚠ QUAN TRỌNG - Đếm TỔNG SỐ CÂU HỎI CON trong các câu hỏi cha NH (KHÔNG đếm câu hỏi cha). Hệ thống sẽ kiểm tra số câu hỏi con có sẵn trước khi rút trích. Khi chọn câu hỏi cha, tất cả câu hỏi con sẽ tự động được thêm vào đề thi.",
-                _ => ""
-            };
-        }
-        
-        protected Color GetQuestionTypeHelperColor(string loai)
-        {
-            return (loai == "TL" || loai == "NH") ? Color.Warning : Color.Default;
-        }
 
-        // Bước 6: Rút trích đề thi (chỉ khi đã validate thành công)
         protected async Task RutTrichDeThi()
         {
             if (!_isValidated)
@@ -492,12 +856,12 @@ namespace FEQuestionBank.Client.Pages.DeThi
 
                 if (res.Success && res.Data?.MaDeThi != Guid.Empty)
                 {
-                    Snackbar.Add($" Rút trích thành công! Đề: {res.Data.TenDeThi}", Severity.Success);
+                    Snackbar.Add($"✓ Rút trích thành công! Đề: {res.Data.TenDeThi}", Severity.Success);
                     Navigation.NavigateTo($"/dethi/{res.Data.MaDeThi}");
                 }
                 else
                 {
-                    Snackbar.Add($" {res.Message ?? "Lỗi khi rút trích!"}", Severity.Error);
+                    Snackbar.Add($"✗ {res.Message ?? "Lỗi khi rút trích!"}", Severity.Error);
                 }
             }
             catch (Exception ex)
@@ -511,79 +875,6 @@ namespace FEQuestionBank.Client.Pages.DeThi
             }
         }
 
-        protected void OnMaTranChanged()
-        {
-            if (_maTran.CloPerPart)
-                _maTran.TotalQuestions = CalculatedTotalQuestions();
-            _isValidated = false; // Reset validation khi có thay đổi
-            StateHasChanged();
-        }
-        protected void OnCloPerPartChanged(bool newValue)
-        {
-            // Nếu muốn bật "Theo phần" nhưng môn hiện tại không có phần nào"
-            if (newValue && (!_availableParts?.Any() ?? true))
-            {
-                Snackbar.Add("Môn này chưa có phần nào → Tự động chuyển về chế độ rút trích toàn đề.", Severity.Info);
-                _maTran.CloPerPart = false;
-                InitializeDefaultData();
-            }
-            else
-            {
-                _maTran.CloPerPart = newValue;
-
-                if (newValue)
-                {
-                    // Chuyển sang theo phần
-                    _maTran.Clos.Clear();
-                    _maTran.QuestionTypes.Clear();
-
-                    if (_selectedPartIds.Any())
-                    {
-                        UpdateMaTranParts();
-                    }
-                    // Nếu không có phần nào thì vẫn cho dùng (rút từ toàn bộ ngân hàng)
-                    else if (!_availableParts.Any())
-                    {
-                        Snackbar.Add("Chưa có phần nào. Ma trận sẽ áp dụng cho toàn bộ câu hỏi trong môn.", Severity.Info);
-                    }
-                }
-                else
-                {
-                    // Chuyển về toàn đề
-                    _maTran.Parts.Clear();
-                    _selectedPartIds.Clear();
-                    InitializeDefaultData();
-                }
-            }
-
-            _isValidated = false;
-            _validationMessage = null;
-            OnMaTranChanged();
-            StateHasChanged();
-        }
-        protected void ResetPage()
-        {
-            // Xóa phần chọn
-            _selectedPartIds.Clear();
-
-            // Xóa ma trận theo phần
-            _maTran.Parts.Clear();
-
-            // Nếu đang theo phần, chuyển về toàn đề
-            _maTran.CloPerPart = false;
-
-            // Reset CLO và QuestionTypes mặc định
-            _maTran.Clos.Clear();
-            _maTran.QuestionTypes.Clear();
-            AddClo();
-            AddQuestionType();
-
-            // Reset validation và message
-            _isValidated = false;
-            _validationMessage = null;
-
-            StateHasChanged();
-        }
-
+        #endregion
     }
 }
