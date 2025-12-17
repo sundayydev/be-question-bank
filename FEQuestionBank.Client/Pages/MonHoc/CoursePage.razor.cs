@@ -43,7 +43,30 @@ namespace FEQuestionBank.Client.Pages.MonHoc
 
         protected override async Task OnInitializedAsync()
         {
+            await LoadKhoasAsync();
             await LoadAllMonHocsForInfoCardAsync();
+        }
+
+        private async Task LoadKhoasAsync()
+        {
+            try
+            {
+                var response = await KhoaApiClient.GetAllKhoasAsync(); // Giả sử có method này
+                if (response.Success && response.Data != null)
+                {
+                    Khoas = response.Data;
+                }
+                else
+                {
+                    Snackbar.Add("Không tải được danh sách khoa", Severity.Warning);
+                    Khoas = new List<KhoaDto>();
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Lỗi tải danh sách khoa: {ex.Message}", Severity.Error);
+                Khoas = new List<KhoaDto>();
+            }
         }
         
         private async Task LoadAllMonHocsForInfoCardAsync()
