@@ -19,14 +19,17 @@
                       Required="true"
                       ErrorText="Tên môn học là bắt buộc" />
 
-        <MudSelect Label="Khoa" 
-                   @bind-Value="MonHoc.MaKhoa" 
+        <MudSelect T="Guid"
+                   Label="Khoa"
                    Variant="Variant.Outlined"
+                   @bind-Value="MonHoc.MaKhoa"
                    Required="true"
-                   ErrorText="Khoa là bắt buộc">
+                   RequiredError="Vui lòng chọn khoa!">
             @foreach (var khoa in Khoas)
             {
-                <MudSelectItem Value="@khoa.MaKhoa">@khoa.TenKhoa</MudSelectItem>
+                <MudSelectItem Value="@khoa.MaKhoa">
+                    @khoa.TenKhoa
+                </MudSelectItem>
             }
         </MudSelect>
 
