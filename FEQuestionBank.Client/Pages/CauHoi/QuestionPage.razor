@@ -349,20 +349,26 @@
                           Hover="true" Striped="true" Dense="true"
                           Loading="@LoadingGroup">
                     <HeaderContent>
-                        <MudTh Style="width: 30%;">Nội dung</MudTh>
+                        <MudTh Style="width: 20%;">Nội dung</MudTh>
                         <MudTh Style="width: 10%; text-align:center">Cấp độ</MudTh>
+                        <MudTh Style="width: 10%; text-align:center">Clo</MudTh>
                         <MudTh Style="width: 15%; text-align:center">Số câu con</MudTh>
                         <MudTh Style="width: 10%; text-align:center">Đã dùng</MudTh>
                         <MudTh Style="width: 15%; text-align:center">Ngày tạo</MudTh>
                         <MudTh Style="width: 20%; text-align:center">Thao tác</MudTh>
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd Style="width: 30%;">@((MarkupString)context.NoiDung?.Truncate(80))</MudTd>
+                        <MudTd Style="width: 20%;">@((MarkupString)context.NoiDung?.Truncate(80))</MudTd>
                         <MudTd Style="width: 10%; text-align:center">
                             <MudChip T="short" Size="Size.Small" Color="@GetLevelColor(context.CapDo)">
                                 Cấp @context.CapDo</MudChip>
                         </MudTd>
-                        <MudTd Style="width: 15%; text-align:center">
+ <MudTd Style="width: 10%; text-align:center">
+                            <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Style="width:50px;">
+                                @context.CLO
+                            </MudChip>
+                        </MudTd>
+                        <MudTd Style="width: 10%; text-align:center">
                             <MudChip T="string" Size="Size.Small"
                                      Color="Color.Secondary">@(context.SoCauHoiCon)</MudChip>
                         </MudTd>

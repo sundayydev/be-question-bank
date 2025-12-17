@@ -64,11 +64,7 @@
                 <!-- Thống kê -->
                 <MudPaper Class="pa-4 mt-4" Elevation="3" Style="border-radius: 10px">
                     <MudText Typo="Typo.h6" Class="mb-3">Thống kê câu hỏi</MudText>
-                    <MudText><strong>Tổng số câu hỏi:</strong> @(DeThi.SoCauHoi)</MudText>
-                    <MudText><strong>Tổng câu hỏi
-                            đơn:</strong> @(DeThi.ChiTietDeThis?.Count(c => c.CauHoi?.SoCauHoiCon == 0) ?? 0)</MudText>
-                    <MudText><strong>Tổng câu hỏi
-                            nhóm:</strong> @(DeThi.ChiTietDeThis?.Count(c => c.CauHoi?.SoCauHoiCon > 0) ?? 0)</MudText>
+                    <MudText><strong>Tổng số câu hỏi:</strong> @(DeThi.SoCauHoi ?? 0)</MudText>
                 </MudPaper>
             </MudItem>
 
@@ -214,35 +210,7 @@
                                             <MudText Typo="Typo.subtitle2" Color="Color.Primary">Tổng số câu hỏi
                                             </MudText>
                                             <MudText Typo="Typo.h5" Color="Color.Primary" Class="font-weight-bold">
-                                                @DeThi.SoCauHoi
-                                            </MudText>
-                                        </MudPaper>
-                                    </MudItem>
-
-                                    <!-- Tổng câu hỏi đơn -->
-                                    <MudItem xs="12" sm="4">
-                                        <MudPaper Class="pa-4" Elevation="0"
-                                                  Style=@($"border:1px solid {Colors.Green.Darken3};" +
-                                                  $" border-radius:12px;" +
-                                                  $" background-color:{Colors.Green.Lighten5};")>
-                                            <MudText Typo="Typo.subtitle2" Color="Color.Success">Tổng câu hỏi đơn
-                                            </MudText>
-                                            <MudText Typo="Typo.h5" Color="Color.Success" Class="font-weight-bold">
-                                                @(DeThi.ChiTietDeThis?.Count(c => c.CauHoi?.SoCauHoiCon == 0) ?? 0)
-                                            </MudText>
-                                        </MudPaper>
-                                    </MudItem>
-
-                                    <!-- Tổng câu hỏi nhóm -->
-                                    <MudItem xs="12" sm="4">
-                                        <MudPaper Class="pa-4" Elevation="0"
-                                                  Style=@($"border:1px solid {Colors.Red.Darken3};" +
-                                                  $" border-radius:12px;" +
-                                                  $" background-color:{Colors.Red.Lighten5};")>
-                                            <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Tổng câu hỏi nhóm
-                                            </MudText>
-                                            <MudText Typo="Typo.h5" Color="Color.Secondary" Class="font-weight-bold">
-                                                @(DeThi.ChiTietDeThis?.Count(c => c.CauHoi?.SoCauHoiCon > 0) ?? 0)
+                                                @(DeThi.SoCauHoi ?? 0)
                                             </MudText>
                                         </MudPaper>
                                     </MudItem>
