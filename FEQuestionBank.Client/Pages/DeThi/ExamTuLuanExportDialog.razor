@@ -1,0 +1,97 @@
+﻿@using FEQuestionBank.Client.Services
+@using MudBlazor
+@using BEQuestionBank.Shared.DTOs.DeThi
+@using FEQuestionBank.Client.Services.Interface
+@inject IKhoaApiClient KhoaApiClient
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.h6" Class="mb-4">Thông tin xuất đề thi tự luận</MudText>
+        <MudGrid Spacing="3">
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="Model.HocKy" Label="Học kỳ" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="Model.NamHoc" Label="Năm học" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudDatePicker @bind-Date="Model.NgayThi" Label="Ngày thi" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudNumericField T="int?" @bind-Value="Model.ThoiLuong" Label="Thời lượng (phút)" Variant="Variant.Outlined" />
+            </MudItem>
+
+            <!-- ComboBox Khoa -->
+            <MudItem xs="12">
+                <MudSelect T="Guid?" @bind-Value="Model.MaKhoa" Label="Khoa" Variant="Variant.Outlined" Dense="true"
+                           Disabled="@(!KhoaList.Any())">
+                    @if (!KhoaList.Any())
+                    {
+                        <MudSelectItem T="Guid?" Value="null">Đang tải...</MudSelectItem>
+                    }
+                    else
+                    {
+                        @foreach (var khoa in KhoaList)
+                        {
+                            <MudSelectItem T="Guid?" Value="@khoa.MaKhoa">@khoa.TenKhoa</MudSelectItem>
+                        }
+                    }
+                </MudSelect>
+            </MudItem>
+
+            <!-- Thông báo chỉ xuất Word -->
+            <MudItem xs="12">
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    Đề thi tự luận chỉ xuất dạng Word (.docx) với format LaTeX
+                </MudAlert>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="Submit" StartIcon="@Icons.Material.Filled.FileDownload">
+            Xuất Word
+        </MudButton>
+        <MudButton OnClick="Cancel" Class="ml-2">
+            Hủy
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public YeuCauXuatDeThiDto Model { get; set; } = new();
+
+    private List<KhoaDto> KhoaList = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var res = await KhoaApiClient.GetAllKhoasAsync();
+        if (res != null && res.Data != null)
+        {
+            KhoaList = res.Data;
+        }
+
+        // Set default values nếu chưa có
+        if (string.IsNullOrWhiteSpace(Model.NamHoc))
+        {
+            Model.NamHoc = $"{DateTime.Now.Year}-{DateTime.Now.Year + 1}";
+        }
+
+        if (!Model.ThoiLuong.HasValue)
+        {
+            Model.ThoiLuong = 90;
+        }
+
+        if (!Model.NgayThi.HasValue)
+        {
+            Model.NgayThi = DateTime.Today;
+        }
+    }
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(Model));
+    private void Cancel() => MudDialog.Cancel();
+}

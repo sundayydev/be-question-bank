@@ -437,29 +437,18 @@ public class DeThiController : ControllerBase
 
     [HttpPost("{id}/export-tuluan-word")]
     [SwaggerOperation("Xuất đề thi tự luận ra file Word")]
-    public async Task<IActionResult> ExportTuLuanWord(Guid id)
+    public async Task<IActionResult> ExportTuLuanWord(Guid id, [FromBody] YeuCauXuatDeThiDto request)
     {
-        try
-        {
-            // Gọi đúng service _tuLuanExportService thay vì _deThiService
-            var result = await _tuLuanExportService.ExportTuLuanToWordAsync(id);
+        request.MaDeThi = id;
+        var result = await _tuLuanExportService.ExportTuLuanToWordAsync(request);
 
-            if (!result.Success)
-            {
-                return BadRequest(ApiResponseFactory.ValidationError<object>(result.Message));
-            }
+        if (!result.Success)
+            return BadRequest(result.Message);
 
-            // Trả về file
-            return File(
-                result.FileStream,
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                result.FileName
-            );
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Lỗi xuất file word tự luận");
-            return StatusCode(500, ApiResponseFactory.ServerError("Lỗi server: " + ex.Message));
-        }
+        return File(
+            result.FileStream!,
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            result.FileName
+        );
     }
 }

@@ -1,12 +1,14 @@
 ﻿// UserProfile.razor.cs
 
 using BeQuestionBank.Shared.DTOs.Khoa;
-using BEQuestionBank.Shared.DTOs.user;
 using BeQuestionBank.Shared.Enums;
+using BEQuestionBank.Shared.DTOs.user;
+using FEQuestionBank.Client.Implementation;
 using FEQuestionBank.Client.Services;
 using FEQuestionBank.Client.Services.Interface;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using NPOI.SS.Formula.Functions;
 
 namespace FEQuestionBank.Client.Pages.Auth;
 
@@ -14,6 +16,10 @@ public partial class UserProfile : ComponentBase
 {
     [Inject] private IAuthApiClient AuthApi { get; set; } = default!;
     [Inject] protected IKhoaApiClient KhoaApiClient { get; set; } = default!;
+
+    [Inject] private IDialogService DialogService { get; set; } = default!;
+    [Inject] private NavigationManager Nav { get; set; } = default!;
+    [Inject] private CustomAuthStateProvider AuthState { get; set; } = default!;
     protected List<KhoaDto> Khoas { get; set; } = new();
 
     private NguoiDungDto? CurrentUser { get; set; }
@@ -78,7 +84,7 @@ public partial class UserProfile : ComponentBase
 
     private string GetTrangThaiText() => BiKhoa ? "Bị khóa" : "Hoạt động";
     private Color GetTrangThaiColor() => BiKhoa ? Color.Error : Color.Success;
-    
+
     // private async Task LoadKhoasAsync()
     // {
     //     try
@@ -99,4 +105,37 @@ public partial class UserProfile : ComponentBase
     //     var khoa = Khoas.Find(k => k.MaKhoa == maKhoa);
     //     return khoa?.TenKhoa ?? "Không xác định";
     // }
+
+    private async Task OpenChangePasswordDialog()
+    {
+        var model = new ChangePasswordDialog.ChangePasswordModel();
+        var parameters = new DialogParameters<ChangePasswordDialog>
+    {
+        { x => x.Model, model }
+    };
+
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<ChangePasswordDialog>("Đổi mật khẩu", parameters, options);
+        var result = await dialog.Result;
+
+        if (result.Canceled == false)
+        {
+            // Có thể refresh lại user nếu cần
+            await LoadCurrentUserAsync();
+        }
+    }
+
+    private async Task Logout()
+    {
+        await AuthState.MarkUserAsLoggedOut();
+        Nav.NavigateTo("/login", true);
+    }
+
 }

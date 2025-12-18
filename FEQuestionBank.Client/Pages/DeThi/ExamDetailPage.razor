@@ -32,6 +32,16 @@
                        "; border-radius:8px; height:42px; width:150px; text-transform:none; margin-left:10px;")>
                 Tải PDF
             </MudButton>
+
+            <!-- Nút Tải Tự Luận - màu xanh lá -->
+            <MudButton Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.Description"
+                       OnClick="OpenExportTuLuanDialog"
+                       Disabled="@(!IsTuLuanExam)"
+                       Style=@("color:white; background-color:" + (IsTuLuanExam ? Colors.Green.Darken3 : Colors.Gray.Default) +
+                       "; border-radius:8px; height:42px; width:150px; text-transform:none; margin-left:10px;")>
+                Tải Tự Luận
+            </MudButton>
         </div>
     </div>
 
@@ -52,6 +62,11 @@
                     <MudText Class="mt-2"><strong>Môn học:</strong> @DeThi.TenMonHoc</MudText>
                     <MudText Class="mt-2"><strong>Khoa:</strong> @DeThi.TenKhoa</MudText>
                     <MudText Class="mt-2"><strong>Ngày tạo:</strong> @DeThi.NgayTao.ToString("dd/MM/yyyy")</MudText>
+
+                    @if (IsTuLuanExam)
+                    {
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small" Class="mt-2">Đề thi tự luận</MudChip>
+                    }
 
                     <MudDivider Class="my-4"/>
 

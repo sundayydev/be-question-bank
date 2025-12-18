@@ -80,19 +80,25 @@ public class DeThiApiClient : BaseApiClient, IDeThiApiClient
             Data = data
         };
     }
+    
     public async Task<byte[]> ExportAsync(Guid id, YeuCauXuatDeThiDto request)
     {
         var response = await _httpClient.PostAsJsonAsync($"api/dethi/{id}/export", request);
-
         response.EnsureSuccessStatusCode();
-
         return await response.Content.ReadAsByteArrayAsync();
     }
+    
     public async Task<byte[]> ExportEzpAsync(Guid id, string password = "matkhau123")
     {
-        // Gọi endpoint export-ezp
         var url = $"api/dethi/{id}/export-ezp?password={Uri.EscapeDataString(password)}";
         var response = await _httpClient.PostAsync(url, null);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsByteArrayAsync();
+    }
+
+    public async Task<byte[]> ExportTuLuanWordAsync(Guid id, YeuCauXuatDeThiDto request)
+    {
+        var response = await _httpClient.PostAsJsonAsync($"api/dethi/{id}/export-tuluan-word", request);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsByteArrayAsync();
     }

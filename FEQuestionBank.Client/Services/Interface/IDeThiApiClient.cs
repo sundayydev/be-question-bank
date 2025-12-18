@@ -20,4 +20,5 @@ public interface IDeThiApiClient
     Task<ApiResponse<CheckQuestionResultDto>> CheckQuestionsAsync(MaTranDto maTran, Guid maMonHoc);
     Task<byte[]> ExportAsync(Guid id, YeuCauXuatDeThiDto request);
     Task<byte[]> ExportEzpAsync(Guid id, string password = "matkhau123");
+    Task<byte[]> ExportTuLuanWordAsync(Guid id, YeuCauXuatDeThiDto request);
 }
