@@ -59,10 +59,24 @@
                     <MudIcon Icon="@Icons.Material.Filled.History" Size="Size.Small" Class="me-2" />
                     Lịch sử
                 </MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="false">
-                    <MudIcon Icon="@Icons.Material.Filled.Settings" Size="Size.Small" />
-                    Cài đặt
-                </MudButton>
+
+                <MudMenu AnchorOrigin="Origin.BottomCenter"
+                         TransformOrigin="Origin.TopCenter"
+                         Icon="@Icons.Material.Filled.Settings"
+                         Color="Color.Primary"
+                         Variant="Variant.Outlined"
+                         Label="Cài đặt">
+
+                    <MudMenuItem OnClick="OpenChangePasswordDialog">
+                        <MudIcon Icon="@Icons.Material.Filled.Key" Class="me-2" />
+                        Đổi mật khẩu
+                    </MudMenuItem>
+
+                    <MudMenuItem OnClick="Logout" Class="text-danger">
+                        <MudIcon Icon="@Icons.Material.Filled.Logout" Class="me-2" />
+                        Đăng xuất
+                    </MudMenuItem>
+                </MudMenu>
             </div>
         </MudCardContent>
     </MudCard>

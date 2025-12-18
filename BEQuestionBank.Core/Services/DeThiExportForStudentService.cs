@@ -35,7 +35,7 @@ namespace BEQuestionBank.Core.Services
             _logger = logger;
         }
 
-       
+        
         public async Task<byte[]> ExportWordAsync(YeuCauXuatDeThiDto request)
         {
             var deThi = await _deThiRepository.GetFullForExportAsync(request.MaDeThi)
@@ -150,7 +150,7 @@ namespace BEQuestionBank.Core.Services
 
                     if (!m.Success) break;
 
-                    // Nếu có <br/> trước ảnh, tạo paragraph mới cho ảnh để xuống dòng
+                    
                     if (hasBrBefore && (m.Groups[1].Success || m.Groups[4].Success))
                     {
                         para = section.AddParagraph();
@@ -171,7 +171,7 @@ namespace BEQuestionBank.Core.Services
                         pic.TextWrappingStyle = TextWrappingStyle.Inline;
 
                         // Nếu có <br/> trước hoặc style có "display:block"/"margin:" thì tạo paragraph mới sau ảnh
-                        // để ảnh xuống dòng riêng (đã tạo paragraph mới trước ảnh ở trên nếu có <br/>)
+                        // để ảnh xuống dòng riêng 
                         bool shouldBeBlock = hasBrBefore ||
                                             style.Contains("display:block", StringComparison.OrdinalIgnoreCase) ||
                                             style.Contains("margin:", StringComparison.OrdinalIgnoreCase);
@@ -202,6 +202,8 @@ namespace BEQuestionBank.Core.Services
                         WMath wMath = new WMath(doc);
                         wMath.MathParagraph.LaTeX = latex;
                         para.ChildEntities.Add(wMath);
+
+
                     }
 
                     pos = m.Index + m.Length;
@@ -228,29 +230,38 @@ namespace BEQuestionBank.Core.Services
             // Decode các ký tự HTML như &nbsp;, &gt;, v.v.
             return System.Net.WebUtility.HtmlDecode(html).Trim();
         }
-        
 
-        
+
+
+
         public async Task<byte[]> ExportPdfAsync(YeuCauXuatDeThiDto request)
         {
             byte[] wordBytes = await ExportWordAsync(request);
+
             using var ms = new MemoryStream(wordBytes);
             using var doc = new WordDocument(ms, FormatType.Docx);
+            doc.UpdateDocumentFields();
             using var renderer = new DocIORenderer();
-            using PdfDocument pdf = renderer.ConvertToPDF(doc);
+            renderer.Settings.AutoTag = true;
+
+            PdfDocument pdf = renderer.ConvertToPDF(doc);
+
             using var output = new MemoryStream();
             pdf.Save(output);
+            pdf.Close(true);
+
             return output.ToArray();
         }
-        
 
-        #region Helpers
+
+
+
         private List<string> BuildQuestionLines(DeThi deThi, bool hoanVi)
         {
             var lines = new List<string>();
             int stt = 1;
             var groups = deThi.ChiTietDeThis?
-                .Where(x => x.CauHoi != null && x.CauHoi.MaCauHoiCha == null) // Chỉ lấy câu hỏi cha
+                .Where(x => x.CauHoi != null && x.CauHoi.MaCauHoiCha == null)
                 .OrderBy(x => x.ThuTu)
                 .GroupBy(x => x.Phan)
                 .OrderBy(g => g.First().Phan?.ThuTu ?? 0);
@@ -286,11 +297,10 @@ namespace BEQuestionBank.Core.Services
                         int startNum = stt;
                         int endNum = stt + childCount - 1;
                         
-                        // Đánh số trước câu hỏi cha: "1-3"
+                  
                         lines.Add($"{startNum}-{endNum}. {ch.NoiDung}");
                         lines.Add("");
                         
-                        // Đánh số và hiển thị các câu hỏi con: 1, 2, 3
                         int childStt = 1;
                         foreach (var child in children)
                         {
@@ -313,12 +323,12 @@ namespace BEQuestionBank.Core.Services
                             childStt++;
                         }
                     }
-                    // Xử lý câu hỏi TL (Tự luận) - hiển thị như bình thường
+                    
                     else if (ch.LoaiCauHoi == "TL")
                     {
                         lines.Add($"{stt:D2}. {ch.NoiDung}");
                         
-                        // Câu hỏi TL có thể có câu hỏi con (câu hỏi phụ)
+                        
                         if (ch.CauHoiCons != null && ch.CauHoiCons.Any())
                         {
                             var children = ch.CauHoiCons
@@ -336,7 +346,7 @@ namespace BEQuestionBank.Core.Services
                         lines.Add("");
                         stt++;
                     }
-                    // Xử lý các loại câu hỏi khác (TN, MN, DT, GN)
+                    
                     else
                     {
                         lines.Add($"{stt:D2}. {ch.NoiDung}");
@@ -375,11 +385,11 @@ namespace BEQuestionBank.Core.Services
             var obj = new { format = string.Join("\n", lines) };
             return JsonSerializer.Serialize(obj);
         }
-        #endregion
+        
     
 
 
-        #region EZP Export
+        
         public async Task<byte[]> ExportEzpAsync(YeuCauXuatDeThiDto request, string password)
         {
             // 1. Xuất Word trước
@@ -413,7 +423,7 @@ namespace BEQuestionBank.Core.Services
             cs.Close();
             return ms.ToArray();
         }
-        #endregion
+        
 
 
     }

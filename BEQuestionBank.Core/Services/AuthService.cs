@@ -218,7 +218,7 @@ public class AuthService
                 return false;
             }
 
-            user.MatKhau = HashPassword(newPassword);
+            user.MatKhau = newPassword;
             await _userService.UpdateAsync(userId, user);
 
             _logger.LogInformation("Đổi mật khẩu thành công cho user ID: {UserId}", userId);
