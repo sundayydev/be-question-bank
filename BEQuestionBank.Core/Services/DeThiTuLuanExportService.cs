@@ -241,11 +241,14 @@ namespace BEQuestionBank.Core.Services
             string cleaned = content;
             
             // Xóa các span wrapper HTML
-            cleaned = Regex.Replace(cleaned, @"<span[^>]*class=['""]math-display['""][^>]*>(.*?)</span>", "$1", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-            cleaned = Regex.Replace(cleaned, @"<span[^>]*class=['""]math-inline['""][^>]*>(.*?)</span>", "$1", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-            cleaned = Regex.Replace(cleaned, @"<span[^>]*class=['""]text-content['""][^>]*>(.*?)</span>", "$1", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            cleaned = Regex.Replace(cleaned, @"<span[^>]*class=['\""]math-display['\""][^>]*>(.*?)</span>", "$1", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            cleaned = Regex.Replace(cleaned, @"<span[^>]*class=['\""]math-inline['\""][^>]*>(.*?)</span>", "$1", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            cleaned = Regex.Replace(cleaned, @"<span[^>]*class=['\""]text-content['\""][^>]*>(.*?)</span>", "$1", RegexOptions.Singleline | RegexOptions.IgnoreCase);
             cleaned = Regex.Replace(cleaned, @"<span[^>]*>(.*?)</span>", "$1", RegexOptions.Singleline | RegexOptions.IgnoreCase);
             cleaned = Regex.Replace(cleaned, "<.*?>", string.Empty);
+
+            Console.WriteLine($"[DEBUG] Original: {content}");
+            Console.WriteLine($"[DEBUG] Cleaned: {cleaned}");
 
             // Bước 2: Detect pattern "...text: a) ... b) ..." 
             // Tìm vị trí của dấu hai chấm (":") trước câu a)
@@ -330,9 +333,16 @@ namespace BEQuestionBank.Core.Services
         {
             if (string.IsNullOrWhiteSpace(content)) return;
 
-            // Tìm LaTeX patterns
+            // Tìm LaTeX patterns: \[...\], \(...\), $$...$$, $...$
             var latexPattern = @"(\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)|\$\$[\s\S]*?\$\$|(?<!\$)\$(?!\$)[^\$]+?\$(?!\$))";
             var matches = Regex.Matches(content, latexPattern, RegexOptions.Singleline);
+
+            Console.WriteLine($"[DEBUG ProcessMixedContent] Input: {content}");
+            Console.WriteLine($"[DEBUG ProcessMixedContent] Found {matches.Count} LaTeX matches");
+            foreach (Match m in matches)
+            {
+                Console.WriteLine($"[DEBUG ProcessMixedContent] Match: {m.Value}");
+            }
 
             if (matches.Count == 0)
             {
@@ -368,7 +378,7 @@ namespace BEQuestionBank.Core.Services
                     }
                 }
 
-                // LaTeX - tạo WMath object
+                // LaTeX - tạo WMath object using AppendMath API
                 string latex = match.Value.Trim();
                 string pureLatex = StripLatexDelimiters(latex);
                 pureLatex = NormalizeLatex(pureLatex);
@@ -377,17 +387,20 @@ namespace BEQuestionBank.Core.Services
                 {
                     try
                     {
-                        WMath wMath = new WMath(paragraph.Document);
-                        paragraph.ChildEntities.Add(wMath);
-                        wMath.MathParagraph.LaTeX = pureLatex;
+                        Console.WriteLine($"[DEBUG WMath] Appending Math with LaTeX: '{pureLatex}'");
+                        // Use AppendMath API instead of WMath
+                        var math = paragraph.AppendMath(pureLatex);
+                        Console.WriteLine($"[DEBUG WMath] Successfully appended Math");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"[WMath ERROR] {ex.Message}");
+                        Console.WriteLine($"[WMath ERROR] {ex.GetType().Name}: {ex.Message}");
+                        Console.WriteLine($"[WMath ERROR] Stack: {ex.StackTrace}");
                         IWTextRange fallbackRange = paragraph.AppendText($" [{pureLatex}] ");
                         fallbackRange.CharacterFormat.TextColor = Color.Red;
                     }
                 }
+
 
                 currentIndex = match.Index + match.Length;
             }
@@ -413,65 +426,54 @@ namespace BEQuestionBank.Core.Services
             if (string.IsNullOrWhiteSpace(latex)) return string.Empty;
 
             string result = latex.Trim();
+            Console.WriteLine($"[DEBUG StripLatexDelimiters] Input: '{result}'");
 
-            if (result.StartsWith(@"\[") && result.EndsWith(@"\]"))
-                return result.Substring(2, result.Length - 4).Trim();
-            
-            if (result.StartsWith(@"\(") && result.EndsWith(@"\)"))
-                return result.Substring(2, result.Length - 4).Trim();
-            
-            if (result.StartsWith("$$") && result.EndsWith("$$") && result.Length > 4)
-                return result.Substring(2, result.Length - 4).Trim();
-            
-            if (result.StartsWith("$") && result.EndsWith("$") && result.Length > 2)
-                return result.Substring(1, result.Length - 2).Trim();
+            // Check for \[ ... \] (display math)
+            if (result.StartsWith("\\[") && result.EndsWith("\\]"))
+            {
+                var stripped = result.Substring(2, result.Length - 4).Trim();
+                Console.WriteLine($"[DEBUG StripLatexDelimiters] Stripped \\[...\\]: '{stripped}'");
+                return stripped;
+            }
 
+            // Check for \( ... \) (inline math)
+            if (result.StartsWith("\\(") && result.EndsWith("\\)"))
+            {
+                var stripped = result.Substring(2, result.Length - 4).Trim();
+                Console.WriteLine($"[DEBUG StripLatexDelimiters] Stripped \\(...\\): '{stripped}'");
+                return stripped;
+            }
+
+            // Check for $$ ... $$ (display math)
+            if (result.StartsWith("$$") && result.EndsWith("$$"))
+            {
+                var stripped = result.Substring(2, result.Length - 4).Trim();
+                Console.WriteLine($"[DEBUG StripLatexDelimiters] Stripped $$...$$: '{stripped}'");
+                return stripped;
+            }
+
+            // Check for $ ... $ (inline math)
+            if (result.StartsWith("$") && result.EndsWith("$"))
+            {
+                var stripped = result.Substring(1, result.Length - 2).Trim();
+                Console.WriteLine($"[DEBUG StripLatexDelimiters] Stripped $...$: '{stripped}'");
+                return stripped;
+            }
+
+            Console.WriteLine($"[DEBUG StripLatexDelimiters] No delimiter found, returning as-is");
             return result;
         }
 
-        private static string NormalizeLatex(string latex)
+
+
+       private static string NormalizeLatex(string latex)
         {
             if (string.IsNullOrWhiteSpace(latex)) return string.Empty;
 
             string result = latex;
 
-            // Fix 1: Xóa khoảng trắng ngay sau backslash
-            result = Regex.Replace(result, @"\\\s+", @"\");
-
-            // Fix 2: Thay \mathbit -> \mathbf
+            // Chỉ convert \mathbit -> \mathbf
             result = Regex.Replace(result, @"\\mathbit\s*\{([^}]*)\}", @"\mathbf{$1}", RegexOptions.IgnoreCase);
-
-            // Fix 3: Xóa multiple spaces
-            result = Regex.Replace(result, @"\s{2,}", " ");
-
-            // Fix 4: Chuẩn hóa spacing
-            result = result
-                .Replace("{ ", "{")
-                .Replace(" }", "}")
-                .Replace("( ", "(")
-                .Replace(" )", ")")
-                .Replace(" ^", "^")
-                .Replace(" _", "_");
-
-            // Fix 5: Chuẩn hóa mũ/chỉ số
-            result = Regex.Replace(result, @"\^\s*\{", "^{");
-            result = Regex.Replace(result, @"_\s*\{", "_{");
-
-            // Fix 6: Cân bằng ngoặc
-            int open = result.Count(c => c == '{');
-            int close = result.Count(c => c == '}');
-            if (close > open)
-            {
-                while (close > open && result.EndsWith("}"))
-                {
-                    result = result.Substring(0, result.Length - 1);
-                    close--;
-                }
-            }
-            else if (open > close)
-            {
-                result += new string('}', open - close);
-            }
 
             return result.Trim();
         }

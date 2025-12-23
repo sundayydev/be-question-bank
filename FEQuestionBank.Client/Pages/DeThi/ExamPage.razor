@@ -83,17 +83,19 @@
               @ref="table">
 
         <HeaderContent>
-            <MudTh Style="width:25%;"><MudTableSortLabel T="DeThiDto" SortBy="x => x.TenDeThi">Tên Đề Thi</MudTableSortLabel></MudTh>
-            <MudTh Style="width:15%;"><MudTableSortLabel T="DeThiDto" SortBy="x => x.SoCauHoi">Số Câu Hỏi</MudTableSortLabel></MudTh>
-            <MudTh Style="width:15%;"><MudTableSortLabel T="DeThiDto" SortBy="x => x.DaDuyet">Trạng Thái</MudTableSortLabel></MudTh>
+            <MudTh Style="width:20%;"><MudTableSortLabel T="DeThiDto" SortBy="x => x.TenDeThi">Tên Đề Thi</MudTableSortLabel></MudTh>
+            <MudTh Style="width:15%;"><MudTableSortLabel T="DeThiDto" SortBy="x => x.TenMonHoc">Môn Học</MudTableSortLabel></MudTh>
+            <MudTh Style="width:10%;"><MudTableSortLabel T="DeThiDto" SortBy="x => x.SoCauHoi">Số Câu Hỏi</MudTableSortLabel></MudTh>
+            <MudTh Style="width:10%;"><MudTableSortLabel T="DeThiDto" SortBy="x => x.DaDuyet">Trạng Thái</MudTableSortLabel></MudTh>
             <MudTh Style="width:20%;"><MudTableSortLabel T="DeThiDto" SortBy="x => x.NgayTao">Ngày Tạo</MudTableSortLabel></MudTh>
             <MudTh Style="width:25%; text-align:center;">Thao Tác</MudTh>
         </HeaderContent>
 
         <RowTemplate>
-            <MudTd Style="width:25%;">@context.TenDeThi</MudTd>
-            <MudTd Style="width:15%;">@context.SoCauHoi</MudTd>
-            <MudTd Style="width:15%;">
+            <MudTd Style="width:20%;">@context.TenDeThi</MudTd>
+            <MudTd Style="width:15%;">@context.TenMonHoc</MudTd>
+            <MudTd Style="width:10%;">@context.SoCauHoi</MudTd>
+            <MudTd Style="width:10%;">
                 <MudChip T="string"
                          Size="Size.Small"
                          Style="@(
@@ -114,6 +116,12 @@
                                Class="mx-1"
                                Style="@($"color:{Colors.Yellow.Darken2};")"
                                OnClick="@(() => Nav.NavigateTo($"/exams/{context.MaDeThi}"))"/>
+                <MudIconButton Icon="@Icons.Material.Filled.Download"
+                               Size="Size.Small"
+                               Class="mx-1"
+                               Style="@($"color:{Colors.Green.Darken2};")"
+                               Title="Tải file EZP"
+                               OnClick="@(() => OnDownloadEzp(context))"/>
                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Class="mx-1"
                                Color="Color.Error"
                                OnClick="() => OnConfirmDelete(context)"/>

@@ -153,18 +153,23 @@
                                             @if (ch.SoCauHoiCon > 0 && ch.CauHoiCons?.Any() == true)
                                             {
                                                 <div class="mt-4 pl-4">
-                                                    @foreach (var con in ch.CauHoiCons.OrderBy(c => c.MaSoCauHoi))
+                                                    @foreach (var (con, index) in ch.CauHoiCons.OrderBy(c => c.MaSoCauHoi).Select((c, i) => (c, i)))
                                                     {
+                                                        var subQuestionIndex = index + 1;
                                                         <div class="mb-6">
                                                             <!-- Số thứ tự và nội dung câu con -->
                                                             <div class="d-flex align-start gap-3 mb-3">
                                                                 <MudText Class="font-weight-bold"
                                                                          Style="color:#1976d2; min-width:50px;">
-                                                                    @con.MaSoCauHoi.
+                                                                    (@subQuestionIndex)
                                                                 </MudText>
-                                                                <div class="flex-grow-1">
-                                                                    <LatexContent Content="@con.NoiDung"/>
-                                                                </div>
+                                                                @if (!string.IsNullOrWhiteSpace(con.NoiDung) && 
+                                                                     !System.Text.RegularExpressions.Regex.IsMatch(con.NoiDung, @"^\(\d+\)$"))
+                                                                {
+                                                                    <div class="flex-grow-1">
+                                                                        <LatexContent Content="@con.NoiDung"/>
+                                                                    </div>
+                                                                }
                                                             </div>
 
                                                             <!-- Đáp án của câu con nếu có -->
@@ -198,13 +203,13 @@
                                                 </div>
                                             }
 
-                                            <!-- Cảnh báo chỉ khi câu hỏi thật sự trống -->
+                                            @* <!-- Cảnh báo chỉ khi câu hỏi thật sự trống -->
                                             @if (ch.SoCauHoiCon == 0 && (ch.CauTraLois?.Any() != true))
                                             {
                                                 <MudAlert Severity="Severity.Warning" Class="mt-3">
                                                     Chưa có đáp án cho câu hỏi này
                                                 </MudAlert>
-                                            }
+                                            } *@
                                         </div>
                                     }
                                 }

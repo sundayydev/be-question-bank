@@ -56,6 +56,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<RutTrichTuLuanService>();
         services.AddScoped<DeThiExportForStudentService>();
         services.AddScoped<DeThiTuLuanExportService>();
+        services.AddScoped<DeThiExportService>();
+
+        // EZP Encryption Services
+        services.AddScoped<EzpEncryptionService>();
 
         return services;
     }

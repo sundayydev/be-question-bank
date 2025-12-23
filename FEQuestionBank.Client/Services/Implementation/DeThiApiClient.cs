@@ -88,10 +88,10 @@ public class DeThiApiClient : BaseApiClient, IDeThiApiClient
         return await response.Content.ReadAsByteArrayAsync();
     }
     
-    public async Task<byte[]> ExportEzpAsync(Guid id, string password = "matkhau123")
+    public async Task<byte[]> ExportEzpAsync(Guid id)
     {
-        var url = $"api/dethi/{id}/export-ezp?password={Uri.EscapeDataString(password)}";
-        var response = await _httpClient.PostAsync(url, null);
+        var url = $"api/dethi/{id}/export-ezp";
+        var response = await _httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsByteArrayAsync();
     }

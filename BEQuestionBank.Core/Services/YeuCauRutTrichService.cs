@@ -14,11 +14,16 @@ public class YeuCauRutTrichService
 {
     private readonly IYeuCauRutTrichRepository _repository;
     private readonly IPhanRepository _phanRepository;
+    private readonly ICauHoiRepository _cauHoiRepository;
 
-    public YeuCauRutTrichService(IYeuCauRutTrichRepository repository , IPhanRepository phanRepository)
+    public YeuCauRutTrichService(
+        IYeuCauRutTrichRepository repository, 
+        IPhanRepository phanRepository,
+        ICauHoiRepository cauHoiRepository)
     {
         _repository = repository;
         _phanRepository = phanRepository;
+        _cauHoiRepository = cauHoiRepository;
     }
 
     /// <summary>
@@ -145,6 +150,15 @@ public class YeuCauRutTrichService
     /// </summary>
     private YeuCauRutTrichDto MapToBasicDto(YeuCauRutTrich entity)
     {
+        // Lấy thông tin đề thi liên quan (nếu có)
+        var deThi = entity.MonHoc?.DeThis?.FirstOrDefault(dt => 
+            dt.ChiTietDeThis != null && 
+            dt.ChiTietDeThis.Any(ctdt => 
+                ctdt.CauHoi != null && 
+                ctdt.CauHoi.NoiDungRutTrich != null &&
+                ctdt.CauHoi.NoiDungRutTrich.Contains(entity.MaYeuCau.ToString())
+            )
+        );
         return new YeuCauRutTrichDto
         {
             MaYeuCau = entity.MaYeuCau,
@@ -247,8 +261,32 @@ public class YeuCauRutTrichService
                 !maTranTuLuan.Parts.Any(p => p.Clos?.Any() == true))
                 return (false, "Ma trận tự luận phải có ít nhất một phần và một yêu cầu CLO.", Guid.Empty);
 
-            if (maTranTuLuan.TotalQuestions <= 0)
-                return (false, "Tổng số câu hỏi phải lớn hơn 0.", Guid.Empty);
+            // Tính tổng số câu hỏi dự kiến từ ma trận
+            // Nếu có SubQuestionCount: num × subQuestionCount
+            // Nếu không có SubQuestionCount: num × 1 (giả sử mỗi câu cha = 1 câu)
+            var expectedTotalQuestions = maTranTuLuan.Parts
+                .Where(p => p.Clos != null)
+                .SelectMany(p => p.Clos!)
+                .Sum(c => c.Num * Math.Max(1, c.SubQuestionCount ?? 1));
+
+            if (expectedTotalQuestions <= 0)
+                return (false, "Ma trận phải yêu cầu ít nhất 1 câu hỏi.", Guid.Empty);
+
+            // VALIDATION CHO TỰ LUẬN: 
+            // totalQuestions phải khớp với tổng dự kiến từ ma trận
+            if (maTranTuLuan.TotalQuestions != expectedTotalQuestions)
+            {
+                return (false, 
+                    $"Tổng câu hỏi (totalQuestions = {maTranTuLuan.TotalQuestions}) không khớp với " +
+                    $"tổng dự kiến từ ma trận ({expectedTotalQuestions} câu). " +
+                    $"Tính toán: Tổng của (num × subQuestionCount) cho tất cả CLO requests.", 
+                    Guid.Empty);
+            }
+
+            // Kiểm tra xem có đủ câu hỏi trong database không
+            var validationResult = await ValidateMaTranTuLuanAsync(maMonHoc, maTranTuLuan);
+            if (!validationResult.IsValid)
+                return (false, validationResult.ErrorMessage, Guid.Empty);
 
             var entity = new YeuCauRutTrich
             {
@@ -270,6 +308,72 @@ public class YeuCauRutTrichService
         {
             return (false, $"Lỗi khi tạo yêu cầu tự luận: {ex.Message}", Guid.Empty);
         }
+    }
+
+    /// <summary>
+    /// Kiểm tra xem có đủ câu hỏi tự luận trong database để rút trích theo ma trận
+    /// </summary>
+    private async Task<(bool IsValid, string ErrorMessage)> ValidateMaTranTuLuanAsync(
+        Guid maMonHoc,
+        MaTranTuLuan maTran)
+    {
+        var errorMessages = new List<string>();
+
+        foreach (var part in maTran.Parts ?? new List<PartTuLuanDto>())
+        {
+            // Lấy tên phần từ database để hiển thị trong thông báo lỗi
+            var phan = await _phanRepository.GetByIdAsync(part.Part);
+            var tenPhan = phan?.TenPhan ?? part.Part.ToString();
+
+            foreach (var cloReq in part.Clos ?? new List<CloDto>())
+            {
+                var clo = (BeQuestionBank.Shared.Enums.EnumCLO)cloReq.Clo;
+                var numNeeded = cloReq.Num;
+                var subQuestionCount = cloReq.SubQuestionCount;
+
+                // Đếm số câu hỏi tự luận có sẵn cho phần và CLO này
+                var availableQuestionsQuery = await _cauHoiRepository.FindAsync(ch =>
+                    ch.MaPhan == part.Part &&
+                    ch.MaCauHoiCha == null && // Chỉ lấy câu cha
+                    ch.LoaiCauHoi == "TL" &&
+                    ch.CLO == clo &&
+                    ch.XoaTam == false);
+
+                // Nếu có chỉ định SubQuestionCount, chỉ lấy câu có SoCauHoiCon phù hợp
+                var questionsList = subQuestionCount.HasValue
+                    ? availableQuestionsQuery.Where(ch => 
+                        (ch.SoCauHoiCon <= 1 && subQuestionCount.Value == 1) ||  // Câu không có con
+                        (ch.SoCauHoiCon == subQuestionCount.Value)                // Câu có đúng số con
+                    ).ToList()
+                    : availableQuestionsQuery.ToList();
+
+                var availableQuestionCount = questionsList.Count;
+
+                if (availableQuestionCount == 0)
+                {
+                    var subQuestInfo = subQuestionCount.HasValue 
+                        ? $" (yêu cầu {subQuestionCount.Value} câu con)" 
+                        : "";
+                    errorMessages.Add($"Phần '{tenPhan}' - CLO {cloReq.Clo}{subQuestInfo}: Không có câu hỏi tự luận nào trong database.");
+                }
+                else if (availableQuestionCount < numNeeded)
+                {
+                    var subQuestInfo = subQuestionCount.HasValue 
+                        ? $" với {subQuestionCount.Value} câu con" 
+                        : "";
+                    errorMessages.Add($"Phần '{tenPhan}' - CLO {cloReq.Clo}: Cần {numNeeded} câu hỏi{subQuestInfo} nhưng chỉ có {availableQuestionCount} câu trong database.");
+                }
+            }
+        }
+
+        if (errorMessages.Any())
+        {
+            var fullMessage = "Không thể tạo yêu cầu rút trích do thiếu câu hỏi:\n" + 
+                              string.Join("\n", errorMessages);
+            return (false, fullMessage);
+        }
+
+        return (true, string.Empty);
     }
     // public async Task<MaTranDto> ReadMaTranFromExcelAndSaveAsync(
     //     string filePath,

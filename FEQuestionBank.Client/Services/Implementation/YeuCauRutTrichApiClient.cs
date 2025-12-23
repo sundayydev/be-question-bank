@@ -15,24 +15,16 @@ public class YeuCauRutTrichApiClient : BaseApiClient, IYeuCauRutTrichApiClient
         => GetListAsync<YeuCauRutTrichDto>("api/yeucauruttrich");
 
     public Task<ApiResponse<YeuCauRutTrichDto>> GetByIdAsync(Guid id)
-    {
-        throw new NotImplementedException();
-    }
+        => GetAsync<YeuCauRutTrichDto>($"api/YeuCauRutTrich/{id}");
 
     public Task<ApiResponse<List<YeuCauRutTrichDto>>> GetByMaNguoiDungAsync(Guid maNguoiDung)
-    {
-        throw new NotImplementedException();
-    }
+        => GetListAsync<YeuCauRutTrichDto>($"api/YeuCauRutTrich/NguoiDung/{maNguoiDung}");
 
     public Task<ApiResponse<List<YeuCauRutTrichDto>>> GetByMaMonHocAsync(Guid maMonHoc)
-    {
-        throw new NotImplementedException();
-    }
+        => GetListAsync<YeuCauRutTrichDto>($"api/YeuCauRutTrich/MonHoc/{maMonHoc}");
 
     public Task<ApiResponse<List<YeuCauRutTrichDto>>> GetByTrangThaiAsync(bool daXuLy)
-    {
-        throw new NotImplementedException();
-    }
+        => GetListAsync<YeuCauRutTrichDto>($"api/YeuCauRutTrich/TrangThai/{daXuLy}");
 
     public Task<ApiResponse<PagedResult<YeuCauRutTrichDto>>> GetYeuCauPagedAsync(
         int page = 1,
@@ -96,13 +88,17 @@ public class YeuCauRutTrichApiClient : BaseApiClient, IYeuCauRutTrichApiClient
     //     };
     // }
 
-    public Task<ApiResponse<object>> UpdateAsync(Guid id, YeuCauRutTrichDto dto)
+    public async Task<ApiResponse<object>> UpdateAsync(Guid id, YeuCauRutTrichDto dto)
     {
-        throw new NotImplementedException();
+        var response = await _httpClient.PatchAsJsonAsync($"api/YeuCauRutTrich/{id}", dto);
+        return await response.Content.ReadFromJsonAsync<ApiResponse<object>>()
+               ?? new ApiResponse<object>(500, "Error");
     }
 
-    public Task<ApiResponse<object>> DeleteAsync(Guid id)
+    public async Task<ApiResponse<object>> DeleteAsync(Guid id)
     {
-        throw new NotImplementedException();
+        var response = await _httpClient.DeleteAsync($"api/YeuCauRutTrich/{id}");
+        return await response.Content.ReadFromJsonAsync<ApiResponse<object>>()
+               ?? new ApiResponse<object>(500, "Error");
     }
 }

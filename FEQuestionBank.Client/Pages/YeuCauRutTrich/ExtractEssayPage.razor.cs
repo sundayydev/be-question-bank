@@ -10,6 +10,7 @@ using BeQuestionBank.Shared.DTOs.MonHoc;
 using BeQuestionBank.Shared.DTOs.Phan;
 using BeQuestionBank.Shared.Enums;
 using FEQuestionBank.Client.Implementation;
+using FEQuestionBank.Client.Component.DiaLog;
 
 namespace FEQuestionBank.Client.Pages.YeuCauRutTrich;
 
@@ -18,6 +19,7 @@ public partial class ExtractEssayPage : ComponentBase
     [Inject] private IYeuCauRutTrichApiClient ApiClient { get; set; } = default!;
     [Inject] CustomAuthStateProvider AuthStateProvider { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
+    [Inject] private IDialogService DialogService { get; set; } = default!;
     [Inject] protected IKhoaApiClient KhoaApiClient { get; set; } = default!;
     [Inject] protected IMonHocApiClient MonHocApiClient { get; set; } = default!;
     [Inject] protected IPhanApiClient PhanApiClient { get; set; } = default!;
@@ -119,18 +121,27 @@ public partial class ExtractEssayPage : ComponentBase
 
     private void AddPart()
     {
+        Console.WriteLine($"AddPart called. Phans count: {Phans.Count}");
+        
         // Khởi tạo Part mới theo đúng DTO PartTuLuanDto
         if (_model.MaTranTuLuan.Parts == null) _model.MaTranTuLuan.Parts = new List<PartTuLuanDto>();
 
+        // Mặc định chọn phần đầu tiên (nếu có)
+        var defaultPartId = Phans.Any() ? Phans.First().MaPhan : Guid.Empty;
+        
+        Console.WriteLine($"Default Part ID: {defaultPartId}");
+
         _model.MaTranTuLuan.Parts.Add(new PartTuLuanDto
         {
-            Part = Guid.Empty, // Người dùng sẽ chọn từ Dropdown
+            Part = defaultPartId, // Mặc định chọn phần đầu tiên
             Clos = new List<CloDto>
             {
                 // Mặc định thêm 1 dòng CLO (Lưu ý: Cast Enum sang int)
-                new CloDto { Clo = (int)EnumCLO.CLO1, Num = 1 }
+                new CloDto { Clo = (int)EnumCLO.CLO1, Num = 1, SubQuestionCount = 1 }
             }
         });
+        
+        Console.WriteLine($"Part added. Total parts: {_model.MaTranTuLuan.Parts.Count}");
     }
 
     private void RemovePart(int index)
@@ -143,7 +154,7 @@ public partial class ExtractEssayPage : ComponentBase
 
     private void AddClo(PartTuLuanDto part)
     {
-        part.Clos.Add(new CloDto { Clo = (int)EnumCLO.CLO1, Num = 1 });
+        part.Clos.Add(new CloDto { Clo = (int)EnumCLO.CLO1, Num = 1, SubQuestionCount = 1 });
     }
 
     private void RemoveClo(PartTuLuanDto part, int index)
@@ -165,6 +176,31 @@ public partial class ExtractEssayPage : ComponentBase
         {
             _previewJson = $"Lỗi: {ex.Message}";
         }
+    }
+
+    private async Task ShowErrorDialog(string title, string message)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", message },
+            { "ButtonText", "Đóng" },
+            { "Color", Color.Error }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+        await DialogService.ShowMessageBox(title, message, "Đóng", null, null, options);
+    }
+
+    private async Task ShowGuideDialog()
+    {
+        var options = new DialogOptions 
+        { 
+            CloseButton = true, 
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true
+        };
+
+        await DialogService.ShowAsync<EssayGuideDialog>();
     }
 
     private async Task SubmitAsync()
@@ -214,17 +250,32 @@ public partial class ExtractEssayPage : ComponentBase
                 var maDeThi = response.Data.MaDeThi;
                 var tenDeThi = response.Data.TenDeThi;
 
-                Snackbar.Add($"Tạo yêu cầu và đề thi tự luận thành công! Mã đề thi: {tenDeThi}", Severity.Success);
+                // Hiển thị dialog thành công với 2 button
+                var parameters = new DialogParameters
+                {
+                    { "MaDeThi", maDeThi },
+                    { "TenDeThi", tenDeThi }
+                };
+
+                var options = new DialogOptions 
+                { 
+                    CloseButton = true, 
+                    MaxWidth = MaxWidth.Small,
+                    FullWidth = true
+                };
+
+                await DialogService.ShowAsync<ExamExtractSuccessDialog>("Rút trích thành công", parameters, options);
+
                 // Reset data
                 _model.MaTranTuLuan.Parts.Clear();
                 _model.NoiDungRutTrich = "";
                 _model.GhiChu = "";
-
                 _previewJson = "";
             }
             else
             {
-                Snackbar.Add(response.Message ?? "Có lỗi xảy ra.", Severity.Error);
+                // Hiển thị lỗi validation qua Dialog
+                await ShowErrorDialog("Lỗi rút trích", response.Message ?? "Có lỗi xảy ra.");
             }
         }
         catch (Exception ex)
