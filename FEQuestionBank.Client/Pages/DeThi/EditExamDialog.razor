@@ -27,12 +27,6 @@
             }
         </MudSelect>
 
-        <MudTextField Label="Tên Môn Học" 
-                      Value="@(MonHocs.FirstOrDefault(m => m.MaMonHoc == DeThi.MaMonHoc)?.TenMonHoc)" 
-                      Variant="Variant.Outlined"
-                      ReadOnly="true"
-                      Class="mt-3" />
-
         <MudTextField Label="Số Câu Hỏi" 
                       @bind-Value="DeThi.SoCauHoi" 
                       Variant="Variant.Outlined"

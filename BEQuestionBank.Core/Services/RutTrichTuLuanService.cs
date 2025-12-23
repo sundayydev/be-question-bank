@@ -52,11 +52,25 @@ public class RutTrichTuLuanService
                 return (false, "Ma trận tự luận không hợp lệ hoặc không có phần nào.", null);
 
             var maDeThi = Guid.NewGuid();
-            var chiTietDeThis = await RutTrichTheoPartsAsync(maTran, maDeThi);
+            var (chiTietDeThis, errors) = await RutTrichTheoPartsAsync(maTran, maDeThi);
+
+            // Nếu có lỗi, hiển thị thông báo chi tiết
+            if (errors.Any())
+            {
+                var errorMessage = "Rút trích không thành công hoặc không đủ câu hỏi:\n" + 
+                                   string.Join("\n", errors);
+                return (false, errorMessage, null);
+            }
 
             // Chỉ cần rút được ít nhất 1 câu TL là ok
             if (!chiTietDeThis.Any())
                 return (false, "Không tìm thấy câu hỏi tự luận nào phù hợp để rút trích.", null);
+
+            // Tính tổng số câu hỏi thực tế (bao gồm cả câu con)
+            // Lấy thông tin câu hỏi để tính SoCauHoiCon
+            var cauHoiIds = chiTietDeThis.Select(ct => ct.MaCauHoi).ToList();
+            var cauHois = await _cauHoiRepository.FindAsync(ch => cauHoiIds.Contains(ch.MaCauHoi));
+            var totalQuestions = cauHois.Sum(ch => ch.SoCauHoiCon > 1 ? ch.SoCauHoiCon : 1);
 
             var deThi = new DeThi
             {
@@ -64,7 +78,7 @@ public class RutTrichTuLuanService
                 MaMonHoc = yeuCau.MaMonHoc,
                 TenDeThi = tenDeThi,
                 DaDuyet = false,
-                SoCauHoi = chiTietDeThis.Count,
+                SoCauHoi = totalQuestions, // Tổng số câu thực tế (bao gồm câu con)
                 NgayTao = DateTime.UtcNow,
                 NgayCapNhat = DateTime.UtcNow,
                 ChiTietDeThis = chiTietDeThis
@@ -76,7 +90,7 @@ public class RutTrichTuLuanService
             yeuCau.NgayXuLy = DateTime.UtcNow;
             await _yeuCauRutTrichRepository.UpdateAsync(yeuCau);
 
-            return (true, $"Rút trích đề tự luận thành công (tổng {chiTietDeThis.Count} câu).", maDeThi);
+            return (true, $"Rút trích đề tự luận thành công (tổng {totalQuestions} câu, {chiTietDeThis.Count} câu hỏi cha).", maDeThi);
         }
         catch (Exception ex)
         {
@@ -84,10 +98,11 @@ public class RutTrichTuLuanService
         }
     }
 
-    private async Task<List<ChiTietDeThi>> RutTrichTheoPartsAsync(MaTranTuLuan maTran, Guid maDeThi)
+    private async Task<(List<ChiTietDeThi> ChiTiet, List<string> Errors)> RutTrichTheoPartsAsync(MaTranTuLuan maTran, Guid maDeThi)
     {
         var chiTiet = new List<ChiTietDeThi>();
         var usedQuestionIds = new HashSet<Guid>(); // Tránh trùng câu
+        var errors = new List<string>();
 
         foreach (var part in maTran.Parts ?? new List<PartTuLuanDto>())
         {
@@ -97,9 +112,11 @@ public class RutTrichTuLuanService
             foreach (var req in part.Clos ?? new List<CloDto>())
             {
                 var clo = (EnumCLO)req.Clo;
+                var numQuestionsNeeded = req.Num; // Số lượng câu hỏi cần rút cho CLO này
+                var subQuestionCount = req.SubQuestionCount;
 
-                // Chỉ lấy câu lớn (cha) trước để làm đầu phần
-                var parentQuestions = await _cauHoiRepository.FindAsync(ch =>
+                // Lấy tất cả câu lớn (cha) phù hợp với CLO
+                var parentQuestionsQuery = await _cauHoiRepository.FindAsync(ch =>
                     ch.MaPhan == maPhanPart &&
                     ch.MaCauHoiCha == null &&
                     !usedQuestionIds.Contains(ch.MaCauHoi) &&
@@ -107,45 +124,77 @@ public class RutTrichTuLuanService
                     ch.CLO == clo &&
                     ch.XoaTam == false);
 
+                // Nếu có chỉ định SubQuestionCount, chỉ lấy câu có SoCauHoiCon phù hợp
+                var parentQuestions = subQuestionCount.HasValue
+                    ? parentQuestionsQuery.Where(ch =>
+                        (ch.SoCauHoiCon <= 1 && subQuestionCount.Value == 1) ||  // Câu không có con
+                        (ch.SoCauHoiCon == subQuestionCount.Value)                // Câu có đúng số con
+                    ).ToList()
+                    : parentQuestionsQuery.ToList();
+
+                var availableCount = parentQuestions.Count;
+                
                 if (!parentQuestions.Any())
-                    continue;
-
-                // Random chọn 1 câu lớn
-                var selectedParent = parentQuestions.OrderBy(_ => Guid.NewGuid()).First();
-                usedQuestionIds.Add(selectedParent.MaCauHoi);
-//tăng số làn dùng
-                selectedParent.SoLanDung += 1;
-                await _cauHoiRepository.UpdateAsync(selectedParent);
-
-                // Thêm câu lớn
-                chiTiet.Add(new ChiTietDeThi
                 {
-                    MaDeThi = maDeThi,
-                    MaPhan = selectedParent.MaPhan,
-                    MaCauHoi = selectedParent.MaCauHoi,
-                    ThuTu = thuTuTrongPart++
-                });
+                    var subQuestInfo = subQuestionCount.HasValue 
+                        ? $" (yêu cầu {subQuestionCount.Value} câu con)" 
+                        : "";
+                    errors.Add($"Phần {maPhanPart} - CLO {req.Clo}{subQuestInfo}: Không có câu hỏi tự luận nào.");
+                    continue;
+                }
 
-                // // Lấy tất cả câu con của nó (nếu có)
-                // var childQuestions = await _cauHoiRepository.FindAsync(ch =>
-                //     ch.MaCauHoiCha == selectedParent.MaCauHoi &&
-                //     !usedQuestionIds.Contains(ch.MaCauHoi) &&
-                //     ch.XoaTam == false);
-                //
-                // foreach (var child in childQuestions.OrderBy(c => c.MaSoCauHoi))
-                // {
-                //     chiTiet.Add(new ChiTietDeThi
-                //     {
-                //         MaDeThi = maDeThi,
-                //         MaPhan = selectedParent.MaPhan,
-                //         MaCauHoi = child.MaCauHoi,
-                //         ThuTu = thuTuTrongPart++
-                //     });
-                //     usedQuestionIds.Add(child.MaCauHoi);
-                // }
+                if (availableCount < numQuestionsNeeded)
+                {
+                    var subQuestInfo = subQuestionCount.HasValue 
+                        ? $" với {subQuestionCount.Value} câu con" 
+                        : "";
+                    errors.Add($"Phần {maPhanPart} - CLO {req.Clo}: Cần {numQuestionsNeeded} câu{subQuestInfo} nhưng chỉ có {availableCount} câu.");
+                }
+
+                // Random và lấy đúng số lượng câu hỏi theo Num (hoặc ít hơn nếu không đủ)
+                var selectedParents = parentQuestions
+                    .OrderBy(_ => Guid.NewGuid())
+                    .Take(numQuestionsNeeded)
+                    .ToList();
+
+                foreach (var selectedParent in selectedParents)
+                {
+                    usedQuestionIds.Add(selectedParent.MaCauHoi);
+                    
+                    // Tăng số lần dùng
+                    selectedParent.SoLanDung += 1;
+                    await _cauHoiRepository.UpdateAsync(selectedParent);
+
+                    // Thêm câu lớn
+                    chiTiet.Add(new ChiTietDeThi
+                    {
+                        MaDeThi = maDeThi,
+                        MaPhan = selectedParent.MaPhan,
+                        MaCauHoi = selectedParent.MaCauHoi,
+                        ThuTu = thuTuTrongPart++
+                    });
+
+                    // // Lấy tất cả câu con của nó (nếu có)
+                    // var childQuestions = await _cauHoiRepository.FindAsync(ch =>
+                    //     ch.MaCauHoiCha == selectedParent.MaCauHoi &&
+                    //     !usedQuestionIds.Contains(ch.MaCauHoi) &&
+                    //     ch.XoaTam == false);
+                    //
+                    // foreach (var child in childQuestions.OrderBy(c => c.MaSoCauHoi))
+                    // {
+                    //     chiTiet.Add(new ChiTietDeThi
+                    //     {
+                    //         MaDeThi = maDeThi,
+                    //         MaPhan = selectedParent.MaPhan,
+                    //         MaCauHoi = child.MaCauHoi,
+                    //         ThuTu = thuTuTrongPart++
+                    //     });
+                    //     usedQuestionIds.Add(child.MaCauHoi);
+                    // }
+                }
             }
         }
 
-        return chiTiet;
+        return (chiTiet, errors);
     }
 }

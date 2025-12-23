@@ -1,0 +1,111 @@
+@using FEQuestionBank.Client.Services
+@using MudBlazor
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+@inject IDeThiApiClient DeThiApiClient
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Class="mr-2"/>
+            Rút trích thành công!
+        </MudText>
+    </TitleContent>
+    
+    <DialogContent>
+        <MudAlert Severity="Severity.Success" Class="mb-4">
+            Đề thi <strong>@TenDeThi</strong> đã được tạo thành công!
+        </MudAlert>
+        
+        <MudText Typo="Typo.body1" Class="mb-2">
+            Bạn có muốn:
+        </MudText>
+        
+        <MudList T="string" Dense="true">
+            <MudListItem T="string" Icon="@Icons.Material.Filled.Download">
+                Tải đề thi dưới dạng file EZP
+            </MudListItem>
+            <MudListItem T="string" Icon="@Icons.Material.Filled.Visibility">
+                Xem chi tiết đề thi
+            </MudListItem>
+        </MudList>
+    </DialogContent>
+    
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">
+            Đóng
+        </MudButton>
+        <MudButton OnClick="DownloadEzp" 
+                   StartIcon="@Icons.Material.Filled.Download" 
+                   Color="Color.Success"
+                   Variant="Variant.Filled">
+            Tải EZP
+        </MudButton>
+        <MudButton OnClick="ViewExam" 
+                   StartIcon="@Icons.Material.Filled.Visibility" 
+                   Color="Color.Primary"
+                   Variant="Variant.Filled">
+            Xem Đề Thi
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    
+    [Parameter] public Guid MaDeThi { get; set; }
+    [Parameter] public string TenDeThi { get; set; } = string.Empty;
+    
+    private bool _isDownloading = false;
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task DownloadEzp()
+    {
+        if (_isDownloading) return;
+        
+        try
+        {
+            _isDownloading = true;
+            Snackbar.Add("Đang tạo file EZP...", Severity.Info);
+            
+            // Gọi API export EZP
+            var fileBytes = await DeThiApiClient.ExportEzpAsync(MaDeThi);
+            
+            if (fileBytes != null && fileBytes.Length > 0)
+            {
+                // Tạo file download
+                var fileName = $"{TenDeThi.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd}.ezp";
+                
+                // Convert to base64 và trigger download
+                var base64 = Convert.ToBase64String(fileBytes);
+                await JSRuntime.InvokeVoidAsync("downloadFile", fileName, base64);
+                
+                Snackbar.Add("Tải file EZP thành công!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Không thể tạo file EZP!", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi khi tải file EZP: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isDownloading = false;
+        }
+    }
+
+    private void ViewExam()
+    {
+        MudDialog.Close();
+        Nav.NavigateTo($"/exams/{MaDeThi}");
+    }
+}

@@ -3,6 +3,7 @@
 using BeQuestionBank.Shared.DTOs.Khoa;
 using BeQuestionBank.Shared.Enums;
 using BEQuestionBank.Shared.DTOs.user;
+using BeQuestionBank.Shared.DTOs.YeuCauRutTrich;
 using FEQuestionBank.Client.Implementation;
 using FEQuestionBank.Client.Services;
 using FEQuestionBank.Client.Services.Interface;
@@ -16,6 +17,7 @@ public partial class UserProfile : ComponentBase
 {
     [Inject] private IAuthApiClient AuthApi { get; set; } = default!;
     [Inject] protected IKhoaApiClient KhoaApiClient { get; set; } = default!;
+    [Inject] private IYeuCauRutTrichApiClient YeuCauRutTrichApi { get; set; } = default!;
 
     [Inject] private IDialogService DialogService { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
@@ -24,6 +26,10 @@ public partial class UserProfile : ComponentBase
 
     private NguoiDungDto? CurrentUser { get; set; }
     private bool IsLoading { get; set; } = true;
+    
+    // Withdrawal History
+    private List<YeuCauRutTrichDto> WithdrawalHistory { get; set; } = new();
+    private bool IsLoadingHistory { get; set; } = true;
 
     // Các property để binding trực tiếp trong Razor (giữ nguyên UI)
     private string HoTen => CurrentUser?.HoTen ?? "Chưa có tên";
@@ -55,6 +61,8 @@ public partial class UserProfile : ComponentBase
             if (response.Success && response.Data != null)
             {
                 CurrentUser = response.Data;
+                // Load withdrawal history after user is loaded
+                await LoadWithdrawalHistoryAsync();
             }
             else
             {
@@ -136,6 +144,40 @@ public partial class UserProfile : ComponentBase
     {
         await AuthState.MarkUserAsLoggedOut();
         Nav.NavigateTo("/login", true);
+    }
+
+    private async Task LoadWithdrawalHistoryAsync()
+    {
+        if (CurrentUser == null)
+        {
+            IsLoadingHistory = false;
+            return;
+        }
+
+        try
+        {
+            var response = await YeuCauRutTrichApi.GetByMaNguoiDungAsync(CurrentUser.MaNguoiDung);
+            
+            if (response.Success && response.Data != null)
+            {
+                WithdrawalHistory = response.Data;
+            }
+            else
+            {
+                WithdrawalHistory = new List<YeuCauRutTrichDto>();
+                Snackbar.Add(response.Message ?? "Không thể tải lịch sử rút trích", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            WithdrawalHistory = new List<YeuCauRutTrichDto>();
+            Snackbar.Add($"Lỗi khi tải lịch sử: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            IsLoadingHistory = false;
+            StateHasChanged();
+        }
     }
 
 }

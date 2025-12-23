@@ -18,15 +18,19 @@ public class DeThiController : ControllerBase
     private readonly DeThiExportForStudentService _exportService;
     private readonly DeThiService _service;
     private readonly DeThiTuLuanExportService _tuLuanExportService;
+    private readonly DeThiExportService _ezpExportService;
     private readonly ILogger<DeThiController> _logger;
 
     public DeThiController(DeThiService service,
-        DeThiTuLuanExportService tuLuanExportService, DeThiExportForStudentService exportService,
+        DeThiTuLuanExportService tuLuanExportService, 
+        DeThiExportForStudentService exportService,
+        DeThiExportService ezpExportService,
         ILogger<DeThiController> logger)
     {
         _service = service;
         _exportService = exportService;
         _tuLuanExportService = tuLuanExportService;
+        _ezpExportService = ezpExportService;
         _logger = logger;
     }
 
@@ -427,12 +431,105 @@ public class DeThiController : ControllerBase
         }
 
     }
-    [HttpPost("{id}/export-ezp")]
-    public async Task<IActionResult> ExportDeThiEzp(Guid id, [FromQuery] string password = "matkhau123")
+    [HttpGet("{id}/export-ezp")]
+    [SwaggerOperation(Summary = "Export đề thi ra file .ezp (JSON)", Description = "Export đề thi với đầy đủ thông tin câu hỏi và đáp án. Tự động mã hóa nếu được bật trong config.")]
+    [SwaggerResponse(200, "File .ezp", typeof(FileResult))]
+    [SwaggerResponse(404, "Không tìm thấy đề thi")]
+    [SwaggerResponse(500, "Lỗi server")]
+    public async Task<IActionResult> ExportDeThiEzp(Guid id)
     {
-        var request = new YeuCauXuatDeThiDto { MaDeThi = id };
-        byte[] ezpBytes = await _exportService.ExportEzpAsync(request, password);
-        return File(ezpBytes, "application/octet-stream", $"DeThi_{id}.ezp");
+        try
+        {
+            if (id == Guid.Empty)
+            {
+                return BadRequest(ApiResponseFactory.ValidationError<object>("ID đề thi không hợp lệ."));
+            }
+
+            var (success, message, fileContent, fileName) = await _ezpExportService.ExportDeThiToEzpFileWithPasswordAsync(id);
+
+            if (!success || fileContent == null)
+            {
+                return NotFound(ApiResponseFactory.NotFound<object>(message));
+            }
+
+            return File(fileContent, "application/json", fileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi export đề thi {MaDeThi} ra file .ezp", id);
+            return StatusCode(500, ApiResponseFactory.ServerError($"Không thể export đề thi: {ex.Message}"));
+        }
+    }
+
+    // GET: api/DeThi/{id}/export-json
+    [HttpGet("{id}/export-json")]
+    [SwaggerOperation(Summary = "Export đề thi ra JSON string", Description = "Lấy nội dung JSON của đề thi để xem trước hoặc kiểm tra")]
+    [SwaggerResponse(200, "JSON content")]
+    [SwaggerResponse(404, "Không tìm thấy đề thi")]
+    public async Task<IActionResult> ExportDeThiJson(Guid id, [FromQuery] bool indented = true)
+    {
+        try
+        {
+            if (id == Guid.Empty)
+            {
+                return BadRequest(ApiResponseFactory.ValidationError<object>("ID đề thi không hợp lệ."));
+            }
+
+            var (success, message, jsonContent) = await _ezpExportService.ExportDeThiToJsonStringAsync(id, indented);
+
+            if (!success || string.IsNullOrEmpty(jsonContent))
+            {
+                return NotFound(ApiResponseFactory.NotFound<object>(message));
+            }
+
+            return Ok(ApiResponseFactory.Success(new { JsonContent = jsonContent }, "Export JSON thành công"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi export đề thi {MaDeThi} ra JSON", id);
+            return StatusCode(500, ApiResponseFactory.ServerError($"Không thể export JSON: {ex.Message}"));
+        }
+    }
+     [HttpPost("decrypt-ezp")]
+    [SwaggerOperation(Summary = "Giải mã file EZP để xem nội dung", Description = "Upload file EZP để giải mã và xem nội dung JSON bên trong. Dùng để test/debug.")]
+    [SwaggerResponse(200, "Nội dung JSON đã giải mã")]
+    [SwaggerResponse(400, "Lỗi giải mã")]
+    public IActionResult DecryptEzpFile(IFormFile file)
+    {
+        try
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(ApiResponseFactory.ValidationError<object>("File rỗng hoặc không hợp lệ."));
+            }
+
+            // Đọc file content
+            using var memoryStream = new MemoryStream();
+            file.CopyTo(memoryStream);
+            byte[] fileBytes = memoryStream.ToArray();
+
+            // Giải mã
+            var (success, message, decryptedJson) = _ezpExportService.DecryptEzpFileFromBytes(fileBytes);
+
+            if (!success)
+            {
+                return BadRequest(ApiResponseFactory.ValidationError<object>(message));
+            }
+
+            // Trả về JSON đã giải mã
+            return Ok(ApiResponseFactory.Success(new 
+            { 
+                Message = message,
+                JsonContent = decryptedJson,
+                FileSize = fileBytes.Length,
+                IsEncrypted = message.Contains("Giải mã thành công")
+            }, "Xử lý file thành công!"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi giải mã file EZP");
+            return StatusCode(500, ApiResponseFactory.ServerError($"Lỗi: {ex.Message}"));
+        }
     }
 
     [HttpPost("{id}/export-tuluan-word")]

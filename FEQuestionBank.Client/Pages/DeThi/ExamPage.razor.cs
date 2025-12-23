@@ -3,6 +3,7 @@ using BeQuestionBank.Shared.DTOs.Pagination;
 using BeQuestionBank.Shared.DTOs.DeThi;
 using FEQuestionBank.Client.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using MudBlazor;
 using System.Net.Http.Json;
 using System.Threading;
@@ -11,15 +12,18 @@ using System;
 using System.Collections.Generic;
 using BEQuestionBank.Shared.DTOs.DeThi;
 using FEQuestionBank.Client.Pages.OtherPage;
+using BeQuestionBank.Shared.DTOs.MonHoc;
 
 namespace FEQuestionBank.Client.Pages.DeThi
 {
     public partial class DeThiBase : ComponentBase
     {
         [Inject] protected IDeThiApiClient DeThiApiClient { get; set; } = default!;
+        [Inject] protected IMonHocApiClient MonHocApiClient { get; set; } = default!;
         [Inject] protected ISnackbar Snackbar { get; set; } = default!;
         [Inject] protected IDialogService DialogService { get; set; } = default!;
         [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
+        [Inject] protected IJSRuntime JSRuntime { get; set; } = default!;
 
         protected string? _searchTerm;
         protected MudTable<DeThiDto>? table;
@@ -27,6 +31,7 @@ namespace FEQuestionBank.Client.Pages.DeThi
         protected int ActiveKhoa { get; set; }
         protected int LockedKhoa { get; set; }
         private List<DeThiDto> allDeThis = new List<DeThiDto>();
+        private List<MonHocDto> monHocs = new List<MonHocDto>();
         protected List<BreadcrumbItem> _breadcrumbs = new()
         {
             new BreadcrumbItem("Trang chủ", href: "/"),
@@ -35,8 +40,25 @@ namespace FEQuestionBank.Client.Pages.DeThi
         };
         protected override async Task OnInitializedAsync()
         {
+            await LoadMonHocsAsync();
             await LoadallDeThisForInfoCardAsync();
         }
+        private async Task LoadMonHocsAsync()
+        {
+            try
+            {
+                var response = await MonHocApiClient.GetAllMonHocsAsync();
+                if (response.Success && response.Data != null)
+                {
+                    monHocs = response.Data;
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Lỗi khi tải danh sách môn học: {ex.Message}", Severity.Error);
+            }
+        }
+
         private async Task LoadallDeThisForInfoCardAsync()
         {
             try
@@ -109,7 +131,8 @@ namespace FEQuestionBank.Client.Pages.DeThi
             var parameters = new DialogParameters
             {
                 ["DeThi"] = new DeThiDto { NgayTao = DateTime.Now },
-                ["DialogTitle"] = "Tạo mới Đề thi"
+                ["DialogTitle"] = "Tạo mới Đề thi",
+                ["MonHocs"] = monHocs
             };
 
             var options = new DialogOptions { MaxWidth = MaxWidth.Small, CloseButton = true };
@@ -129,7 +152,8 @@ namespace FEQuestionBank.Client.Pages.DeThi
             var parameters = new DialogParameters
             {
                 ["DeThi"] = deThi,
-                ["DialogTitle"] = "Chỉnh sửa Đề thi"
+                ["DialogTitle"] = "Chỉnh sửa Đề thi",
+                ["MonHocs"] = monHocs
             };
             var dialog = DialogService.Show<EditExamDialog>("Chỉnh sửa Đề thi", parameters);
             var result = await dialog.Result;
@@ -198,6 +222,37 @@ namespace FEQuestionBank.Client.Pages.DeThi
             catch (Exception ex)
             {
                 Snackbar.Add($"Lỗi hệ thống: {ex.Message}", Severity.Error);
+            }
+        }
+
+        protected async Task OnDownloadEzp(DeThiDto deThi)
+        {
+            try
+            {
+                Snackbar.Add("Đang tạo file EZP...", Severity.Info);
+                
+                // Gọi API export EZP
+                var fileBytes = await DeThiApiClient.ExportEzpAsync(deThi.MaDeThi);
+                
+                if (fileBytes != null && fileBytes.Length > 0)
+                {
+                    // Tạo file download
+                    var fileName = $"{deThi.TenDeThi.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd}.ezp";
+                    
+                    // Convert to base64 và trigger download
+                    var base64 = Convert.ToBase64String(fileBytes);
+                    await JSRuntime.InvokeVoidAsync("downloadFile", fileName, base64);
+                    
+                    Snackbar.Add("Tải file EZP thành công!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Không thể tạo file EZP!", Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Lỗi khi tải file EZP: {ex.Message}", Severity.Error);
             }
         }
 

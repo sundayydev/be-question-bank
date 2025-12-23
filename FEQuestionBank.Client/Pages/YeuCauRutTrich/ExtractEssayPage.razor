@@ -11,10 +11,16 @@
              Style="position: absolute; top: -30px; right: -20px; width: 300px; height: 300px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
         <div class="hero-decoration"
              Style="position: absolute; bottom: -60px; left: -20px; width: 150px; height: 150px; background: rgba(255,255,255,0.08); border-radius: 50%;"></div>
-        <h1 class="create-question-title"> Rút trích đề thi TỰ LUẬN</h1>
-        <p style="color: rgba(255,255,255,0.85); margin-top: 8px; margin-bottom: 0; font-size: 16px;">
-            Chọn đủ các thuộc tính bên dưới để rút trích
-        </p>
+        
+        <div class="d-flex justify-space-between align-center">
+            <div>
+                <h1 class="create-question-title"> Rút trích đề thi TỰ LUẬN</h1>
+                <p style="color: rgba(255,255,255,0.85); margin-top: 8px; margin-bottom: 0; font-size: 16px;">
+                    Chọn đủ các thuộc tính bên dưới để rút trích
+                </p>
+            </div>
+          
+        </div>
     </div>
 
     <MudGrid Spacing="4">
@@ -52,17 +58,29 @@
 
     <MudDivider Class="my-8"/>
 
-    <div class="d-flex justify-space-between align-center mb-4">
-        <MudText Typo="Typo.h6">Cấu hình Ma trận</MudText>
+    <div class="d-flex align-center mb-4" style="gap: 55px;">
+        <MudText Typo="Typo.h6">
+            Cấu hình Ma trận
+        </MudText>
         <MudNumericField @bind-Value="_model.MaTranTuLuan.TotalQuestions"
-                         Label="Tổng số câu cần rút"
-                         Variant="Variant.Outlined" Margin="Margin.Dense"
-                         Min="1" Style="width: 200px;"/>
+                         Label="Tổng số câu"
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Dense"
+                         Min="1"
+                         Style="width: 240px;"
+                         HelperText="= Σ (Số câu × Số câu con)"/>
+        <MudButton StartIcon="@Icons.Material.Filled.Help"
+                   Variant="Variant.Outlined"
+                   Color="Color.Primary"
+                   OnClick="ShowGuideDialog">
+            Hướng dẫn
+        </MudButton>
     </div>
 
+
     <MudButton StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Variant="Variant.Filled"
-               OnClick="AddPart" Disabled="@(Phans.Count == 0)" Class="mb-4">
-        Thêm Phần vào Ma trận
+               OnClick="AddPart" Disabled="@(SelectedMonHocId == null)" Class="mb-4">
+        Thêm Phần vào Ma trận @(Phans.Count > 0 ? $"({Phans.Count} phần có sẵn)" : "")
     </MudButton>
 
     @if (_model.MaTranTuLuan.Parts != null)
@@ -94,7 +112,7 @@
                         </MudItem>
 
                         <MudItem xs="12" md="8">
-                            <MudText Typo="Typo.subtitle2" Class="mb-2">Chi tiết (CLO : Số câu)</MudText>
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Chi tiết (CLO : Số câu : Số câu con)</MudText>
 
                             @if (part.Clos != null)
                             {
@@ -105,7 +123,7 @@
                                     <div class="d-flex gap-3 align-center mb-2">
                                         <MudSelect T="int" @bind-Value="clo.Clo" Label="CLO"
                                                    Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true"
-                                                   Style="width: 120px;">
+                                                   Style="width: 100px;">
                                             @foreach (EnumCLO item in Enum.GetValues(typeof(EnumCLO)))
                                             {
                                                 <MudSelectItem Value="@((int)item)">@item.ToString()</MudSelectItem>
@@ -114,7 +132,10 @@
 
                                         <MudNumericField @bind-Value="clo.Num" Label="Số câu"
                                                          Variant="Variant.Outlined" Margin="Margin.Dense" Min="1"
-                                                         Style="width: 100px;"/>
+                                                         Style="width: 90px;"/>
+
+                                        <MudNumericField @bind-Value="clo.SubQuestionCount" Label="Số câu con/câu"
+                                                         Variant="Variant.Outlined" Margin="Margin.Dense" Min="1"/>
 
                                         <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
                                                        Color="Color.Default"

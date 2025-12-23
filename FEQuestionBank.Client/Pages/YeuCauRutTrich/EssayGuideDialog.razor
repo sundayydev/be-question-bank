@@ -1,0 +1,182 @@
+@using MudBlazor
+<MudDialog>
+    <DialogContent>
+        <MudContainer Style="max-height: 600px;">
+            <div class="d-flex align-center mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.MenuBook" Size="Size.Large" Color="Color.Primary" Class="mr-2"/>
+                <MudText Typo="Typo.h5" Color="Color.Primary">
+                    HƯỚNG DẪN RÚT TRÍCH ĐỀ TỰ LUẬN
+                </MudText>
+            </div>
+
+            <!-- Bước 1 -->
+            <MudCard Class="mb-3" Elevation="1">
+                <MudCardHeader Style="background-color: #594AE2;">
+                    <CardHeaderContent>
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.LooksOne" Class="mr-2"/>
+                            <MudText Typo="Typo.h6" Style="color: white;">
+                                CHỌN KHOA VÀ MÔN HỌC
+                            </MudText>
+                        </div>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudList T="string" Dense="true">
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.ArrowRight">
+                            Chọn <strong>Khoa</strong> → Danh sách Môn học sẽ hiển thị
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.ArrowRight">
+                            Chọn <strong>Môn học</strong> → Danh sách Phần/Chương sẽ load
+                        </MudListItem>
+                    </MudList>
+                </MudCardContent>
+            </MudCard>
+
+            <!-- Bước 2 -->
+            <MudCard Class="mb-3" Elevation="1">
+                <MudCardHeader Style="background-color: #1976d2;">
+                    <CardHeaderContent>
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.LooksTwo" Class="mr-2"/>
+                            <MudText Typo="Typo.h6" Style="color: white;">
+                                NHẬP TỔNG SỐ CÂU
+                            </MudText>
+                        </div>
+                    </CardHeaderContent>
+                </MudCardHeader>
+              <MudCardContent>
+    <MudText Typo="Typo.subtitle1" Class="mb-2">
+        Cấu trúc câu hỏi tự luận
+    </MudText>
+
+    <MudText Typo="Typo.body2">
+        Một câu hỏi tự luận thường được tổ chức theo cấu trúc phân cấp như sau:
+    </MudText>
+
+    <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2 mb-2">
+        <strong>Câu hỏi tiêu đề</strong> → <strong>Câu hỏi chính thức</strong>
+    </MudAlert>
+
+    <MudText Typo="Typo.body2">
+        Trong đó Cấu trúc cơ bản của câu hỏi tự luận :
+        <ul class="mt-1 mb-0">
+            <li>
+                <strong>Câu hỏi tiêu đề</strong>: mô tả yêu cầu chung, bối cảnh hoặc chủ đề cần làm rõ (Câu hỏi).
+            </li>
+            <li>
+                <strong>Câu hỏi chính thức</strong>: nội dung yêu cầu thí sinh trả lời(Câu hỏi con ) .
+            </li>
+        </ul>
+    </MudText>
+</MudCardContent>
+</MudCard>
+
+
+            <!-- Bước 3 -->
+            <MudCard Class="mb-3" Elevation="1">
+                <MudCardHeader Style="background-color: #00897b;">
+                    <CardHeaderContent>
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.Looks3" Class="mr-2"/>
+                            <MudText Typo="Typo.h6" Style="color: white;">
+                                THÊM PHẦN VÀO MA TRẬN
+                            </MudText>
+                        </div>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudList T="string" Dense="true">
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Add">
+                            Click <strong>"Thêm Phần"</strong> → Chọn Chương/Phần
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Info">
+                            Mỗi phần có thể có nhiều yêu cầu CLO
+                        </MudListItem>
+                    </MudList>
+                </MudCardContent>
+            </MudCard>
+
+            <!-- Bước 4 -->
+            <MudCard Class="mb-3" Elevation="1">
+                <MudCardHeader Style="background-color: #f57c00;">
+                    <CardHeaderContent>
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.Looks4" Class="mr-2"/>
+                            <MudText Typo="Typo.h6" Style="color: white;">
+                                CẤU HÌNH CHO MỖI PHẦN
+                            </MudText>
+                        </div>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid>
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.body1" Class="mb-2"><strong>📌 CLO:</strong> Chọn mức độ CLO (CLO1, CLO2,...)</MudText>
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.body1" Class="mb-2"><strong>📌 Số câu:</strong> Số câu hỏi CHA cần rút</MudText>
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.body1" Class="mb-3"><strong>📌 Số câu con/câu:</strong> Số câu con tối đa mỗi câu cha</MudText>
+                        </MudItem>
+                    </MudGrid>
+                    
+                    <MudAlert Severity="Severity.Warning" Dense="true">
+                        <strong>Lưu ý:</strong><br/>
+                        • Số câu con = 1: Chỉ lấy câu KHÔNG có con (hoặc có đúng 1 con)<br/>
+                        • Số câu con = 4: Chỉ lấy câu có ĐÚNG 4 câu con<br/>
+                        • Hệ thống sẽ random chọn câu phù hợp
+                    </MudAlert>
+                </MudCardContent>
+            </MudCard>
+
+            <!-- Bước 5 -->
+            <MudCard Class="mb-3" Elevation="1">
+                <MudCardHeader Style="background-color: #388e3c;">
+                    <CardHeaderContent>
+                        <div class="d-flex align-center">
+                            <MudIcon Icon="@Icons.Material.Filled.Looks5" Class="mr-2"/>
+                            <MudText Typo="Typo.h6" Style="color: white;">
+                                KIỂM TRA VÀ RÚT TRÍCH
+                            </MudText>
+                        </div>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudList T="string" Dense="true">
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Preview">
+                            Xem <strong>JSON Preview</strong> để kiểm tra ma trận
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.PlayArrow">
+                            Click <strong>"Rút trích ngay"</strong> để tạo đề thi
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Error">
+                            Nếu có lỗi, dialog sẽ hiển thị chi tiết
+                        </MudListItem>
+                    </MudList>
+                </MudCardContent>
+            </MudCard>
+
+            <!-- Lưu ý -->
+            <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Lightbulb">
+                <strong>LƯU Ý QUAN TRỌNG:</strong><br/>
+                ✓ Tổng số câu PHẢI khớp với công thức<br/>
+                ✓ Database phải có đủ câu hỏi phù hợp<br/>
+                ✓ Mỗi phần có thể có nhiều yêu cầu CLO khác nhau
+            </MudAlert>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Close">Đã hiểu</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private void Close()
+    {
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

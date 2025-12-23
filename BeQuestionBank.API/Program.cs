@@ -41,11 +41,20 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
                 "http://localhost:5273",
-                "http://localhost:5173" 
+                "http://localhost:5173",
+                "http://localhost:5043"  // Thêm Swagger port
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
+    });
+
+    // Policy cho testing/development - cho phép mọi origin
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
     });
 });
 
@@ -115,6 +124,9 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddSingleton<string>(provider => "wwwroot/uploads");
 
+// Configure EzpSettings from appsettings.json
+builder.Services.Configure<BeQuestionBank.Shared.Configuration.EzpSettings>(
+    builder.Configuration.GetSection("EzpSettings"));
 
 // Gọi extension từ Core
 builder.Services.AddCoreServices();

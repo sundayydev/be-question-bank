@@ -135,10 +135,26 @@ namespace FEQuestionBank.Client.Pages.CauHoi
                 return;
             }
 
+            // Lấy tên hiển thị
+            var tenKhoa = Khoas.FirstOrDefault(k => k.MaKhoa == SelectedKhoaId)?.TenKhoa ?? "Chưa chọn";
+            var tenMon = MonHocs.FirstOrDefault(m => m.MaMonHoc == SelectedMonHocId)?.TenMonHoc ?? "Chưa chọn";
+            var tenPhan = Phans.FirstOrDefault(p => p.MaPhan == SelectedPhanId)?.TenPhan ?? "Chưa chọn";
+
+            // Convert FillBlankAnswer to CreateCauTraLoiDienTuDto
+            var cauTraLoiDtos = CauTraLoi.Select(x => new CreateCauTraLoiDienTuDto
+            {
+                NoiDung = x.NoiDung,
+                HoanVi = x.HoanVi
+            }).ToList();
+
             var dialog = Dialog.Show<QuestionFillBlankPreviewDialog>("Xem trước", new DialogParameters
             {
-                ["NoiDung"] = NoiDungCha,
-                ["Answers"] = CauTraLoi.Select(x => x.NoiDung).ToList()
+                ["NoiDungCha"] = NoiDungCha,
+                ["CauTraLoi"] = cauTraLoiDtos,
+                ["TenKhoa"] = tenKhoa,
+                ["TenMon"] = tenMon,
+                ["TenPhan"] = tenPhan,
+                ["CloName"] = SelectedCLO.ToString()
             }, new DialogOptions { FullWidth = true });
 
             var result = await dialog.Result;
@@ -152,27 +168,25 @@ namespace FEQuestionBank.Client.Pages.CauHoi
         {
             if (!Validate()) return;
 
-            // Tạo danh sách câu hỏi con (mỗi chỗ trống là 1 câu con)
-            var cauHoiCons = CauTraLoi.Select((ans, i) => new CreateCauHoiWithCauTraLoiDto
+            // Tạo danh sách câu hỏi con (mỗi chỗ trống là 1 câu con) - dùng CreateChilDienTu
+            var cauHoiCons = CauTraLoi.Select((ans, i) => new CreateChilDienTu
             {
                 NoiDung = $"({i + 1})", // Nội dung câu con: (1), (2), (3)...
                 MaPhan = SelectedPhanId.Value,
                 CapDo = CapDo,
                 CLO = SelectedCLO,
                 HoanVi = false,
-                CauTraLois = new List<CreateCauTraLoiDto>
+                CauTraLois = new List<CreateCauTraLoiDienTuDto>
                 {
-                    new CreateCauTraLoiDto
+                    new CreateCauTraLoiDienTuDto
                     {
                         NoiDung = ans.NoiDung.Trim(),
-                        LaDapAn = true,
-                        HoanVi = false,
-                        ThuTu = i + 1
+                        HoanVi = ans.HoanVi
                     }
                 }
             }).ToList();
 
-            var createDto = new CreateCauHoiNhomDto
+            var createDto = new CreateCauHoiDienTuDto
             {
                 NoiDung = NoiDungCha,
                 MaPhan = SelectedPhanId.Value,
@@ -223,7 +237,8 @@ namespace FEQuestionBank.Client.Pages.CauHoi
             }
             else
             {
-                res = await CauHoiApiClient.CreateGroupQuestionAsync(createDto);
+                // Gọi API tạo câu hỏi điền từ (DT) thay vì nhóm (NH)
+                res = await CauHoiApiClient.CreateFillingQuestionAsync(createDto);
             }
 
             if (res.Success)

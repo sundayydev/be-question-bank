@@ -393,6 +393,7 @@ public class CauHoiRepository : GenericRepository<CauHoi>, ICauHoiRepository
             NgayTao = c.NgayTao,
             NgaySua = c.NgayCapNhat,
             LoaiCauHoi = c.LoaiCauHoi,
+            CLO = c.CLO,
             CauHoiCons = c.CauHoiCons.Select(child => new CauHoiDto
             {
                 MaCauHoi = child.MaCauHoi,

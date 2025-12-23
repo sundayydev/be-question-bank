@@ -26,11 +26,11 @@
                          Icon="@Icons.Material.Filled.List" 
                          Expanded="@_group0Expanded"
                          ExpandedChanged="@((bool value) => OnGroupExpandedChanged(0, value))">
-                <MudNavLink Href="/khoa" Icon="@Icons.Material.Filled.CorporateFare" OnClick="HandleClose">Danh sách khoa
+                <MudNavLink Href="/khoa"     Icon="@Icons.Material.Filled.CorporateFare" OnClick="HandleClose">Danh sách khoa
                 </MudNavLink>
-                <MudNavLink Href="/monhoc" Icon="@Icons.Material.Filled.MenuBook" OnClick="HandleClose">Danh sách môn học
+                <MudNavLink Href="/monhoc"  Icon="@Icons.Material.Filled.MenuBook" OnClick="HandleClose">Danh sách môn học
                 </MudNavLink>
-                <MudNavLink Href="/exams" Icon="@Icons.Material.Filled.Assignment" OnClick="HandleClose">Danh sách đề thi
+                <MudNavLink Href="/exams"   Icon="@Icons.Material.Filled.Assignment" OnClick="HandleClose">Danh sách đề thi
                 </MudNavLink>
             </MudNavGroup>
 
@@ -52,7 +52,7 @@
             </MudNavGroup>
 
             <!-- Quản lý người dùng -->
-            <MudNavGroup Title="Quản lý người dùng" 
+            <MudNavGroup Title="Quản lý người dùng"     
                          Icon="@Icons.Material.Filled.Person" 
                          Expanded="@_group2Expanded"
                          ExpandedChanged="@((bool value) => OnGroupExpandedChanged(2, value))">
@@ -106,15 +106,12 @@
 
     private void HandleClose()
     {
-        Console.WriteLine("HandleClose called, closing drawer...");
         OnClose.InvokeAsync(false);
     }
 
     // Xử lý khi một group được mở/đóng
     private void OnGroupExpandedChanged(int groupIndex, bool isExpanded)
     {
-        Console.WriteLine($"Group {groupIndex} expanded changed to: {isExpanded}");
-        
         // Cập nhật trạng thái của group hiện tại
         switch (groupIndex)
         {

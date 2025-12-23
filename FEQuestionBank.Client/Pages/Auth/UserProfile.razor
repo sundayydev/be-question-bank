@@ -2,99 +2,192 @@
 @using MudBlazor
 @inject ISnackbar Snackbar
 
-<div class="profile-container">
+<div class="profile-wrapper">
     <!-- Gradient Header -->
     <div class="gradient-header">
         <div Style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
         <div Style="position: absolute; bottom: -100px; left: 50px; width: 250px; height: 250px; background: rgba(255,255,255,0.08); border-radius: 50%;"></div>
-        </div>
+    </div>
     
-    <!-- Profile Card -->
-    <MudCard class="profile-card">
-        <MudCardContent>
-            <div class="profile-header">
-                <!-- Avatar -->
-                <div class="avatar-container">
-                    <img src="images/avatar-default.png" alt="" class="avatar" />
-                </div>
-            </div>
-
-            <!-- User Info -->
-            <div class="user-info">
-                <h1 class="user-name">@HoTen</h1>
-                <p class="user-title">@Email</p>
-             
-
-                
-                <div class="user-location">
-                    <MudIcon Icon="@Icons.Material.Filled.CorporateFare" Size="Size.Small" />
-                    @* <span> *@
-                    @*     @(CurrentUser != null  *@
-                    @*         ? (CurrentUser.MaKhoa != null ? GetKhoaName(CurrentUser.MaKhoa.Value) : "Chưa có khoa")  *@
-                    @*         : "Chưa có thông tin") *@
-                    @* </span> *@
-                    <span>@TenKhoa</span>
-                </div>
-
-            </div>
-
-            <!-- Stats -->
-            <div class="stats-container">
-                <div class="stat-item">
-                    <span class="stat-number">@VaiTro</span>
-                    <span class="stat-label">Vai Trò</span>
-                </div>
-                <div class="stat-item">
-                    <div>
-                        <span class="status-indicator @(CurrentUser?.BiKhoa == false ? "active" : "inactive")">
-                        </span>
-                        <span>@(CurrentUser?.BiKhoa == false ? "Đang hoạt động" : "Bị khóa")</span>
+    <!-- Two Column Layout -->
+    <div class="profile-grid">
+        <!-- Left Column: User Profile Card -->
+        <div class="profile-container">
+            <MudCard class="profile-card">
+                <MudCardContent>
+                    <div class="profile-header">
+                        <!-- Avatar -->
+                        <div class="avatar-container">
+                            <img src="images/avatar-default.png" alt="" class="avatar" />
+                        </div>
                     </div>
-                    <span class="stat-label">@NgayTao</span>
-                </div>
-            </div>
-            <!-- Action Buttons -->
-            <div class="button-container">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="false" Class="follow-btn">
-                    <MudIcon Icon="@Icons.Material.Filled.History" Size="Size.Small" Class="me-2" />
-                    Lịch sử
-                </MudButton>
 
-                <MudMenu AnchorOrigin="Origin.BottomCenter"
-                         TransformOrigin="Origin.TopCenter"
-                         Icon="@Icons.Material.Filled.Settings"
-                         Color="Color.Primary"
-                         Variant="Variant.Outlined"
-                         Label="Cài đặt">
+                    <!-- User Info -->
+                    <div class="user-info">
+                        <h1 class="user-name">@HoTen</h1>
+                        <p class="user-title">@Email</p>
+                        
+                        <div class="user-location">
+                            <MudIcon Icon="@Icons.Material.Filled.CorporateFare" Size="Size.Small" />
+                            <span>@TenKhoa</span>
+                        </div>
+                    </div>
 
-                    <MudMenuItem OnClick="OpenChangePasswordDialog">
-                        <MudIcon Icon="@Icons.Material.Filled.Key" Class="me-2" />
-                        Đổi mật khẩu
-                    </MudMenuItem>
+                    <!-- Stats -->
+                    <div class="stats-container">
+                        <div class="stat-item">
+                            <span class="stat-number">@VaiTro</span>
+                            <span class="stat-label">Vai Trò</span>
+                        </div>
+                        <div class="stat-item">
+                            <div>
+                                <span class="status-indicator @(CurrentUser?.BiKhoa == false ? "active" : "inactive")">
+                                </span>
+                                <span>@(CurrentUser?.BiKhoa == false ? "Đang hoạt động" : "Bị khóa")</span>
+                            </div>
+                            <span class="stat-label">@NgayTao</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="button-container">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="false" Class="follow-btn">
+                            <MudIcon Icon="@Icons.Material.Filled.History" Size="Size.Small" Class="me-2" />
+                            Lịch sử
+                        </MudButton>
 
-                    <MudMenuItem OnClick="Logout" Class="text-danger">
-                        <MudIcon Icon="@Icons.Material.Filled.Logout" Class="me-2" />
-                        Đăng xuất
-                    </MudMenuItem>
-                </MudMenu>
-            </div>
-        </MudCardContent>
-    </MudCard>
+                        <MudMenu AnchorOrigin="Origin.BottomCenter"
+                                 TransformOrigin="Origin.TopCenter"
+                                 Icon="@Icons.Material.Filled.Settings"
+                                 Color="Color.Primary"
+                                 Variant="Variant.Outlined"
+                                 Label="Cài đặt">
+
+                            <MudMenuItem OnClick="OpenChangePasswordDialog">
+                                <MudIcon Icon="@Icons.Material.Filled.Key" Class="me-2" />
+                                Đổi mật khẩu
+                            </MudMenuItem>
+
+                            <MudMenuItem OnClick="Logout" Class="text-danger">
+                                <MudIcon Icon="@Icons.Material.Filled.Logout" Class="me-2" />
+                                Đăng xuất
+                            </MudMenuItem>
+                        </MudMenu>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </div>
+
+        <!-- Right Column: Withdrawal History -->
+        <div class="history-container">
+            <MudCard class="history-card">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <div class="history-header">
+                            <MudIcon Icon="@Icons.Material.Filled.History" Size="Size.Medium" Color="Color.Primary" />
+                            <MudText Typo="Typo.h6">Lịch sử rút trích</MudText>
+                        </div>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (IsLoadingHistory)
+                    {
+                        <div class="loading-container">
+                            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                            <MudText Typo="Typo.body2" Color="Color.Default">Đang tải lịch sử...</MudText>
+                        </div>
+                    }
+                    else if (WithdrawalHistory == null || !WithdrawalHistory.Any())
+                    {
+                        <div class="empty-state">
+                            <MudIcon Icon="@Icons.Material.Outlined.FolderOpen" Size="Size.Large" Color="Color.Default" />
+                            <MudText Typo="Typo.body1" Color="Color.Default">Chưa có lịch sử rút trích</MudText>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="history-list">
+                            @foreach (var item in WithdrawalHistory.OrderByDescending(x => x.NgayYeuCau))
+                            {
+                                <MudCard class="history-item" Elevation="1">
+                                    <MudCardContent>
+                                        <div class="history-item-header">
+                                            <MudText Typo="Typo.subtitle1" Class="history-item-title">
+                                                @(item.TenMonHoc ?? "Không có tên môn")
+                                            </MudText>
+                                            <MudChip T="string" Size="Size.Small" 
+                                                     Color="@(item.DaXuLy == true ? Color.Success : Color.Warning)"
+                                                     Variant="Variant.Filled">
+                                                @(item.DaXuLy == true ? "Đã xử lý" : "Chưa xử lý")
+                                            </MudChip>
+                                        </div>
+                                        
+                                        <div class="history-item-details">
+                                            <div class="detail-row">
+                                                <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Small" Color="Color.Default" />
+                                                <MudText Typo="Typo.body2">@(item.NoiDungRutTrich ?? "Không có nội dung")</MudText>
+                                            </div>
+                                            <div class="detail-row">
+                                                <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" Color="Color.Default" />
+                                                <MudText Typo="Typo.body2">@item.NgayYeuCau?.ToString("dd/MM/yyyy HH:mm")</MudText>
+                                            </div>
+                                            @if (item.DaXuLy == true && item.NgayXuLy != null)
+                                            {
+                                                <div class="detail-row">
+                                                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success" />
+                                                    <MudText Typo="Typo.body2">Xử lý: @item.NgayXuLy?.ToString("dd/MM/yyyy HH:mm")</MudText>
+                                                </div>
+                                            }
+                                        </div>
+
+                                        @if (!string.IsNullOrEmpty(item.GhiChu))
+                                        {
+                                            <MudText Typo="Typo.caption" Class="history-item-note">
+                                                Ghi chú: @item.GhiChu
+                                            </MudText>
+                                        }
+                                    </MudCardContent>
+                                </MudCard>
+                            }
+                        </div>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
 </div>
 
 <style>
-    .profile-container {
-        max-width: 800px;
+    .profile-wrapper {
+        max-width: 1400px;
         margin: 20px auto;
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1px solid #e0e0e0;
+        padding: 0 20px;
     }
 
     .gradient-header {
         height: 180px;
         background: #0d47a1 !important;
         position: relative;
+        border-radius: 12px 12px 0 0;
+        margin-bottom: -80px;
+    }
+
+    .profile-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr;
+        gap: 24px;
+        position: relative;
+        z-index: 10;
+    }
+
+    @@media (max-width: 1024px) {
+        .profile-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .profile-container {
+        /* max-width: 800px; */
     }
 
     .profile-card {
@@ -102,7 +195,6 @@
         border-radius: 12px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         position: relative;
-        z-index: 10;
     }
 
     .profile-header {
@@ -117,7 +209,6 @@
         flex-shrink: 0; 
     }
 
-
     .avatar {
         width: 120px;        
         height: 120px;
@@ -127,9 +218,11 @@
         object-fit: cover;
         transform: translateY(-50%); 
     }
+    
     .user-info {
         margin-top: -40px;
     }
+    
     .user-name {
         font-size: 28px;
         font-weight: 700;
@@ -179,12 +272,6 @@
         color: #999;
     }
 
-    .stat-divider {
-        width: 1px;
-        height: 40px;
-        background: #e0e0e0;
-    }
-
     .button-container {
         display: flex;
         gap: 12px;
@@ -195,13 +282,6 @@
         flex: 1;
     }
     
-    .user-status {
-        gap: 6px;
-        font-size: 14px;
-        color: #666;
-        margin-top: 4px;
-    }
-
     .status-indicator {
         width: 10px;
         height: 10px;
@@ -210,13 +290,119 @@
     }
 
     .status-indicator.active {
-        background-color: #4caf50; /* xanh lá: đang hoạt động */
+        background-color: #4caf50;
     }
 
     .status-indicator.inactive {
-        background-color: #f44336; /* đỏ: bị khóa */
+        background-color: #f44336;
     }
 
-   
-    
+    /* Withdrawal History Styles */
+    .history-container {
+        /* max-width: 600px; */
+    }
+
+    .history-card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .history-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .history-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        max-height: 600px;
+        overflow-y: auto;
+        padding-right: 8px;
+    }
+
+    .history-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .history-list::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .history-list::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+
+    .history-list::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    .history-item {
+        border-left: 3px solid #1a73e8;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .history-item:hover {
+        transform: translateX(4px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .history-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 12px;
+    }
+
+    .history-item-title {
+        font-weight: 600;
+        color: #1a1a1a;
+        flex: 1;
+        margin-right: 12px;
+    }
+
+    .history-item-details {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .detail-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #666;
+    }
+
+    .history-item-note {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #f0f0f0;
+        color: #999;
+        font-style: italic;
+    }
+
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        padding: 40px;
+    }
+
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        padding: 60px 20px;
+        color: #999;
+    }
 </style>
