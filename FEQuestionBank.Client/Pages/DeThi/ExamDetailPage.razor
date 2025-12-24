@@ -125,15 +125,15 @@
                                             @if (ch.SoCauHoiCon == 0 && ch.CauTraLois?.Any() == true)
                                             {
                                                 <div class="pl-6">
-                                                    @foreach (var da in ch.CauTraLois.OrderBy(x => x.ThuTu))
+                                                    @foreach (var (da, index) in ch.CauTraLois.OrderBy(x => x.ThuTu).Select((item, i) => (item, i)))
                                                     {
-                                                        var label = da.ThuTu switch
+                                                        var label = index switch
                                                         {
-                                                            1 => "A.",
-                                                            2 => "B.",
-                                                            3 => "C.",
-                                                            4 => "D.",
-                                                            _ => $"{da.ThuTu}."
+                                                            0 => "A.",
+                                                            1 => "B.",
+                                                            2 => "C.",
+                                                            3 => "D.",
+                                                            _ => $"{(char)('A' + index)}."
                                                         };
 
                                                         <div class="d-flex align-start gap-3 mb-3"

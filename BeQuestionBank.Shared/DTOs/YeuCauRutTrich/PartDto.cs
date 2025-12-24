@@ -18,5 +18,9 @@ public class PartDto
 
     [Required(ErrorMessage = "Danh sách loại câu hỏi không được để trống.")]
     public List<QuestionTypeDto> QuestionTypes { get; set; }
-    
+
+    /// <summary>
+    /// Chi tiết từng ô trong ma trận CLO × Loại câu hỏi cho phần này
+    /// </summary>
+    public List<MatrixCellDto>? MatrixCells { get; set; }
 }
