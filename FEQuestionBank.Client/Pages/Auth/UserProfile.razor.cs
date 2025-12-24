@@ -171,7 +171,6 @@ public partial class UserProfile : ComponentBase
         catch (Exception ex)
         {
             WithdrawalHistory = new List<YeuCauRutTrichDto>();
-            Snackbar.Add($"Lỗi khi tải lịch sử: {ex.Message}", Severity.Error);
         }
         finally
         {
