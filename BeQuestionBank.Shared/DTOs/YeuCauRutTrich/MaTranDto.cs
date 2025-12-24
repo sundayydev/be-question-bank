@@ -9,6 +9,12 @@ public class MaTranDto : IValidatableObject
     public List<CloDto>? Clos { get; set; }
     public List<QuestionTypeDto>? QuestionTypes { get; set; }
 
+    /// <summary>
+    /// Chi tiết từng ô trong ma trận CLO × Loại câu hỏi
+    /// Chứa số lượng câu hỏi chính xác cho từng cặp (CLO, Loại)
+    /// </summary>
+    public List<MatrixCellDto>? MatrixCells { get; set; }
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (CloPerPart && (Parts == null || !Parts.Any()))

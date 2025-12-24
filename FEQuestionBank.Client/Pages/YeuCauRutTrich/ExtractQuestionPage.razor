@@ -3,27 +3,20 @@
 @using BeQuestionBank.Shared.DTOs.YeuCauRutTrich
 @using BeQuestionBank.Shared.DTOs.MonHoc
 @using BeQuestionBank.Shared.DTOs.Phan
+@using BeQuestionBank.Shared.DTOs.Khoa
 @using MudBlazor
 @inherits FEQuestionBank.Client.Pages.DeThi.ExtractQuestionPage
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge">
     <MudBreadcrumbs Items="_breadcrumbs" />
 
-    <!-- Progress Stepper -->
-    <MudPaper Elevation="2" Class="pa-4 mb-6">
-        <MudStepper @ref="_stepper" Linear="false">
-            <MudStep Title="Chọn môn học" Icon="@Icons.Material.Filled.School" />
-            <MudStep Title="Cấu hình ma trận" Icon="@Icons.Material.Filled.GridOn" />
-            <MudStep Title="Xem trước" Icon="@Icons.Material.Filled.Preview" />
-            <MudStep Title="Kiểm tra" Icon="@Icons.Material.Filled.CheckCircle" StatusColor="@(_isValidated ? Color.Success : Color.Default)" />
-            <MudStep Title="Rút trích" Icon="@Icons.Material.Filled.AutoFixHigh" Disabled="@(!_isValidated)" />
-        </MudStepper>
-    </MudPaper>
-
     <MudCard Elevation="3">
         <MudCardHeader>
             <CardHeaderContent>
-                <MudText Typo="Typo.h5">Rút Trích Đề Thi</MudText>
+                <MudText Typo="Typo.h5">
+                    <MudIcon Icon="@Icons.Material.Filled.AutoFixHigh" Class="mr-2" />
+                    Rút Trích Đề Thi
+                </MudText>
                 <MudText Typo="Typo.body2" Color="Color.Secondary">
                     Tạo đề thi tự động dựa trên ma trận CLO và loại câu hỏi
                 </MudText>
@@ -33,46 +26,88 @@
         <MudCardContent>
             <MudForm @ref="_form" Model="_model">
 
-                <!-- BƯỚC 1: Chọn Môn học & Chế độ -->
+                <!-- Thông tin cơ bản -->
                 <MudPaper Elevation="1" Class="pa-4 mb-6">
                     <MudText Typo="Typo.h6" Class="mb-4">
-                        <MudIcon Icon="@Icons.Material.Filled.LooksOne" Class="mr-2" />
+                        <MudIcon Icon="@Icons.Material.Filled.School" Class="mr-2" />
                         Thông tin cơ bản
                     </MudText>
                     
-                    <MudGrid Spacing="4">
-                        <MudItem xs="12" sm="6">
+                    <MudGrid Spacing="3">
+                        <!-- Chọn Khoa -->
+                        <MudItem xs="12" sm="4">
                             <MudSelect T="Guid"
-                                       Label="Môn Học"
+                                       Label="Khoa"
                                        Variant="Variant.Outlined"
-                                       Value="_model.MaMonHoc"
-                                       ValueChanged="@OnMonHocChanged"
-                                       Required="true">
-                                @foreach (var mh in _monHocs)
+                                       Value="_selectedKhoaId"
+                                       ValueChanged="@OnKhoaChanged"
+                                       Required="true"
+                                       Adornment="Adornment.Start"
+                                       AdornmentIcon="@Icons.Material.Filled.AccountBalance">
+                                @foreach (var khoa in _khoas)
                                 {
-                                    <MudSelectItem Value="@mh.MaMonHoc">
-                                        <div class="d-flex align-center gap-2">
-                                            <MudIcon Icon="@Icons.Material.Filled.Book" Size="Size.Small" />
-                                            <span>@mh.TenMonHoc</span>
-                                        </div>
+                                    <MudSelectItem Value="@khoa.MaKhoa">
+                                        @khoa.TenKhoa
                                     </MudSelectItem>
                                 }
                             </MudSelect>
                         </MudItem>
 
-                        <MudItem xs="12" sm="6">
+                        <!-- Chọn Môn học -->
+                        <MudItem xs="12" sm="4">
+                            <MudSelect T="Guid"
+                                       Label="Môn Học"
+                                       Variant="Variant.Outlined"
+                                       Value="_model.MaMonHoc"
+                                       ValueChanged="@OnMonHocChanged"
+                                       Required="true"
+                                       Disabled="@(_isLoadingMonHoc || !_monHocs.Any())"
+                                       Adornment="Adornment.Start"
+                                       AdornmentIcon="@Icons.Material.Filled.Book">
+                                @if (_isLoadingMonHoc)
+                                {
+                                    <MudSelectItem Value="Guid.Empty">
+                                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                        Đang tải...
+                                    </MudSelectItem>
+                                }
+                                else if (!_monHocs.Any())
+                                {
+                                    <MudSelectItem Value="Guid.Empty">
+                                        <em>Chọn khoa trước</em>
+                                    </MudSelectItem>
+                                }
+                                else
+                                {
+                                    @foreach (var mh in _monHocs)
+                                    {
+                                        <MudSelectItem Value="@mh.MaMonHoc">
+                                            @mh.TenMonHoc
+                                        </MudSelectItem>
+                                    }
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <!-- Chế độ rút trích -->
+                        <MudItem xs="12" sm="4">
                             <MudSelect T="bool"
                                        Value="_maTran.CloPerPart"
                                        ValueChanged="@OnCloPerPartChanged"
                                        Variant="Variant.Outlined"
-                                       Label="Chế độ rút trích">
+                                       Label="Chế độ rút trích"
+                                       Disabled="@(_model.MaMonHoc == Guid.Empty)">
                                 <MudSelectItem Value="false">
-                                    <MudIcon Icon="@Icons.Material.Filled.ViewCompact" Size="Size.Small" Class="mr-1" />
-                                    Ma trận CLO x Loại câu hỏi (toàn đề)
+                                    <div class="d-flex align-center">
+                                        <MudIcon Icon="@Icons.Material.Filled.ViewCompact" Size="Size.Small" Class="mr-2" />
+                                        <span>Toàn đề</span>
+                                    </div>
                                 </MudSelectItem>
                                 <MudSelectItem Value="true">
-                                    <MudIcon Icon="@Icons.Material.Filled.ViewModule" Size="Size.Small" Class="mr-1" />
-                                    Theo từng Chương/Phần
+                                    <div class="d-flex align-center">
+                                        <MudIcon Icon="@Icons.Material.Filled.ViewModule" Size="Size.Small" Class="mr-2" />
+                                        <span>Theo Chương/Phần</span>
+                                    </div>
                                 </MudSelectItem>
                             </MudSelect>
                         </MudItem>
@@ -655,33 +690,30 @@
                     </MudAlert>
                 }
 
-                <!-- BƯỚC 3-6: Các nút hành động -->
+                <!-- Các nút hành động -->
                 <MudPaper Elevation="2" Class="pa-4">
                     <div class="d-flex flex-wrap justify-end gap-3">
-                        <!-- Bước 3: Xem trước -->
                         <MudButton Variant="Variant.Outlined"
                                    Color="Color.Info"
+                                   StartIcon="@Icons.Material.Filled.Preview"
                                    OnClick="XemTruocMaTran"
                                    Disabled="@(_model.MaMonHoc == Guid.Empty)">
-                            <MudIcon Icon="@Icons.Material.Filled.Looks3" Size="Size.Small" Class="mr-1" />
                             Xem trước ma trận
                         </MudButton>
 
-                        <!-- Bước 4: Kiểm tra -->
                         <MudButton Variant="Variant.Filled"
                                    Color="Color.Warning"
+                                   StartIcon="@Icons.Material.Filled.CheckCircle"
                                    OnClick="KiemTraMaTran"
                                    Disabled="@(_isChecking || _model.MaMonHoc == Guid.Empty)">
-                            <MudIcon Icon="@Icons.Material.Filled.Looks4" Size="Size.Small" Class="mr-1" />
                             @(_isChecking ? "Đang kiểm tra..." : "Kiểm tra ma trận")
                         </MudButton>
 
-                        <!-- Bước 6: Rút trích (chỉ khi đã validate) -->
                         <MudButton Variant="Variant.Filled"
                                    Color="Color.Success"
+                                   StartIcon="@Icons.Material.Filled.AutoFixHigh"
                                    OnClick="RutTrichDeThi"
                                    Disabled="@(_isProcessing || !_isValidated)">
-                            <MudIcon Icon="@Icons.Material.Filled.Looks5" Size="Size.Small" Class="mr-1" />
                             @(_isProcessing ? "Đang rút trích..." : "Rút trích đề thi")
                         </MudButton>
                     </div>
@@ -708,6 +740,3 @@
     }
 </style>
 
-@code {
-    private MudStepper _stepper = default!;
-}

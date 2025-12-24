@@ -1,5 +1,6 @@
 using BeQuestionBank.Shared.DTOs.MonHoc;
 using BeQuestionBank.Shared.DTOs.YeuCauRutTrich;
+using BeQuestionBank.Shared.DTOs.Khoa;
 using FEQuestionBank.Client.Services;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -16,6 +17,7 @@ namespace FEQuestionBank.Client.Pages.DeThi
         [Inject] CustomAuthStateProvider AuthStateProvider { get; set; } = default!;
         [Inject] IDeThiApiClient DeThiApi { get; set; } = default!;
         [Inject] IMonHocApiClient MonHocApi { get; set; } = default!;
+        [Inject] IKhoaApiClient KhoaApi { get; set; } = default!;
         [Inject] IPhanApiClient PhanApi { get; set; } = default!;
         [Inject] ISnackbar Snackbar { get; set; } = default!;
         [Inject] IDialogService DialogService { get; set; } = default!;
@@ -32,9 +34,12 @@ namespace FEQuestionBank.Client.Pages.DeThi
             Parts = new()
         };
 
+        protected List<KhoaDto> _khoas = new();
+        protected Guid _selectedKhoaId = Guid.Empty;
         protected List<MonHocDto> _monHocs = new();
         protected List<PhanDto> _availableParts = new();
         protected HashSet<Guid> _selectedPartIds = new();
+        protected bool _isLoadingMonHoc = false;
 
         // Ma trận CLO x Loại câu hỏi
         protected List<int> _matrixClos = new() { 1, 2, 3 }; // CLO1, CLO2, CLO3 mặc định
@@ -95,23 +100,90 @@ namespace FEQuestionBank.Client.Pages.DeThi
 
             if (user.Identity?.IsAuthenticated ?? false)
             {
+                // Lấy claim
                 var userIdClaim = user.FindFirst("UserId") ?? user.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out var userId))
                 {
                     _model.MaNguoiDung = userId;
+                    Console.WriteLine($"Current user id: {_model.MaNguoiDung}");
+                }
+                else
+                {
+                    Console.WriteLine("WARNING: No valid user id claim found.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("User is not authenticated.");
+            }
+
+            // Load danh sách Khoa
+            var resKhoa = await KhoaApi.GetAllKhoasAsync();
+            if (resKhoa.Success && resKhoa.Data != null && resKhoa.Data.Any())
+            {
+                _khoas = resKhoa.Data.Where(k => k.XoaTam != true).ToList();
+                if (_khoas.Any())
+                {
+                    _selectedKhoaId = _khoas.First().MaKhoa;
+                    await OnKhoaChanged(_selectedKhoaId);
                 }
             }
 
-            // Load môn học
-            var res = await MonHocApi.GetAllMonHocsAsync();
-            if (res.Success && res.Data != null && res.Data.Any())
+            InitializeDefaultMatrix();
+        }
+
+        protected async Task OnKhoaChanged(Guid maKhoa)
+        {
+            _selectedKhoaId = maKhoa;
+            _monHocs = new List<MonHocDto>();
+            _model.MaMonHoc = Guid.Empty;
+
+            // Reset tất cả state liên quan đến môn học
+            _availableParts = new List<PhanDto>();
+            _selectedPartIds = new HashSet<Guid>();
+            _maTran = new MaTranDto
             {
-                _monHocs = res.Data;
-                _model.MaMonHoc = _monHocs.First().MaMonHoc;
-                await OnMonHocChanged(_model.MaMonHoc);
+                TotalQuestions = 0,
+                CloPerPart = false,
+                Clos = new List<CloDto>(),
+                QuestionTypes = new List<QuestionTypeDto>(),
+                Parts = new List<PartDto>()
+            };
+            _matrixData = new Dictionary<(int clo, string loai), int>();
+            _partMatrixData = new Dictionary<Guid, Dictionary<(int clo, string loai), int>>();
+            _partClos = new Dictionary<Guid, List<int>>();
+            _matrixClos = new List<int> { 1, 2, 3 };
+            _isValidated = false;
+            _validationMessage = null;
+
+            if (maKhoa == Guid.Empty)
+            {
+                StateHasChanged();
+                return;
             }
 
-            InitializeDefaultMatrix();
+            _isLoadingMonHoc = true;
+            StateHasChanged();
+
+            try
+            {
+                var res = await MonHocApi.GetMonHocsByMaKhoaAsync(maKhoa);
+                if (res.Success && res.Data != null && res.Data.Any())
+                {
+                    _monHocs = res.Data;
+                    _model.MaMonHoc = _monHocs.First().MaMonHoc;
+                    await OnMonHocChanged(_model.MaMonHoc);
+                }
+                else
+                {
+                    Snackbar.Add("Khoa này chưa có môn học nào.", Severity.Info);
+                }
+            }
+            finally
+            {
+                _isLoadingMonHoc = false;
+                StateHasChanged();
+            }
         }
 
         private void InitializeDefaultMatrix()
@@ -278,11 +350,61 @@ namespace FEQuestionBank.Client.Pages.DeThi
         private void UpdateMaTranFromMatrix()
         {
             // Cập nhật _maTran từ ma trận
-            _maTran.Clos = _matrixClos
-                .Select(clo => new CloDto
+            // Tạo MatrixCells chi tiết cho từng ô (CLO × Loại)
+            var matrixCells = new List<MatrixCellDto>();
+
+            foreach (var clo in _matrixClos)
+            {
+                foreach (var loai in _questionTypes.Keys)
                 {
-                    Clo = clo,
-                    Num = GetColumnTotal(clo)
+                    var value = GetMatrixValue(clo, loai);
+                    if (value > 0)
+                    {
+                        // Với loại NH/TL, gán SubQuestionCount từ cấu hình
+                        int? subQuestionCount = null;
+                        if (IsCountingChildQuestions(loai))
+                        {
+                            subQuestionCount = GetChildQuestionCount(loai);
+                        }
+
+                        matrixCells.Add(new MatrixCellDto
+                        {
+                            Clo = clo,
+                            Loai = loai,
+                            Num = value,
+                            SubQuestionCount = subQuestionCount
+                        });
+                    }
+                }
+            }
+
+            _maTran.MatrixCells = matrixCells;
+
+            // Gộp theo CLO như cấu trúc ban đầu (cho tương thích ngược)
+            _maTran.Clos = _matrixClos
+                .Select(clo =>
+                {
+                    // Kiểm tra xem CLO này có loại NH hoặc TL không
+                    bool hasNH = GetMatrixValue(clo, "NH") > 0;
+                    bool hasTL = GetMatrixValue(clo, "TL") > 0;
+
+                    // Lấy SubQuestionCount nếu có loại NH/TL
+                    int? subQuestionCount = null;
+                    if (hasNH)
+                    {
+                        subQuestionCount = GetChildQuestionCount("NH");
+                    }
+                    else if (hasTL)
+                    {
+                        subQuestionCount = GetChildQuestionCount("TL");
+                    }
+
+                    return new CloDto
+                    {
+                        Clo = clo,
+                        Num = GetColumnTotal(clo),
+                        SubQuestionCount = subQuestionCount
+                    };
                 })
                 .Where(c => c.Num > 0)
                 .ToList();
@@ -453,11 +575,61 @@ namespace FEQuestionBank.Client.Pages.DeThi
         {
             var clos = GetPartClos(part);
 
-            part.Clos = clos
-                .Select(clo => new CloDto
+            // Tạo MatrixCells chi tiết cho từng ô (CLO × Loại)
+            var matrixCells = new List<MatrixCellDto>();
+
+            foreach (var clo in clos)
+            {
+                foreach (var loai in _questionTypes.Keys)
                 {
-                    Clo = clo,
-                    Num = GetPartColumnTotal(part, clo)
+                    var value = GetPartMatrixValue(part, clo, loai);
+                    if (value > 0)
+                    {
+                        // Với loại NH/TL, gán SubQuestionCount từ cấu hình
+                        int? subQuestionCount = null;
+                        if (IsCountingChildQuestions(loai))
+                        {
+                            subQuestionCount = GetChildQuestionCount(loai);
+                        }
+
+                        matrixCells.Add(new MatrixCellDto
+                        {
+                            Clo = clo,
+                            Loai = loai,
+                            Num = value,
+                            SubQuestionCount = subQuestionCount
+                        });
+                    }
+                }
+            }
+
+            part.MatrixCells = matrixCells;
+
+            // Gộp theo CLO như cấu trúc ban đầu (cho tương thích ngược)
+            part.Clos = clos
+                .Select(clo =>
+                {
+                    // Kiểm tra xem CLO này có loại NH hoặc TL không
+                    bool hasNH = GetPartMatrixValue(part, clo, "NH") > 0;
+                    bool hasTL = GetPartMatrixValue(part, clo, "TL") > 0;
+
+                    // Lấy SubQuestionCount nếu có loại NH/TL
+                    int? subQuestionCount = null;
+                    if (hasNH)
+                    {
+                        subQuestionCount = GetChildQuestionCount("NH");
+                    }
+                    else if (hasTL)
+                    {
+                        subQuestionCount = GetChildQuestionCount("TL");
+                    }
+
+                    return new CloDto
+                    {
+                        Clo = clo,
+                        Num = GetPartColumnTotal(part, clo),
+                        SubQuestionCount = subQuestionCount
+                    };
                 })
                 .Where(c => c.Num > 0)
                 .ToList();
@@ -843,6 +1015,20 @@ namespace FEQuestionBank.Client.Pages.DeThi
             if (_model.MaMonHoc == Guid.Empty)
             {
                 Snackbar.Add("Vui lòng chọn môn học!", Severity.Warning);
+                return;
+            }
+
+            // Đảm bảo UserId luôn có
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userIdClaim = user.FindFirst("UserId") ?? user.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out var userId))
+            {
+                _model.MaNguoiDung = userId;
+            }
+            else
+            {
+                Snackbar.Add("Không xác định được UserId.", Severity.Error);
                 return;
             }
 

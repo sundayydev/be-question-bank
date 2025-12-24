@@ -147,7 +147,7 @@ public class YeuCauRutTrichController : ControllerBase
                 ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
     }
-    
+
     [HttpPost]
     [SwaggerOperation("Thêm yêu cầu rút trích mới")]
     public async Task<IActionResult> AddAsync([FromBody] CreateYeuCauRutTrichDto dto)
@@ -157,9 +157,9 @@ public class YeuCauRutTrichController : ControllerBase
             if (dto == null)
                 return StatusCode(StatusCodes.Status400BadRequest,
                     ApiResponseFactory.ValidationError<object>("Dữ liệu không hợp lệ."));
-            
+
             var (success, message, maYeuCau) = await _service.AddAsync(dto);
-            
+
             if (!success)
                 return StatusCode(StatusCodes.Status400BadRequest,
                     ApiResponseFactory.ValidationError<object>(message));
@@ -237,13 +237,13 @@ public class YeuCauRutTrichController : ControllerBase
                 ApiResponseFactory.ServerError($"Lỗi hệ thống: {ex.Message}"));
         }
     }
+
     // POST: api/YeuCauRutTrich/RutTrichDeThi
-  
     [HttpPost("RutTrichDeThi")]
     [SwaggerOperation("Tạo yêu cầu rút trích và đề thi mới")]
     public async Task<IActionResult> CreateAndRutTrichDeThiAsync([FromBody] CreateYeuCauRutTrichDto dto)
     {
-        if (dto == null || dto.MaNguoiDung == Guid.Empty || dto.MaMonHoc == Guid.Empty || 
+        if (dto == null || dto.MaNguoiDung == Guid.Empty || dto.MaMonHoc == Guid.Empty ||
             dto.MaTran == null)
         {
             return StatusCode(StatusCodes.Status400BadRequest,
@@ -266,7 +266,7 @@ public class YeuCauRutTrichController : ControllerBase
             var deThiService = HttpContext.RequestServices.GetService<DeThiService>();
             if (deThiService == null)
             {
-                await _service.DeleteAsync(maYeuCau); 
+                await _service.DeleteAsync(maYeuCau);
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     ApiResponseFactory.ServerError("Không thể khởi tạo DeThiService."));
             }
@@ -399,7 +399,8 @@ public class YeuCauRutTrichController : ControllerBase
             return StatusCode(500, $"Lỗi: {ex.Message}");
         }
     }
-   // GET: api/YeuCauRutTrich/paged
+
+    // GET: api/YeuCauRutTrich/paged
     [HttpGet("paged")]
     [SwaggerOperation("Lấy danh sách yêu cầu rút trích có phân trang, tìm kiếm, sắp xếp")]
     public async Task<IActionResult> GetPagedAsync(
@@ -408,104 +409,104 @@ public class YeuCauRutTrichController : ControllerBase
          [FromQuery] string? sort = null,
          [FromQuery] string? search = null,
          [FromQuery] bool? daXuLy = null)
-{
-    try
     {
-        var query = await _service.GetAllBasicAsync();
-
-        
-        if (daXuLy.HasValue)
+        try
         {
-            query = query.Where(k => k.DaXuLy == daXuLy.Value);
-        }
-        
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var keyword = search.Trim().ToLower();
-            query = query.Where(k =>
-                (!string.IsNullOrEmpty(k.TenNguoiDung) && k.TenNguoiDung.ToLower().Contains(keyword)) ||
-                (!string.IsNullOrEmpty(k.TenMonHoc) && k.TenMonHoc.ToLower().Contains(keyword)) ||
-                (!string.IsNullOrEmpty(k.NoiDungRutTrich) && k.NoiDungRutTrich.ToLower().Contains(keyword)) ||
-                (!string.IsNullOrEmpty(k.TenKhoa) && k.TenKhoa.ToLower().Contains(keyword))
-            );
-        }
+            var query = await _service.GetAllBasicAsync();
 
-        // === 3. Sắp xếp (sort) ===
-        if (!string.IsNullOrWhiteSpace(sort))
-        {
-            var parts = sort.Split(',', StringSplitOptions.RemoveEmptyEntries);
-            var column = parts[0].Trim();
-            var direction = parts.Length > 1 ? parts[1].Trim().ToLower() : "asc";
 
-            query = (column.ToLower(), direction) switch
+            if (daXuLy.HasValue)
             {
-                ("mayeucau", "asc") => query.OrderBy(k => k.MaYeuCau),
-                ("mayeucau", "desc") => query.OrderByDescending(k => k.MaYeuCau),
+                query = query.Where(k => k.DaXuLy == daXuLy.Value);
+            }
 
-                ("tennguoidung", "asc") => query.OrderBy(k => k.TenNguoiDung),
-                ("tennguoidung", "desc") => query.OrderByDescending(k => k.TenNguoiDung),
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var keyword = search.Trim().ToLower();
+                query = query.Where(k =>
+                    (!string.IsNullOrEmpty(k.TenNguoiDung) && k.TenNguoiDung.ToLower().Contains(keyword)) ||
+                    (!string.IsNullOrEmpty(k.TenMonHoc) && k.TenMonHoc.ToLower().Contains(keyword)) ||
+                    (!string.IsNullOrEmpty(k.NoiDungRutTrich) && k.NoiDungRutTrich.ToLower().Contains(keyword)) ||
+                    (!string.IsNullOrEmpty(k.TenKhoa) && k.TenKhoa.ToLower().Contains(keyword))
+                );
+            }
 
-                ("tenmonhoc", "asc") => query.OrderBy(k => k.TenMonHoc),
-                ("tenmonhoc", "desc") => query.OrderByDescending(k => k.TenMonHoc),
+            // === 3. Sắp xếp (sort) ===
+            if (!string.IsNullOrWhiteSpace(sort))
+            {
+                var parts = sort.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                var column = parts[0].Trim();
+                var direction = parts.Length > 1 ? parts[1].Trim().ToLower() : "asc";
 
-                ("tenkhoa", "asc") => query.OrderBy(k => k.TenKhoa),
-                ("tenkhoa", "desc") => query.OrderByDescending(k => k.TenKhoa),
+                query = (column.ToLower(), direction) switch
+                {
+                    ("mayeucau", "asc") => query.OrderBy(k => k.MaYeuCau),
+                    ("mayeucau", "desc") => query.OrderByDescending(k => k.MaYeuCau),
 
-                ("noidungruttrich", "asc") => query.OrderBy(k => k.NoiDungRutTrich),
-                ("noidungruttrich", "desc") => query.OrderByDescending(k => k.NoiDungRutTrich),
+                    ("tennguoidung", "asc") => query.OrderBy(k => k.TenNguoiDung),
+                    ("tennguoidung", "desc") => query.OrderByDescending(k => k.TenNguoiDung),
 
-                ("daxuly", "asc") => query.OrderBy(k => k.DaXuLy),
-                ("daxuly", "desc") => query.OrderByDescending(k => k.DaXuLy),
+                    ("tenmonhoc", "asc") => query.OrderBy(k => k.TenMonHoc),
+                    ("tenmonhoc", "desc") => query.OrderByDescending(k => k.TenMonHoc),
 
-                ("ngayyeucau", "asc") => query.OrderBy(k => k.NgayYeuCau),
-                ("ngayyeucau", "desc") => query.OrderByDescending(k => k.NgayYeuCau),
+                    ("tenkhoa", "asc") => query.OrderBy(k => k.TenKhoa),
+                    ("tenkhoa", "desc") => query.OrderByDescending(k => k.TenKhoa),
 
-                _ => query.OrderByDescending(k => k.NgayYeuCau) 
+                    ("noidungruttrich", "asc") => query.OrderBy(k => k.NoiDungRutTrich),
+                    ("noidungruttrich", "desc") => query.OrderByDescending(k => k.NoiDungRutTrich),
+
+                    ("daxuly", "asc") => query.OrderBy(k => k.DaXuLy),
+                    ("daxuly", "desc") => query.OrderByDescending(k => k.DaXuLy),
+
+                    ("ngayyeucau", "asc") => query.OrderBy(k => k.NgayYeuCau),
+                    ("ngayyeucau", "desc") => query.OrderByDescending(k => k.NgayYeuCau),
+
+                    _ => query.OrderByDescending(k => k.NgayYeuCau)
+                };
+            }
+            else
+            {
+                query = query.OrderByDescending(k => k.NgayYeuCau);
+            }
+
+            var totalCount = query.Count();
+            var items = query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(k => new YeuCauRutTrichDto
+                {
+                    MaYeuCau = k.MaYeuCau,
+                    MaNguoiDung = k.MaNguoiDung,
+                    MaMonHoc = k.MaMonHoc,
+                    NoiDungRutTrich = k.NoiDungRutTrich,
+                    GhiChu = k.GhiChu,
+                    NgayYeuCau = k.NgayYeuCau,
+                    NgayXuLy = k.NgayXuLy,
+                    DaXuLy = k.DaXuLy,
+                    TenNguoiDung = k.TenNguoiDung,
+                    TenMonHoc = k.TenMonHoc,
+                    TenKhoa = k.TenKhoa,
+                    MaTran = k.MaTran
+                })
+                .ToList();
+
+            var result = new PagedResult<YeuCauRutTrichDto>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
             };
-        }
-        else
-        {
-            query = query.OrderByDescending(k => k.NgayYeuCau);
-        }
-        
-        var totalCount = query.Count();
-        var items = query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(k => new YeuCauRutTrichDto
-            {
-                MaYeuCau = k.MaYeuCau,
-                MaNguoiDung = k.MaNguoiDung,
-                MaMonHoc = k.MaMonHoc,
-                NoiDungRutTrich = k.NoiDungRutTrich,
-                GhiChu = k.GhiChu,
-                NgayYeuCau = k.NgayYeuCau,
-                NgayXuLy = k.NgayXuLy,
-                DaXuLy = k.DaXuLy,
-                TenNguoiDung = k.TenNguoiDung,
-                TenMonHoc = k.TenMonHoc,
-                TenKhoa = k.TenKhoa,
-                MaTran = k.MaTran
-            })
-            .ToList();
-        
-        var result = new PagedResult<YeuCauRutTrichDto>
-        {
-            Items = items,
-            TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize
-        };
 
-        return Ok(ApiResponseFactory.Success(result, "Lấy danh sách yêu cầu rút trích thành công"));
+            return Ok(ApiResponseFactory.Success(result, "Lấy danh sách yêu cầu rút trích thành công"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi lấy danh sách yêu cầu rút trích phân trang");
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponseFactory.ServerError("Đã xảy ra lỗi khi xử lý yêu cầu."));
+        }
     }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Lỗi khi lấy danh sách yêu cầu rút trích phân trang");
-        return StatusCode(StatusCodes.Status500InternalServerError,
-            ApiResponseFactory.ServerError("Đã xảy ra lỗi khi xử lý yêu cầu."));
-    }
-}
-    
+
 }
 
