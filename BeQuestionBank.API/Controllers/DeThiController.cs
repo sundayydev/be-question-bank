@@ -432,7 +432,7 @@ public class DeThiController : ControllerBase
 
     }
     [HttpGet("{id}/export-ezp")]
-    [SwaggerOperation(Summary = "Export đề thi ra file .ezp (JSON)", Description = "Export đề thi với đầy đủ thông tin câu hỏi và đáp án. Tự động mã hóa nếu được bật trong config.")]
+    [SwaggerOperation(Summary = "Export đề thi ra file .ezp (JSON) có mã hóa", Description = "Export đề thi với đầy đủ thông tin câu hỏi và đáp án. Tự động mã hóa nếu được bật trong config.")]
     [SwaggerResponse(200, "File .ezp", typeof(FileResult))]
     [SwaggerResponse(404, "Không tìm thấy đề thi")]
     [SwaggerResponse(500, "Lỗi server")]
@@ -457,6 +457,37 @@ public class DeThiController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Lỗi khi export đề thi {MaDeThi} ra file .ezp", id);
+            return StatusCode(500, ApiResponseFactory.ServerError($"Không thể export đề thi: {ex.Message}"));
+        }
+    }
+
+    // GET: api/DeThi/{id}/export-ezp-plain
+    [HttpGet("{id}/export-ezp-plain")]
+    [SwaggerOperation(Summary = "Export đề thi ra file .ezp KHÔNG mã hóa", Description = "Export đề thi dạng JSON thuần túy, không mã hóa. Dùng cho testing và debug.")]
+    [SwaggerResponse(200, "File .ezp (plain JSON)", typeof(FileResult))]
+    [SwaggerResponse(404, "Không tìm thấy đề thi")]
+    [SwaggerResponse(500, "Lỗi server")]
+    public async Task<IActionResult> ExportDeThiEzpPlain(Guid id)
+    {
+        try
+        {
+            if (id == Guid.Empty)
+            {
+                return BadRequest(ApiResponseFactory.ValidationError<object>("ID đề thi không hợp lệ."));
+            }
+
+            var (success, message, fileContent, fileName) = await _ezpExportService.ExportDeThiToEzpFileAsync(id);
+
+            if (!success || fileContent == null)
+            {
+                return NotFound(ApiResponseFactory.NotFound<object>(message));
+            }
+
+            return File(fileContent, "application/json", fileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi export đề thi {MaDeThi} ra file .ezp (plain)", id);
             return StatusCode(500, ApiResponseFactory.ServerError($"Không thể export đề thi: {ex.Message}"));
         }
     }

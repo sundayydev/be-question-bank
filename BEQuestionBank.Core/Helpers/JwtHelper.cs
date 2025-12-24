@@ -1,5 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -29,6 +30,25 @@ public class JwtHelper
         _refreshExpireDays = int.TryParse(jwt["RefreshTokenExpireDays"], out var d) ? d : 7;
     }
 
+    // Properties để expose config cho AuthService (nếu cần)
+    public int AccessExpireMinutes => _accessExpireMinutes;
+    public int RefreshExpireDays => _refreshExpireDays;
+
+    /// <summary>
+    /// Generate cả Access Token + Refresh Token Key (random string để lưu Redis)
+    /// </summary>
+    public (string accessToken, string refreshTokenKey, DateTime expiresAt) GenerateTokenPair(
+        string userId, 
+        string username, 
+        string role)
+    {
+        var accessToken = GenerateAccessToken(userId, username, role);
+        var refreshTokenKey = GenerateSecureRandomString(32); // Random key để lưu Redis
+        var expiresAt = DateTime.UtcNow.AddMinutes(_accessExpireMinutes);
+
+        return (accessToken, refreshTokenKey, expiresAt);
+    }
+
     // Access Token
     public string GenerateAccessToken(string userId, string username, string role)
     {
@@ -37,10 +57,12 @@ public class JwtHelper
 
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, userId), // <-- Sửa chỗ này
+            new Claim(ClaimTypes.NameIdentifier, userId),
             new Claim(ClaimTypes.Name, username),
             new Claim(ClaimTypes.Role, role),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim("UserId", userId), // Backward compatibility
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
         };
 
         var token = new JwtSecurityToken(
@@ -54,7 +76,7 @@ public class JwtHelper
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    // Refresh Token
+    // Refresh Token (JWT - chứa claims để verify)
     public string GenerateRefreshToken(string userId, string username)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
@@ -62,7 +84,7 @@ public class JwtHelper
 
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, userId), // <-- Sửa chỗ này
+            new Claim(ClaimTypes.NameIdentifier, userId),
             new Claim(ClaimTypes.Name, username),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
@@ -76,6 +98,17 @@ public class JwtHelper
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    /// <summary>
+    /// Generate random string để dùng làm key trong Redis hoặc refresh token identifier
+    /// </summary>
+    public static string GenerateSecureRandomString(int byteLength = 32)
+    {
+        var bytes = new byte[byteLength];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(bytes);
+        return Convert.ToBase64String(bytes);
     }
 
     // Giải mã token (dùng khi refresh)

@@ -3,19 +3,16 @@ using BE_CIRRO.Core.Services;
 using BE_CIRRO.Shared.DTOs.Auth;
 using BeQuestionBank.Domain.Models;
 using BeQuestionBank.Shared.Enums;
+using BEQuestionBank.Core.Helpers;
 using BEQuestionBank.Core.Services;
 using BEQuestionBank.Shared.DTOs.user;
 using Mapster;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
-using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Mail;
 using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace BE_CIRRO.Core.Services;
 
@@ -26,15 +23,22 @@ public class AuthService
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthService> _logger;
     private readonly IDatabase _redisDb;
+    private readonly JwtHelper _jwtHelper;
     private const string RefreshTokenPrefix = "refresh_token:";
     private const string OtpPrefix = "otp:";
 
-    public AuthService(NguoiDungService userService, IConfiguration configuration, ILogger<AuthService> logger, IConnectionMultiplexer redis)
+    public AuthService(
+        NguoiDungService userService, 
+        IConfiguration configuration, 
+        ILogger<AuthService> logger, 
+        IConnectionMultiplexer redis,
+        JwtHelper jwtHelper)
     {
         _userService = userService;
         _configuration = configuration;
         _logger = logger;
         _redisDb = redis.GetDatabase();
+        _jwtHelper = jwtHelper;
     }
 
     private string GetRedisKey(string refreshToken) => $"{RefreshTokenPrefix}{refreshToken}";
@@ -230,42 +234,19 @@ public class AuthService
     // TẠO TOKEN
     private async Task<TokenDto> GenerateTokenAsync(NguoiDung user)
     {
-        var jwt = _configuration.GetSection("JwtSettings");
-        var secretKey = jwt["SecretKey"] ?? "your-super-secret-key-that-is-at-least-32-characters-long";
-        var issuer = jwt["Issuer"] ?? "BEQuestionBank";
-        var audience = jwt["Audience"] ?? "BEQuestionBank";
-        var expiryMinutes = int.Parse(jwt["AccessTokenExpireMinutes"] ?? "1");
-        var refreshExpiryDays = int.Parse(jwt["RefreshTokenExpireDays"] ?? "7");
-
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        var claims = new[]
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.MaNguoiDung.ToString()), // <-- THÊM DÒNG NÀY
-            new Claim(ClaimTypes.Name, user.TenDangNhap),
-            new Claim(ClaimTypes.Role, user.VaiTro.ToString()),
-            new Claim("UserId", user.MaNguoiDung.ToString()), // có thể bỏ dòng này nếu muốn sạch
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
-        };
-
-        var token = new JwtSecurityToken(
-            issuer: issuer,
-            audience: audience,
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(expiryMinutes),
-            signingCredentials: credentials
+        // Dùng JwtHelper để generate tokens
+        var (accessToken, refreshTokenKey, expiresAt) = _jwtHelper.GenerateTokenPair(
+            user.MaNguoiDung.ToString(),
+            user.TenDangNhap,
+            user.VaiTro.ToString()
         );
 
-        var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
-        var refreshToken = GenerateRefreshToken();
-
-        var redisKey = GetRedisKey(refreshToken);
+        // Lưu refresh token key vào Redis
+        var redisKey = GetRedisKey(refreshTokenKey);
         var stored = await _redisDb.StringSetAsync(
             redisKey,
             user.MaNguoiDung.ToString(),
-            TimeSpan.FromDays(refreshExpiryDays)
+            TimeSpan.FromDays(_jwtHelper.RefreshExpireDays)
         );
 
         if (!stored)
@@ -277,18 +258,10 @@ public class AuthService
         return new TokenDto
         {
             AccessToken = accessToken,
-            RefreshToken = refreshToken,
-            HanSuDung = DateTime.UtcNow.AddMinutes(expiryMinutes),
+            RefreshToken = refreshTokenKey,
+            HanSuDung = expiresAt,
             LoaiToken = "Bearer"
         };
-    }
-
-    private string GenerateRefreshToken()
-    {
-        var bytes = new byte[32];
-        using var rng = RandomNumberGenerator.Create();
-        rng.GetBytes(bytes);
-        return Convert.ToBase64String(bytes);
     }
 
     private string HashPassword(string password) => BCrypt.Net.BCrypt.HashPassword(password);
@@ -296,35 +269,7 @@ public class AuthService
 
     public ClaimsPrincipal? ValidateToken(string token)
     {
-        try
-        {
-            var jwt = _configuration.GetSection("JwtSettings");
-            var secretKey = jwt["SecretKey"] ?? "your-super-secret-key-that-is-at-least-32-characters-long";
-            var issuer = jwt["Issuer"] ?? "BEQuestionBank";
-            var audience = jwt["Audience"] ?? "BEQuestionBank";
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-            var handler = new JwtSecurityTokenHandler();
-
-            var parameters = new TokenValidationParameters
-            {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = key,
-                ValidateIssuer = true,
-                ValidIssuer = issuer,
-                ValidateAudience = true,
-                ValidAudience = audience,
-                ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
-            };
-
-            return handler.ValidateToken(token, parameters, out _);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Lỗi xác thực JWT token");
-            return null;
-        }
+        return _jwtHelper.ValidateToken(token);
     }
 
     // DEBUG: Kiểm tra token
