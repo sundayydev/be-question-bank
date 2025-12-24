@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Phiếu Nhập Kho</title>
+    <style>
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #000;
+            background: #ccc; /* Nền xám để nhìn rõ khổ giấy */
+            margin: 0;
+            padding: 20px;
+        }
+
+        .invoice-container {
+            width: 210mm; /* Khổ A4 */
+            min-height: 297mm;
+            background: #fff;
+            margin: 0 auto;
+            padding: 20px 40px;
+            box-sizing: border-box;
+            position: relative;
+            /* Tạo viền hoa văn xanh bao quanh giống MISA */
+            border: 5px double #2d89cc; 
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .header-left { width: 60%; }
+        .header-right { width: 40%; text-align: right; }
+
+        .company-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2d89cc; /* Màu xanh đặc trưng */
+            text-transform: uppercase;
+        }
+
+        .invoice-title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #2d89cc;
+            margin-top: 10px;
+        }
+        .invoice-sub {
+            text-align: center;
+            font-style: italic;
+            font-size: 14px;
+        }
+
+        /* Thông tin */
+        .info-section {
+            margin: 20px 0;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+        }
+        .row-info {
+            display: flex;
+            margin-bottom: 5px;
+        }
+        .label {
+            font-weight: bold;
+            width: 160px;
+        }
+        .content {
+            flex: 1;
+            border-bottom: 1px dotted #ccc; /* Dòng kẻ chấm */
+        }
+
+        /* Bảng hàng hóa */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #2d89cc;
+            padding: 8px;
+        }
+        th {
+            background-color: #e6f7ff; /* Nền xanh nhạt */
+            color: #000;
+            font-weight: bold;
+            text-align: center;
+        }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+
+        /* Tổng tiền */
+        .total-section {
+            margin-top: 10px;
+        }
+        .amount-in-words {
+            font-style: italic;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        /* Chữ ký */
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            text-align: center;
+        }
+        .sig-box {
+            width: 40%;
+        }
+        .sig-title { font-weight: bold; }
+        .sig-note { font-style: italic; font-size: 11px; }
+
+        /* QR Code placeholder */
+        .qr-code {
+            width: 80px;
+            height: 80px;
+            background: #eee;
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="invoice-container">
+        <div class="header">
+            <div class="header-left">
+                <div style="font-weight:bold; font-size: 20px; margin-bottom: 5px;">LOGO</div>
+                <div class="company-name">{{CompanyName}}</div>
+                <div>Mã số thuế: {{TaxCode}}</div>
+                <div>Địa chỉ: {{CompanyAddress}}</div>
+                <div>Điện thoại: {{PhoneNumber}}</div>
+                <div>Email: {{Email}}</div>
+            </div>
+            <div class="header-right">
+                <div>Mẫu số: 01-VT</div>
+                <div>Ký hiệu: NK/{{Year}}</div>
+                <div>Số: <strong style="color:red">{{ReceiptNumber}}</strong></div>
+                <div class="qr-code">QR CODE</div>
+            </div>
+        </div>
+
+        <div class="invoice-title">PHIẾU NHẬP KHO</div>
+        <div class="invoice-sub">(Warehouse Import Receipt)</div>
+        <div class="text-center">Ngày {{Day}} tháng {{Month}} năm {{Year}}</div>
+
+        <div class="info-section">
+            <div class="row-info">
+                <span class="label">Nhập tại kho:</span>
+                <span class="content">{{WarehouseName}}</span>
+            </div>
+            <div class="row-info">
+                <span class="label">Người nhập:</span>
+                <span class="content">{{UserName}}</span>
+            </div>
+            <div class="row-info">
+                <span class="label">Nhà cung cấp:</span>
+                <span class="content">{{SupplierName}}</span>
+            </div>
+            <div class="row-info">
+                <span class="label">Địa chỉ NCC:</span>
+                <span class="content">{{SupplierAddress}}</span>
+            </div>
+            <div class="row-info">
+                <span class="label">Ghi chú:</span>
+                <span class="content">{{Notes}}</span>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 50px;">STT</th>
+                    <th>Tên hàng hóa</th>
+                    <th style="width: 80px;">ĐVT</th>
+                    <th style="width: 80px;">Số lượng</th>
+                    <th style="width: 120px;">Đơn giá nhập</th>
+                    <th style="width: 130px;">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ProductRows}}
+                <tr style="height: 100px;">
+                    <td></td><td></td><td></td><td></td><td></td><td></td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" style="font-weight: bold;">Tổng cộng:</td>
+                    <td class="text-center" style="font-weight: bold;">{{TotalQuantity}}</td>
+                    <td></td>
+                    <td class="text-right" style="font-weight: bold;">{{TotalAmount}}</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="amount-in-words">
+            Số tiền viết bằng chữ: {{AmountInWords}}
+        </div>
+
+        <div class="signatures">
+            <div class="sig-box">
+                <div class="sig-title">Thủ kho</div>
+                <div class="sig-note">(Ký, ghi rõ họ tên)</div>
+            </div>
+            <div class="sig-box">
+                <div class="sig-title">Người giao hàng</div>
+                <div class="sig-note">(Ký, ghi rõ họ tên)</div>
+            </div>
+            <div class="sig-box">
+                <div class="sig-title">Người lập phiếu</div>
+                <div class="sig-note">(Ký, ghi rõ họ tên)</div>
+                <div style="margin-top: 80px; font-size: 12px;">{{UserName}}</div>
+            </div>
+        </div>
+        
+        <div style="position: absolute; bottom: 10px; left: 0; width: 100%; text-align: center; font-size: 11px;">
+            (Cần kiểm tra, đối chiếu khi lập, giao, nhận phiếu nhập kho)
+        </div>
+    </div>
+
+</body>
+</html>

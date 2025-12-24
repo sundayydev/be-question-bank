@@ -150,15 +150,6 @@ public class YeuCauRutTrichService
     /// </summary>
     private YeuCauRutTrichDto MapToBasicDto(YeuCauRutTrich entity)
     {
-        // Lấy thông tin đề thi liên quan (nếu có)
-        var deThi = entity.MonHoc?.DeThis?.FirstOrDefault(dt => 
-            dt.ChiTietDeThis != null && 
-            dt.ChiTietDeThis.Any(ctdt => 
-                ctdt.CauHoi != null && 
-                ctdt.CauHoi.NoiDungRutTrich != null &&
-                ctdt.CauHoi.NoiDungRutTrich.Contains(entity.MaYeuCau.ToString())
-            )
-        );
         return new YeuCauRutTrichDto
         {
             MaYeuCau = entity.MaYeuCau,
