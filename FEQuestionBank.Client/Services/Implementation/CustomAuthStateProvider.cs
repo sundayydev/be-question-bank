@@ -23,37 +23,39 @@ namespace FEQuestionBank.Client.Implementation
             var accessToken = await _localStorage.GetItemAsync<string>("authToken");
             var refreshToken = await _localStorage.GetItemAsync<string>("refreshToken");
 
-            
+            // Ưu tiên parse accessToken trước
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+                try
+                {
+                    var handler = new JwtSecurityTokenHandler();
+                    var jwt = handler.ReadJwtToken(accessToken);
+                    var identity = new ClaimsIdentity(jwt.Claims, "jwt");
+                    return new AuthenticationState(new ClaimsPrincipal(identity));
+                }
+                catch
+                {
+                    // AccessToken invalid, fallback to refreshToken identity nếu có
+                    if (!string.IsNullOrWhiteSpace(refreshToken))
+                    {
+                        var identity = new ClaimsIdentity(new[] { new Claim("refreshToken", refreshToken) }, "jwt");
+                        return new AuthenticationState(new ClaimsPrincipal(identity));
+                    }
+                    return Anonymous();
+                }
+            }
+
+            // Không có accessToken nhưng có refreshToken (edge case)
             if (!string.IsNullOrWhiteSpace(refreshToken))
             {
-                
-                _httpClient.DefaultRequestHeaders.Authorization =
-                    !string.IsNullOrWhiteSpace(accessToken)
-                        ? new AuthenticationHeaderValue("Bearer", accessToken)
-                        : null;
-
-                
-                var anonymousIdentity = new ClaimsIdentity(new[] { new Claim("refreshToken", refreshToken) }, "jwt");
-                return new AuthenticationState(new ClaimsPrincipal(anonymousIdentity));
-            }
-
-  
-            if (string.IsNullOrWhiteSpace(accessToken))
-                return Anonymous();
-
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-            try
-            {
-                var handler = new JwtSecurityTokenHandler();
-                var jwt = handler.ReadJwtToken(accessToken);
-                var identity = new ClaimsIdentity(jwt.Claims, "jwt");
+                var identity = new ClaimsIdentity(new[] { new Claim("refreshToken", refreshToken) }, "jwt");
                 return new AuthenticationState(new ClaimsPrincipal(identity));
             }
-            catch
-            {
-                return Anonymous();
-            }
+
+            // Không có gì cả
+            return Anonymous();
         }
         public async Task UpdateStateWithNewToken(string accessToken)
         {

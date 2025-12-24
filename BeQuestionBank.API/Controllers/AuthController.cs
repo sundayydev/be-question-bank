@@ -68,35 +68,7 @@ namespace BE_CIRRO.API.Controllers
             }
         }
 
-        // GET: /api/auth/me - Lấy thông tin user hiện tại từ JWT
-        // [HttpGet("me")]
-        // public async Task<IActionResult> GetMe()
-        // {
-        //     try
-        //     {
-        //         // Ưu tiên đọc từ claim chuẩn trước
-        //         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier) 
-        //                           ?? User.FindFirstValue("UserId"); // fallback custom claim
-        //
-        //         if (string.IsNullOrEmpty(userIdClaim))
-        //             return Unauthorized(ApiResponseFactory.Unauthorized("Token không chứa thông tin user"));
-        //
-        //         if (!Guid.TryParse(userIdClaim, out Guid userId))
-        //             return Unauthorized(ApiResponseFactory.Unauthorized("UserId trong token không hợp lệ"));
-        //
-        //         var user = await _authService.GetCurrentUserAsync(userId);
-        //         if (user == null)
-        //             return NotFound(ApiResponseFactory.NotFound<NguoiDungDto>("Không tìm thấy user"));
-        //
-        //         return Ok(ApiResponseFactory.Success(user, "Lấy thông tin user thành công"));
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         _logger.LogError(ex, "Lỗi khi lấy thông tin user");
-        //         return StatusCode(500, ApiResponseFactory.ServerError(ex.Message));
-        //     }
-        // }
-      [HttpGet("me")]
+     [HttpGet("me")]
         public async Task<IActionResult> GetMe([FromQuery] string? token = null)
         {
             try
@@ -227,19 +199,6 @@ namespace BE_CIRRO.API.Controllers
             }
         }
 
-        /* // GET: /api/auth/debug/refresh-tokens - Debug endpoint để kiểm tra refresh tokens
-        // [ĐÃ XÓA] Endpoint này không còn an toàn khi dùng Redis vì nó
-        // yêu cầu quét toàn bộ keys, gây ảnh hưởng nghiêm trọng đến hiệu năng.
-        [HttpGet("debug/refresh-tokens")]
-        public IActionResult GetRefreshTokens()
-        {
-             return StatusCode(501, ApiResponseFactory.ServerError("Endpoint không được hỗ trợ."));
-        }
-        */
-
-
-        // GET: /api/auth/debug/refresh-token/{token} - Debug endpoint để kiểm tra refresh token cụ thể
-        // [SỬA] Chuyển sang async Task và dùng await
         [HttpGet("debug/refresh-token/{token}")]
         public async Task<IActionResult> CheckRefreshToken(string token)
         {

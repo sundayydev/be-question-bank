@@ -4,6 +4,7 @@ using BeQuestionBank.Shared.DTOs.Khoa;
 using BeQuestionBank.Shared.DTOs.MonHoc;
 using BEQuestionBank.Core.Services;
 using BeQuestionBank.Shared.DTOs.Pagination;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -12,6 +13,7 @@ namespace BeQuestionBank.API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize] // Yêu cầu Bearer token cho tất cả endpoints
 public class KhoaController(KhoaService service, ILogger<KhoaController> logger) : ControllerBase
 {
     private readonly KhoaService _service = service;

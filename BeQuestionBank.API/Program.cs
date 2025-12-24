@@ -67,8 +67,8 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(
 // Cấu hình JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"] ?? "your-super-secret-key-that-is-at-least-32-characters-long-for-jwt-signing";
-var issuer = jwtSettings["Issuer"] ?? "BE_CIRRO";
-var audience = jwtSettings["Audience"] ?? "BE_CIRRO_Users";
+var issuer = jwtSettings["Issuer"] ?? "BEQuestionBank";
+var audience = jwtSettings["Audience"] ?? "BEQuestionBank";
 
 builder.Services.AddAuthentication(options =>
 {

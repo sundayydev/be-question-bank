@@ -12,8 +12,22 @@ using MudBlazor.Services;
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 
-// Đăng ký HttpClient
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5043/") });
+// Đăng ký AuthTokenHandler
+builder.Services.AddTransient<FEQuestionBank.Client.Handlers.AuthTokenHandler>();
+
+// Đăng ký HttpClient với AuthTokenHandler
+builder.Services.AddScoped(sp =>
+{
+    var handler = sp.GetRequiredService<FEQuestionBank.Client.Handlers.AuthTokenHandler>();
+    handler.InnerHandler = new HttpClientHandler();
+    
+    var httpClient = new HttpClient(handler)
+    {
+        BaseAddress = new Uri("http://localhost:5043/")
+    };
+    
+    return httpClient;
+});
 
 // THÊM: Blazored.LocalStorage
 builder.Services.AddBlazoredLocalStorage();
