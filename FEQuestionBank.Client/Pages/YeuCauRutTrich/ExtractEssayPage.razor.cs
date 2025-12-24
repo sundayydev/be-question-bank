@@ -11,6 +11,7 @@ using BeQuestionBank.Shared.DTOs.Phan;
 using BeQuestionBank.Shared.Enums;
 using FEQuestionBank.Client.Implementation;
 using FEQuestionBank.Client.Component.DiaLog;
+using Microsoft.Extensions.Logging;
 
 namespace FEQuestionBank.Client.Pages.YeuCauRutTrich;
 
@@ -23,6 +24,7 @@ public partial class ExtractEssayPage : ComponentBase
     [Inject] protected IKhoaApiClient KhoaApiClient { get; set; } = default!;
     [Inject] protected IMonHocApiClient MonHocApiClient { get; set; } = default!;
     [Inject] protected IPhanApiClient PhanApiClient { get; set; } = default!;
+    [Inject] private ILogger<ExtractEssayPage> Logger { get; set; } = default!;
 
     // Khởi tạo Model đầy đủ để tránh NullReferenceException
     private CreateTuLuanRequestDto _model = new()
@@ -60,21 +62,14 @@ public partial class ExtractEssayPage : ComponentBase
 
         if (user.Identity?.IsAuthenticated ?? false)
         {
-            // Lấy claim
-            var userIdClaim = user.FindFirst("UserId") ?? user.FindFirst(ClaimTypes.NameIdentifier);
+            // Tìm UserId claim - thử nhiều cách
+            var userIdClaim = user.FindFirst(c => c.Type == "UserId")
+                              ?? user.FindFirst(ClaimTypes.NameIdentifier);
+            
             if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out var userId))
             {
                 _model.MaNguoiDung = userId;
-                Console.WriteLine($"Current user id: {_model.MaNguoiDung}");
             }
-            else
-            {
-                Console.WriteLine("WARNING: No valid user id claim found.");
-            }
-        }
-        else
-        {
-            Console.WriteLine("User is not authenticated.");
         }
 
         await LoadKhoas();
@@ -121,7 +116,7 @@ public partial class ExtractEssayPage : ComponentBase
 
     private void AddPart()
     {
-        Console.WriteLine($"AddPart called. Phans count: {Phans.Count}");
+        Logger.LogInformation("AddPart called. Phans count: {PhansCount}", Phans.Count);
         
         // Khởi tạo Part mới theo đúng DTO PartTuLuanDto
         if (_model.MaTranTuLuan.Parts == null) _model.MaTranTuLuan.Parts = new List<PartTuLuanDto>();
@@ -129,7 +124,7 @@ public partial class ExtractEssayPage : ComponentBase
         // Mặc định chọn phần đầu tiên (nếu có)
         var defaultPartId = Phans.Any() ? Phans.First().MaPhan : Guid.Empty;
         
-        Console.WriteLine($"Default Part ID: {defaultPartId}");
+        Logger.LogInformation("Default Part ID: {PartId}", defaultPartId);
 
         _model.MaTranTuLuan.Parts.Add(new PartTuLuanDto
         {
@@ -141,7 +136,7 @@ public partial class ExtractEssayPage : ComponentBase
             }
         });
         
-        Console.WriteLine($"Part added. Total parts: {_model.MaTranTuLuan.Parts.Count}");
+        Logger.LogInformation("Part added. Total parts: {TotalParts}", _model.MaTranTuLuan.Parts.Count);
     }
 
     private void RemovePart(int index)
@@ -227,13 +222,16 @@ public partial class ExtractEssayPage : ComponentBase
         // Đảm bảo UserId luôn có
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-        var userIdClaim = user.FindFirst("UserId") ?? user.FindFirst(ClaimTypes.NameIdentifier);
+        var userIdClaim = user.FindFirst(c => c.Type == "UserId") 
+                          ?? user.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out var userId))
         {
             _model.MaNguoiDung = userId;
+            Logger.LogInformation("Submit: Using UserId {UserId}", userId);
         }
         else
         {
+            Logger.LogError("Cannot find UserId claim in user claims");
             Snackbar.Add("Không xác định được UserId.", Severity.Error);
             return;
         }

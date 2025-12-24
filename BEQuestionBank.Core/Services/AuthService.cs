@@ -116,10 +116,6 @@ public class AuthService
             var user = await _userService.GetByIdAsync(userId);
             if (user == null) return null;
 
-            // var userDto = user.Adapt<NguoiDungDto>();
-            //
-            //
-            // return userDto;
             return new NguoiDungDto
             {
                 MaNguoiDung = user.MaNguoiDung,
@@ -236,10 +232,10 @@ public class AuthService
     {
         var jwt = _configuration.GetSection("JwtSettings");
         var secretKey = jwt["SecretKey"] ?? "your-super-secret-key-that-is-at-least-32-characters-long";
-        var issuer = jwt["Issuer"] ?? "BE_CIRRO";
-        var audience = jwt["Audience"] ?? "BE_CIRRO_Users";
-        var expiryMinutes = int.Parse(jwt["ExpiryMinutes"] ?? "60");
-        var refreshExpiryDays = int.Parse(jwt["RefreshExpiryDays"] ?? "7");
+        var issuer = jwt["Issuer"] ?? "BEQuestionBank";
+        var audience = jwt["Audience"] ?? "BEQuestionBank";
+        var expiryMinutes = int.Parse(jwt["AccessTokenExpireMinutes"] ?? "1");
+        var refreshExpiryDays = int.Parse(jwt["RefreshTokenExpireDays"] ?? "7");
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -304,8 +300,8 @@ public class AuthService
         {
             var jwt = _configuration.GetSection("JwtSettings");
             var secretKey = jwt["SecretKey"] ?? "your-super-secret-key-that-is-at-least-32-characters-long";
-            var issuer = jwt["Issuer"] ?? "BE_CIRRO";
-            var audience = jwt["Audience"] ?? "BE_CIRRO_Users";
+            var issuer = jwt["Issuer"] ?? "BEQuestionBank";
+            var audience = jwt["Audience"] ?? "BEQuestionBank";
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var handler = new JwtSecurityTokenHandler();
