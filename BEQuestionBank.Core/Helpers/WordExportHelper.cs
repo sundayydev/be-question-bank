@@ -122,11 +122,11 @@ namespace BEQuestionBank.Core.Helpers
 
         private static async Task InsertPicture(IWParagraph paragraph, byte[] imageBytes, string style, bool isLatex = false, bool isDisplayMode = false)
         {
-            IWPicture pic = paragraph.AppendPicture(imageBytes);
-            pic.TextWrappingStyle = TextWrappingStyle.Inline;
-
             if (isLatex)
             {
+                IWPicture pic = paragraph.AppendPicture(imageBytes);
+                pic.TextWrappingStyle = TextWrappingStyle.Inline;
+                
                 // Xử lý ảnh LaTeX - scale về kích thước như chữ
                 // DPI cao (250-300) đảm bảo rõ nét khi thu nhỏ
                 
@@ -145,7 +145,14 @@ namespace BEQuestionBank.Core.Helpers
             }
             else
             {
-                // Xử lý ảnh base64 thông thường
+                // Xử lý ảnh base64 thông thường - cho xuống dòng riêng
+                
+                // Thêm line break trước ảnh
+                paragraph.AppendBreak(BreakType.LineBreak);
+                
+                IWPicture pic = paragraph.AppendPicture(imageBytes);
+                pic.TextWrappingStyle = TextWrappingStyle.Inline;
+                
                 // Lấy width/height từ style
                 var w = Regex.Match(style, @"width\s*:\s*(\d+)px", RegexOptions.IgnoreCase);
                 var h = Regex.Match(style, @"height\s*:\s*(\d+)px", RegexOptions.IgnoreCase);
@@ -157,20 +164,17 @@ namespace BEQuestionBank.Core.Helpers
                 if (pic.Width == 0 || pic.Width > 600) pic.Width = 500;
                 if (pic.Height == 0 || pic.Height > 500) pic.Height = 400;
 
-                // Nếu có display:block hoặc margin → xuống dòng
-                bool isBlock = style.Contains("display:block", StringComparison.OrdinalIgnoreCase) ||
-                               style.Contains("margin:", StringComparison.OrdinalIgnoreCase);
-
-                if (isBlock)
-                {
-                    paragraph.AppendBreak(BreakType.LineBreak);
-                }
+                // Thêm line break sau ảnh
+                paragraph.AppendBreak(BreakType.LineBreak);
             }
         }
 
         private static string CleanHtmlText(string html)
         {
             if (string.IsNullOrWhiteSpace(html)) return string.Empty;
+
+            // Xóa thẻ <u> (gạch dưới) - giữ lại text bên trong
+            html = Regex.Replace(html, @"</?u>", "", RegexOptions.IgnoreCase);
 
             html = Regex.Replace(html, @"<br\s*/?>", "\r\n", RegexOptions.IgnoreCase);
             html = Regex.Replace(html, @"</?span[^>]*>", "", RegexOptions.IgnoreCase);
