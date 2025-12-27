@@ -3,6 +3,7 @@ using BeQuestionBank.Domain.Models;
 using BeQuestionBank.Shared.DTOs.DeThi;
 using BeQuestionBank.Shared.Helpers;
 using BEQuestionBank.Core.Repositories;
+using BEQuestionBank.Core.Helpers;
 using Microsoft.Extensions.Logging;
 using Syncfusion.DocIO;
 using Syncfusion.DocIO.DLS;
@@ -89,7 +90,7 @@ namespace BEQuestionBank.Core.Services
                 : khoa.TenKhoa.Trim();
         }
 
-        private void InsertQuestions(WordDocument doc, DeThi deThi, bool hoanViDapAn)
+        private async Task InsertQuestions(WordDocument doc, DeThi deThi, bool hoanViDapAn)
         {
             var section = doc.LastSection;
             var lines = BuildQuestionLines(deThi, hoanViDapAn);
@@ -106,108 +107,8 @@ namespace BEQuestionBank.Core.Services
                 para.ParagraphFormat.BeforeSpacing = 6;
                 para.ParagraphFormat.AfterSpacing = 6;
 
-                string html = line;
-
-                // Xử lý audio trước: Thay thế thẻ <audio> bằng text đánh dấu
-                html = Regex.Replace(html, 
-                    @"<audio[^>]*>.*?</audio>", 
-                    " [CÓ AUDIO] ", 
-                    RegexOptions.IgnoreCase | RegexOptions.Singleline);
-
-                // Regex cập nhật: match cả <span class='image-wrapper'> và <img> trực tiếp
-                var regex = new Regex(
-                    @"(<span\s+class\s*=\s*['""]image-wrapper['""][^>]*>.*?<img[^>]+src\s*=\s*""data:image/[^;]+;base64,([^""]+)""[^>]*style\s*=\s*""([^""]*)""[^>]*>.*?</span>)|" +
-                    @"(<img[^>]+src\s*=\s*""data:image/[^;]+;base64,([^""]+)""[^>]*style\s*=\s*""([^""]*)""[^>]*>)|" +
-                    @"(<span class='math-display'>\\\[(.*?)\\\]</span>)",
-                    RegexOptions.IgnoreCase | RegexOptions.Singleline);
-
-                int pos = 0;
-
-                while (pos < html.Length)
-                {
-                    Match m = regex.Match(html, pos);
-
-                    // Text trước ảnh/math
-                    string textBefore = m.Success
-                        ? html.Substring(pos, m.Index - pos)
-                        : html.Substring(pos);
-
-                    // Kiểm tra xem text trước có kết thúc bằng <br/> không (trước khi xử lý)
-                    bool hasBrBefore = !string.IsNullOrWhiteSpace(textBefore) &&
-                                      Regex.IsMatch(textBefore, @"<br\s*/?>[\s]*$", RegexOptions.IgnoreCase);
-
-                    if (!string.IsNullOrWhiteSpace(textBefore))
-                    {
-                        // Xóa <br/> ở cuối để không duplicate
-                        string textToClean = hasBrBefore
-                            ? Regex.Replace(textBefore, @"<br\s*/?>[\s]*$", "", RegexOptions.IgnoreCase)
-                            : textBefore;
-
-                        string cleanText = CleanHtmlText(textToClean);
-                        if (!string.IsNullOrWhiteSpace(cleanText))
-                            para.AppendText(cleanText);
-                    }
-
-                    if (!m.Success) break;
-
-                    
-                    if (hasBrBefore && (m.Groups[1].Success || m.Groups[4].Success))
-                    {
-                        para = section.AddParagraph();
-                        para.ParagraphFormat.BeforeSpacing = 6;
-                        para.ParagraphFormat.AfterSpacing = 6;
-                    }
-
-
-                    if (m.Groups[1].Success || m.Groups[4].Success)
-                    {
-                        string base64 = m.Groups[1].Success ? m.Groups[2].Value : m.Groups[5].Value;
-                        string style = m.Groups[1].Success ? m.Groups[3].Value : m.Groups[6].Value;
-                        byte[] imgBytes = Convert.FromBase64String(base64);
-
-                        IWPicture pic = para.AppendPicture(imgBytes);
-
-                        // Luôn dùng Inline wrapping style
-                        pic.TextWrappingStyle = TextWrappingStyle.Inline;
-
-                        // Nếu có <br/> trước hoặc style có "display:block"/"margin:" thì tạo paragraph mới sau ảnh
-                        // để ảnh xuống dòng riêng 
-                        bool shouldBeBlock = hasBrBefore ||
-                                            style.Contains("display:block", StringComparison.OrdinalIgnoreCase) ||
-                                            style.Contains("margin:", StringComparison.OrdinalIgnoreCase);
-
-                        if (shouldBeBlock)
-                        {
-                            // Tạo paragraph mới sau ảnh để text tiếp theo không dính vào ảnh
-                            para = section.AddParagraph();
-                            para.ParagraphFormat.BeforeSpacing = 6;
-                            para.ParagraphFormat.AfterSpacing = 6;
-                        }
-
-                        // Lấy kích thước từ style (width/height)
-                        var w = Regex.Match(style, @"width\s*:\s*(\d+)px", RegexOptions.IgnoreCase);
-                        var h = Regex.Match(style, @"height\s*:\s*(\d+)px", RegexOptions.IgnoreCase);
-
-                        if (w.Success) pic.Width = float.Parse(w.Groups[1].Value);
-                        if (h.Success) pic.Height = float.Parse(h.Groups[1].Value);
-
-                        // Giới hạn kích thước hợp lý
-                        if (pic.Width == 0 || pic.Width > 500) pic.Width = 400;
-                        if (pic.Height == 0 || pic.Height > 500) pic.Height = 350;
-                    }
-                    // === CÔNG THỨC TOÁN: vẫn để inline (giữ nguyên như cũ) ===
-                    else if (m.Groups[7].Success)
-                    {
-                        string latex = m.Groups[8].Value;
-                        WMath wMath = new WMath(doc);
-                        wMath.MathParagraph.LaTeX = latex;
-                        para.ChildEntities.Add(wMath);
-
-
-                    }
-
-                    pos = m.Index + m.Length;
-                }
+                // Sử dụng WordExportHelper để xử lý nội dung hỗn hợp
+                await WordExportHelper.AppendMixedContentAsync(para, line);
             }
         }
 
@@ -220,6 +121,9 @@ namespace BEQuestionBank.Core.Services
                 @"<audio[^>]*>.*?</audio>", 
                 " [CÓ AUDIO] ", 
                 RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+            // Xóa thẻ <u> (gạch dưới)
+            html = Regex.Replace(html, @"</?u>", "", RegexOptions.IgnoreCase);
 
             // Xóa span như cũ
             html = Regex.Replace(html, @"<span.*?>|</span>", "", RegexOptions.IgnoreCase);
