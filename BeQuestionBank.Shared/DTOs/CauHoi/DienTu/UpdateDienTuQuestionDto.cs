@@ -1,4 +1,4 @@
-﻿using BeQuestionBank.Shared.Enums;
+using BeQuestionBank.Domain.Enums;
 
 namespace BeQuestionBank.Shared.DTOs.CauHoi;
 

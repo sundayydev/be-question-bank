@@ -1,7 +1,7 @@
 ﻿
 using BeQuestionBank.Domain.Interfaces.IRepositories;
 using BeQuestionBank.Domain.Models;
-using BeQuestionBank.Shared.Enums;
+using BeQuestionBank.Domain.Enums;
 
 namespace BEQuestionBank.Domain.Interfaces.Repo
 {

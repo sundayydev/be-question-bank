@@ -1,19 +1,19 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace BEQuestionBank.Shared.DTOs.MaTran;
 
 public class CloDto
 {
-    [Required(ErrorMessage = "CLO không được để trống.")]
+    [Required(ErrorMessage = "CLO kh�ng du?c d? tr?ng.")]
     public int Clo { get; set; }
 
-    [Required(ErrorMessage = "Số lượng câu hỏi cho CLO không được để trống.")]
+    [Required(ErrorMessage = "S? lu?ng c�u h?i cho CLO kh�ng du?c d? tr?ng.")]
     public int Num { get; set; }
 
     /// <summary>
-    /// Số câu con tối đa cho mỗi câu hỏi cha (chỉ dành cho đề tự luận).
-    /// Nếu null: không giới hạn số câu con
-    /// Nếu có giá trị: chỉ chọn câu hỏi có SoCauHoiCon <= SubQuestionCount
+    /// S? c�u con t?i da cho m?i c�u h?i cha (ch? d�nh cho d? t? lu?n).
+    /// N?u null: kh�ng gi?i h?n s? c�u con
+    /// N?u c� gi� tr?: ch? ch?n c�u h?i c� SoCauHoiCon <= SubQuestionCount
     /// </summary>
     public int? SubQuestionCount { get; set; }
 }

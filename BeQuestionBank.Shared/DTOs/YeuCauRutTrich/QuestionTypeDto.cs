@@ -1,12 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace BEQuestionBank.Shared.DTOs.MaTran;
 
 public class QuestionTypeDto
 {
-    [Required(ErrorMessage = "Loại câu hỏi không được để trống.")]
+    [Required(ErrorMessage = "Lo?i c�u h?i kh�ng du?c d? tr?ng.")]
     public string Loai { get; set; }
 
-    [Required(ErrorMessage = "Số lượng câu hỏi cho loại không được để trống.")]
+    [Required(ErrorMessage = "S? lu?ng c�u h?i cho lo?i kh�ng du?c d? tr?ng.")]
     public int Num { get; set; }
 }

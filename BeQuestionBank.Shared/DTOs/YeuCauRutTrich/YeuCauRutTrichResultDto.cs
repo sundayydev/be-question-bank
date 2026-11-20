@@ -1,8 +1,8 @@
-ï»¿namespace BeQuestionBank.Shared.DTOs.YeuCauRutTrich
+namespace BeQuestionBank.Shared.DTOs.YeuCauRutTrich
 {
     public class YeuCauRutTrichResultDto
     {
-        // ThÃ´ng tin yÃªu cáº§u rÃºt trÃ­ch
+        // Thông tin yêu c?u rút trích
         public Guid MaYeuCau { get; set; }
         public Guid MaNguoiDung { get; set; }
         public Guid MaMonHoc { get; set; }
@@ -12,7 +12,7 @@
         public DateTime? NgayXuLy { get; set; }
         public bool? DaXuLy { get; set; }
 
-        // ThÃ´ng tin Ä‘á» thi vá»«a rÃºt trÃ­ch
+        // Thông tin d? thi v?a rút trích
         public Guid MaDeThi { get; set; }
         public string TenDeThi { get; set; } = string.Empty;
     }

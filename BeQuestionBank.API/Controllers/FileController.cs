@@ -2,7 +2,7 @@ using BeQuestionBank.Shared.DTOs.Common;
 using BeQuestionBank.Shared.DTOs.CauHoi;
 using BeQuestionBank.Shared.DTOs.File;
 using BeQuestionBank.Shared.DTOs.Pagination;
-using BeQuestionBank.Shared.Enums;
+using BeQuestionBank.Domain.Enums;
 using BEQuestionBank.Core.Services;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;

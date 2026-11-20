@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,37 +8,37 @@ namespace BeQuestionBank.Shared.DTOs.Common
 {
     public static class ApiResponseFactory
     {
-        public static ApiResponse<T?> Success<T>(T data, string message = "Thành công")
+        public static ApiResponse<T?> Success<T>(T data, string message = "Th�nh c�ng")
             => new ApiResponse<T?>(HttpStatusCodes.OK, message, data);
 
-        public static ApiResponse<T?> Created<T>(T data, string message = "Tạo thành công")
+        public static ApiResponse<T?> Created<T>(T data, string message = "T?o th�nh c�ng")
             => new ApiResponse<T?>(HttpStatusCodes.Created, message, data);
 
-        public static ApiResponse<T?> Updated<T>(T data, string message = "Cập nhật thành công")
+        public static ApiResponse<T?> Updated<T>(T data, string message = "C?p nh?t th�nh c�ng")
             => new ApiResponse<T?>(HttpStatusCodes.OK, message, data);
 
-        public static ApiResponse<object> Deleted(string message = "Xóa thành công")
+        public static ApiResponse<object> Deleted(string message = "X�a th�nh c�ng")
             => new ApiResponse<object>(HttpStatusCodes.OK, message);
 
-        public static ApiResponse<T?> NotFound<T>(string message = "Không tìm thấy", object? errors = null)
+        public static ApiResponse<T?> NotFound<T>(string message = "Kh�ng t�m th?y", object? errors = null)
             => new ApiResponse<T?>(HttpStatusCodes.NotFound, message, default, errors);
 
-        public static ApiResponse<T?> ValidationError<T>(string message = "Dữ liệu không hợp lệ", object? errors = null)
+        public static ApiResponse<T?> ValidationError<T>(string message = "D? li?u kh�ng h?p l?", object? errors = null)
             => new ApiResponse<T?>(HttpStatusCodes.BadRequest, message, default, errors);
 
-        public static ApiResponse<object> Unauthorized(string message = "Không có quyền truy cập")
+        public static ApiResponse<object> Unauthorized(string message = "Kh�ng c� quy?n truy c?p")
             => new ApiResponse<object>(HttpStatusCodes.Unauthorized, message);
 
-        public static ApiResponse<object> Forbidden(string message = "Bị chặn truy cập")
+        public static ApiResponse<object> Forbidden(string message = "B? ch?n truy c?p")
             => new ApiResponse<object>(HttpStatusCodes.Forbidden, message);
 
-        public static ApiResponse<object> ServerError(string message = "Lỗi hệ thống")
+        public static ApiResponse<object> ServerError(string message = "L?i h? th?ng")
             => new ApiResponse<object>(HttpStatusCodes.InternalServerError, message);
         
-        public static ApiResponse<object> ServerErrorOb(string message = "Lỗi hệ thống", object? errors = null)
+        public static ApiResponse<object> ServerErrorOb(string message = "L?i h? th?ng", object? errors = null)
             => new ApiResponse<object>(HttpStatusCodes.InternalServerError, message, null, errors);
 
-        public static ApiResponse<T> BadRequest<T>(T data, string message = "Yêu cầu không hợp lệ", object? errors = null)
+        public static ApiResponse<T> BadRequest<T>(T data, string message = "Y�u c?u kh�ng h?p l?", object? errors = null)
             => new ApiResponse<T>(HttpStatusCodes.BadRequest, message, data, errors);
 
         public static ApiResponse<T> Error<T>(int statusCode, string message)

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -10,10 +10,10 @@ namespace BeQuestionBank.Shared.DTOs.Import;
 
 public class ImportCauHoiDto
 {
-    public string NoiDung { get; set; } // HTML (Text + Ảnh Base64)
+    public string NoiDung { get; set; } // HTML (Text + ?nh Base64)
     public short CapDo { get; set; } = 1;
-    public string LoaiCauHoi { get; set; } = "TracNghiem"; // Mặc định
-    public string? CLO { get; set; } // Ví dụ: CLO1, CLO2 lấy từ text
+    public string LoaiCauHoi { get; set; } = "TracNghiem"; // M?c d?nh
+    public string? CLO { get; set; } // V� d?: CLO1, CLO2 l?y t? text
     public List<ImportCauTraLoiDto> CauTraLois { get; set; } = new List<ImportCauTraLoiDto>();
 }
 
@@ -22,14 +22,14 @@ public class ImportCauTraLoiDto
     public string NoiDung { get; set; }
     public bool LaDapAn { get; set; }
     public int ThuTu { get; set; }
-    public bool HoanVi { get; set; } = true; // Mặc định là True (Có hoán vị)
+    public bool HoanVi { get; set; } = true; // M?c d?nh l� True (C� ho�n v?)
 }
 
 public class ImportRequestDto
 {
-    [Required(ErrorMessage = "Vui lòng chọn file.")]
+    [Required(ErrorMessage = "Vui l�ng ch?n file.")]
     public IFormFile File { get; set; }
 
-    [Required(ErrorMessage = "Vui lòng chọn Phần (Chương) để lưu câu hỏi.")]
+    [Required(ErrorMessage = "Vui l�ng ch?n Ph?n (Chuong) d? luu c�u h?i.")]
     public Guid MaPhan { get; set; }
 }

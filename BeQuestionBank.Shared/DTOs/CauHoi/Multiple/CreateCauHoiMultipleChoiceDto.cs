@@ -1,5 +1,5 @@
-﻿using BeQuestionBank.Shared.DTOs.CauTraLoi;
-using BeQuestionBank.Shared.Enums;
+using BeQuestionBank.Shared.DTOs.CauTraLoi;
+using BeQuestionBank.Domain.Enums;
 
 namespace BeQuestionBank.Shared.DTOs.CauHoi;
 

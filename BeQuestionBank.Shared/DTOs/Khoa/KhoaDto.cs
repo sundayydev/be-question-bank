@@ -1,4 +1,4 @@
-﻿using BeQuestionBank.Shared.DTOs.MonHoc;
+using BeQuestionBank.Shared.DTOs.MonHoc;
 using System;
 using System.Collections.Generic;
 using System.Linq;

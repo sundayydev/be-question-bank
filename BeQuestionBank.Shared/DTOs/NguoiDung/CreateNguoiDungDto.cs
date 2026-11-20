@@ -1,5 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
-using BeQuestionBank.Shared.Enums;
+using System.ComponentModel.DataAnnotations;
+using BeQuestionBank.Domain.Enums;
 
 namespace BEQuestionBank.Shared.DTOs.user;
 
@@ -7,21 +7,21 @@ public class CreateNguoiDungDto
 {
     public Guid MaNguoiDung { get; set; }
 
-    [Required(ErrorMessage = "Tên đăng nhập không được để trống")]
-    [RegularExpression(@"^\S+$", ErrorMessage = "Tên đăng nhập phải viết liền, không được chứa khoảng trắng")]
+    [Required(ErrorMessage = "T�n dang nh?p kh�ng du?c d? tr?ng")]
+    [RegularExpression(@"^\S+$", ErrorMessage = "T�n dang nh?p ph?i vi?t li?n, kh�ng du?c ch?a kho?ng tr?ng")]
     public string TenDangNhap { get; set; }
 
-    [Required(ErrorMessage = "Mật khẩu không được để trống")]
-    [MinLength(6, ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự")]
+    [Required(ErrorMessage = "M?t kh?u kh�ng du?c d? tr?ng")]
+    [MinLength(6, ErrorMessage = "M?t kh?u ph?i c� �t nh?t 6 k� t?")]
     public string MatKhau { get; set; }
     public Guid? MaKhoa { get; set; }
     public string ?TenKhoa { get; set; }
 
-    [Required(ErrorMessage = "Họ tên không được để trống")]
+    [Required(ErrorMessage = "H? t�n kh�ng du?c d? tr?ng")]
     public string HoTen { get; set; }
 
-    [Required(ErrorMessage = "Email không được để trống")]
-    [EmailAddress(ErrorMessage = "Email không đúng định dạng (ví dụ: user@domain.com)")]
+    [Required(ErrorMessage = "Email kh�ng du?c d? tr?ng")]
+    [EmailAddress(ErrorMessage = "Email kh�ng d�ng d?nh d?ng (v� d?: user@domain.com)")]
     public string? Email { get; set; }
     public EnumRole VaiTro { get; set; }
     public bool BiKhoa { get; set; }

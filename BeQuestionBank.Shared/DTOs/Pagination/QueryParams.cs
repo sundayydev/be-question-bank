@@ -1,4 +1,4 @@
-﻿namespace BeQuestionBank.Shared.DTOs.Pagination;
+namespace BeQuestionBank.Shared.DTOs.Pagination;
 
 public class QueryParams
 {

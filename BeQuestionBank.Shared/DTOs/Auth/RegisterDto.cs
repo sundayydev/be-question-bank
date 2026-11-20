@@ -1,11 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
-using BeQuestionBank.Shared.Enums;
+using System.ComponentModel.DataAnnotations;
+using BeQuestionBank.Domain.Enums;
 
 namespace BeQuestionBank.Shared.DTOs.NguoiDung;
 
 public class RegisterDto
 {
-    [RegularExpression(@"^\S+$", ErrorMessage = "Tên đăng nhập phải viết liền, không được chứa khoảng trắng")]
+    [RegularExpression(@"^\S+$", ErrorMessage = "T�n dang nh?p ph?i vi?t li?n, kh�ng du?c ch?a kho?ng tr?ng")]
     public string TenDangNhap { get; set; }
     public string MatKhau { get; set; }
     public string HoTen { get; set; }

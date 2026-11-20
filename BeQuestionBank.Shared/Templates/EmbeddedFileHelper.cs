@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Text;
 
 namespace BeQuestionBank.Shared.Helpers;
@@ -9,12 +9,12 @@ public static class EmbeddedFileHelper
 
     public static async Task<byte[]> GetBytesAsync(string resourcePath)
     {
-        // Convert "Templates/Exam/Word/Template.dotx" → ".Templates.Exam.Word.Template.dotx"
+        // Convert "Templates/Exam/Word/Template.dotx" ? ".Templates.Exam.Word.Template.dotx"
         var normalized = resourcePath
             .Replace("/", ".")
             .Replace("\\", ".");
 
-        // Tìm resource phù hợp
+        // T�m resource ph� h?p
         var resourceFullName = Assembly
             .GetManifestResourceNames()
             .FirstOrDefault(r => r.EndsWith(normalized, StringComparison.OrdinalIgnoreCase));
@@ -23,12 +23,12 @@ public static class EmbeddedFileHelper
         {
             var list = string.Join("\n", Assembly.GetManifestResourceNames());
             throw new FileNotFoundException(
-                $"Không tìm thấy resource: {normalized}\n" +
-                $" Các resource đang tồn tại:\n{list}");
+                $"Kh�ng t�m th?y resource: {normalized}\n" +
+                $" C�c resource dang t?n t?i:\n{list}");
         }
 
         await using var stream = Assembly.GetManifestResourceStream(resourceFullName)
-            ?? throw new FileNotFoundException($"Không mở được resource: {resourceFullName}");
+            ?? throw new FileNotFoundException($"Kh�ng m? du?c resource: {resourceFullName}");
 
         await using var ms = new MemoryStream();
         await stream.CopyToAsync(ms);

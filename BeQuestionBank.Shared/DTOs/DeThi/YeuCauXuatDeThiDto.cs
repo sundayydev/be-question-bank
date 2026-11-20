@@ -1,4 +1,4 @@
-﻿
+
 
 public class YeuCauXuatDeThiDto
 {
@@ -20,5 +20,5 @@ public class YeuCauXuatDeThiDto
 
     public string? Format { get; set; } = "word";       
 
-    public string? HinhThucThi { get; set; } = "Tự Luận"; 
+    public string? HinhThucThi { get; set; } = "T? Lu?n"; 
 }

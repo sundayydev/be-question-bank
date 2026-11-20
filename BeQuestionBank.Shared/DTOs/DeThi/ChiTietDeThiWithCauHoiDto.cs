@@ -1,4 +1,4 @@
-﻿namespace BeQuestionBank.Shared.DTOs.DeThi;
+namespace BeQuestionBank.Shared.DTOs.DeThi;
 
 public class ChiTietDeThiWithCauHoiDto
 {

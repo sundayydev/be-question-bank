@@ -318,7 +318,7 @@ public class YeuCauRutTrichService
 
             foreach (var cloReq in part.Clos ?? new List<CloDto>())
             {
-                var clo = (BeQuestionBank.Shared.Enums.EnumCLO)cloReq.Clo;
+                var clo = (BeQuestionBank.Domain.Enums.EnumCLO)cloReq.Clo;
                 var numNeeded = cloReq.Num;
                 var subQuestionCount = cloReq.SubQuestionCount;
 

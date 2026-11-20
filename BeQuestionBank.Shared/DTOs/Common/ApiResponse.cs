@@ -1,4 +1,4 @@
-﻿namespace BeQuestionBank.Shared.DTOs.Common
+namespace BeQuestionBank.Shared.DTOs.Common
 {
     public class ApiResponse<T>
     {

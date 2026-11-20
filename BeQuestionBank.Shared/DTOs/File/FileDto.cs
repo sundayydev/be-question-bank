@@ -1,4 +1,4 @@
-﻿using BeQuestionBank.Shared.Enums;
+using BeQuestionBank.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +12,7 @@ namespace BeQuestionBank.Shared.DTOs.File
         public Guid MaFile { get; set; }
         public string TenFile { get; set; } = string.Empty;
         public FileType LoaiFile { get; set; }
-        public string? Url { get; set; } // Đường dẫn để phát audio
+        public string? Url { get; set; } // �u?ng d?n d? ph�t audio
         public Guid? MaCauHoi { get; set; }
         public Guid? MaCauTraLoi { get; set; }
         public bool XoaTam { get; set; }

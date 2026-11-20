@@ -1,4 +1,4 @@
-﻿namespace BEQuestionBank.Shared.DTOs.user;
+namespace BEQuestionBank.Shared.DTOs.user;
 
 public class ImportUserDto
 {

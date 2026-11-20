@@ -1,4 +1,4 @@
-﻿using BeQuestionBank.Shared.Enums;
+using BeQuestionBank.Domain.Enums;
 using System;
 using System.Collections;
 using System.Collections.Generic;

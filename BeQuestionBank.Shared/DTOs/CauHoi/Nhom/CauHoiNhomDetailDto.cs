@@ -1,4 +1,4 @@
-using BeQuestionBank.Shared.Enums;
+using BeQuestionBank.Domain.Enums;
 using BeQuestionBank.Shared.DTOs.CauTraLoi;
 using System;
 using System.Collections.Generic;

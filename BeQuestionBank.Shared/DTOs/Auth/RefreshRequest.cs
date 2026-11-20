@@ -1,4 +1,4 @@
-﻿namespace BeQuestionBank.Shared.DTOs.NguoiDung;
+namespace BeQuestionBank.Shared.DTOs.NguoiDung;
 
 public class RefreshRequest
 {
