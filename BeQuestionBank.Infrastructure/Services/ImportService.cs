@@ -82,6 +82,12 @@ namespace BEQuestionBank.Core.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+        async Task<object> IImportService.ImportQuestionsAsync(IFormFile wordFile, Guid maPhan, string? mediaFolderPath)
+            => await ImportQuestionsAsync(wordFile, maPhan, mediaFolderPath);
+
+        async Task<object> IImportService.PreviewImportAsync(IFormFile wordFile, string? mediaFolderPath)
+            => await PreviewImportAsync(wordFile, mediaFolderPath);
+
         public async Task<ImportResult> ImportQuestionsAsync(IFormFile wordFile, Guid maPhan, string? mediaFolderPath)
         {
             var result = new ImportResult();

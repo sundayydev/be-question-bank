@@ -1,9 +1,10 @@
 ﻿using System.Text.RegularExpressions;
 using DocumentFormat.OpenXml.Packaging;
+using BeQuestionBank.Application.Common.Interfaces.Services;
 
 namespace BEQuestionBank.Core.Services;
 
-public class ToolService
+public class ToolService : IToolService
 {
     /// <summary>
     /// Chuyển file byte sang Base64

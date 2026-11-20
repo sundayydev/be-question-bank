@@ -67,6 +67,7 @@ public static class DependencyInjection
         services.AddScoped<IEncryptionService, EzpEncryptionService>();
         services.AddScoped<IFileStorageService, FileService>();
         services.AddScoped<IExportService, DeThiExportService>();
+        services.AddScoped<IToolService, ToolService>();
 
         // Concrete services (for direct use and backward-compatibility)
         services.AddScoped<KhoaService>();
