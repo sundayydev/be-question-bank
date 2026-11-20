@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using BeQuestionBank.Shared.DTOs.YeuCauRutTrich;
@@ -7,20 +7,20 @@ namespace BEQuestionBank.Shared.DTOs.MaTran;
 
 public class PartDto
 {
-    [Required(ErrorMessage = "Mã phần không được để trống.")]
+    [Required(ErrorMessage = "M� ph?n kh�ng du?c d? tr?ng.")]
     public Guid MaPhan { get; set; }
 
-    [Required(ErrorMessage = "Số câu hỏi không được để trống.")]
+    [Required(ErrorMessage = "S? c�u h?i kh�ng du?c d? tr?ng.")]
     public int NumQuestions { get; set; }
 
-    [Required(ErrorMessage = "Danh sách CLO không được để trống.")]
+    [Required(ErrorMessage = "Danh s�ch CLO kh�ng du?c d? tr?ng.")]
     public List<CloDto> Clos { get; set; }
 
-    [Required(ErrorMessage = "Danh sách loại câu hỏi không được để trống.")]
+    [Required(ErrorMessage = "Danh s�ch lo?i c�u h?i kh�ng du?c d? tr?ng.")]
     public List<QuestionTypeDto> QuestionTypes { get; set; }
 
     /// <summary>
-    /// Chi tiết từng ô trong ma trận CLO × Loại câu hỏi cho phần này
+    /// Chi ti?t t?ng � trong ma tr?n CLO � Lo?i c�u h?i cho ph?n n�y
     /// </summary>
     public List<MatrixCellDto>? MatrixCells { get; set; }
 }

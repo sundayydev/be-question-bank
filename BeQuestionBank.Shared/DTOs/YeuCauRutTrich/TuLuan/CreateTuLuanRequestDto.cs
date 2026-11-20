@@ -1,4 +1,4 @@
-﻿namespace BeQuestionBank.Shared.DTOs.YeuCauRutTrich;
+namespace BeQuestionBank.Shared.DTOs.YeuCauRutTrich;
 
 public class CreateTuLuanRequestDto
 {

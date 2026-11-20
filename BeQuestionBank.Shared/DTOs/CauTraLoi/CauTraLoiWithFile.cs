@@ -1,4 +1,4 @@
-﻿using BeQuestionBank.Shared.DTOs.File;
+using BeQuestionBank.Shared.DTOs.File;
 using System;
 using System.Collections.Generic;
 using System.Linq;

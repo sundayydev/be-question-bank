@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using BEQuestionBank.Shared.DTOs.MaTran;
 
 public class MaTranDto : IValidatableObject
@@ -10,8 +10,8 @@ public class MaTranDto : IValidatableObject
     public List<QuestionTypeDto>? QuestionTypes { get; set; }
 
     /// <summary>
-    /// Chi tiết từng ô trong ma trận CLO × Loại câu hỏi
-    /// Chứa số lượng câu hỏi chính xác cho từng cặp (CLO, Loại)
+    /// Chi ti?t t?ng � trong ma tr?n CLO � Lo?i c�u h?i
+    /// Ch?a s? lu?ng c�u h?i ch�nh x�c cho t?ng c?p (CLO, Lo?i)
     /// </summary>
     public List<MatrixCellDto>? MatrixCells { get; set; }
 
@@ -20,14 +20,14 @@ public class MaTranDto : IValidatableObject
         if (CloPerPart && (Parts == null || !Parts.Any()))
         {
             yield return new ValidationResult(
-                "Danh sách phần không được để trống khi CloPerPart = true.",
+                "Danh s�ch ph?n kh�ng du?c d? tr?ng khi CloPerPart = true.",
                 new[] { nameof(Parts) });
         }
 
         if (!CloPerPart && (Clos == null || QuestionTypes == null))
         {
             yield return new ValidationResult(
-                "Clos và QuestionTypes không được để trống khi CloPerPart = false.",
+                "Clos v� QuestionTypes kh�ng du?c d? tr?ng khi CloPerPart = false.",
                 new[] { nameof(Clos), nameof(QuestionTypes) });
         }
     }

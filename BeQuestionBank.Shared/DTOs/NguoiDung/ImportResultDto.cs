@@ -1,4 +1,4 @@
-﻿// File: BeQuestionBank.Shared/DTOs/user/ImportResultDto.cs
+// File: BeQuestionBank.Shared/DTOs/user/ImportResultDto.cs
 namespace BeQuestionBank.Shared.DTOs.user;
 
 public class ImportResultDto

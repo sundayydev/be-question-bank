@@ -1,4 +1,4 @@
-﻿using BEQuestionBank.Shared.DTOs.MaTran;
+using BEQuestionBank.Shared.DTOs.MaTran;
 
 namespace BeQuestionBank.Shared.DTOs.YeuCauRutTrich;
 

@@ -9,7 +9,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeQuestionBank.Domain", "Be
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeQuestionBank.Shared", "BeQuestionBank.Shared\BeQuestionBank.Shared.csproj", "{C8C18B00-7E93-4535-89E5-75796B1C846A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BEQuestionBank.Core", "BEQuestionBank.Core\BEQuestionBank.Core.csproj", "{2410C00F-F0EA-4C93-A596-57FB311A2899}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeQuestionBank.Application", "BeQuestionBank.Application\BeQuestionBank.Application.csproj", "{B92A72B3-7845-4D09-B812-70F4D187E61A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeQuestionBank.Infrastructure", "BeQuestionBank.Infrastructure\BeQuestionBank.Infrastructure.csproj", "{2410C00F-F0EA-4C93-A596-57FB311A2899}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeQuestionBank.Test", "BeQuestionBank.Test\BeQuestionBank.Test.csproj", "{42EB69AD-7AF0-4233-ABE1-44BFAFBD1641}"
 EndProject
@@ -33,6 +35,10 @@ Global
 		{C8C18B00-7E93-4535-89E5-75796B1C846A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C8C18B00-7E93-4535-89E5-75796B1C846A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C8C18B00-7E93-4535-89E5-75796B1C846A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B92A72B3-7845-4D09-B812-70F4D187E61A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B92A72B3-7845-4D09-B812-70F4D187E61A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B92A72B3-7845-4D09-B812-70F4D187E61A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B92A72B3-7845-4D09-B812-70F4D187E61A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2410C00F-F0EA-4C93-A596-57FB311A2899}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2410C00F-F0EA-4C93-A596-57FB311A2899}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2410C00F-F0EA-4C93-A596-57FB311A2899}.Release|Any CPU.ActiveCfg = Release|Any CPU

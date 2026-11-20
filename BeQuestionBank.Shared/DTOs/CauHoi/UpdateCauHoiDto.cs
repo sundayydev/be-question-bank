@@ -1,4 +1,4 @@
-﻿using BeQuestionBank.Shared.Enums;
+using BeQuestionBank.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -10,19 +10,19 @@ namespace BeQuestionBank.Shared.DTOs.CauHoi;
 
 public class UpdateCauHoiDto
 {
-    [Required(ErrorMessage = "Mã phần không được để trống.")]
+    [Required(ErrorMessage = "M� ph?n kh�ng du?c d? tr?ng.")]
     public Guid MaPhan { get; set; }
 
-    [Required(ErrorMessage = "Mã số câu hỏi không được để trống.")]
+    [Required(ErrorMessage = "M� s? c�u h?i kh�ng du?c d? tr?ng.")]
     public int MaSoCauHoi { get; set; }
 
     public Guid? MaCauHoi { get; set; }
     public required string NoiDung { get; set; }
 
-    [Required(ErrorMessage = "Hoán vị không được để trống.")]
+    [Required(ErrorMessage = "Ho�n v? kh�ng du?c d? tr?ng.")]
     public bool HoanVi { get; set; }
 
-    [Required(ErrorMessage = "Cấp độ không được để trống.")]
+    [Required(ErrorMessage = "C?p d? kh�ng du?c d? tr?ng.")]
     public short CapDo { get; set; }
 
     public int SoCauHoiCon { get; set; }

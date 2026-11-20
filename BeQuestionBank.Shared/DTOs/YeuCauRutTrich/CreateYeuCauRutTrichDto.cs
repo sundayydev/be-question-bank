@@ -1,13 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using BEQuestionBank.Shared.DTOs.MaTran;
 
 namespace BeQuestionBank.Shared.DTOs.YeuCauRutTrich;
 
 public class CreateYeuCauRutTrichDto
 {
-    [Required(ErrorMessage = "Mã người dùng không được để trống.")]
+    [Required(ErrorMessage = "M� ngu?i d�ng kh�ng du?c d? tr?ng.")]
     public Guid MaNguoiDung { get; set; }
-    [Required(ErrorMessage = "Mã môn học không được để trống.")]
+    [Required(ErrorMessage = "M� m�n h?c kh�ng du?c d? tr?ng.")]
     public Guid MaMonHoc { get; set; }
     public string? NoiDungRutTrich { get; set; }
     public bool? DaXuLy { get; set; } = false;

@@ -1,19 +1,19 @@
-﻿using System.ComponentModel.DataAnnotations;
-using BeQuestionBank.Shared.Enums;
+using System.ComponentModel.DataAnnotations;
+using BeQuestionBank.Domain.Enums;
 
 namespace BeQuestionBank.Shared.DTOs.CauHoi;
 
 public class UpdateCauHoiNhomDto
 {
-    // Mã phần mà câu hỏi nhóm thuộc về
-    [Required(ErrorMessage = "Mã phần không được để trống.")]
+    // M� ph?n m� c�u h?i nh�m thu?c v?
+    [Required(ErrorMessage = "M� ph?n kh�ng du?c d? tr?ng.")]
     public Guid MaPhan { get; set; }
 
-    // Nội dung đoạn văn/ngữ cảnh của câu hỏi nhóm
+    // N?i dung do?n van/ng? c?nh c?a c�u h?i nh�m
     public required string NoiDung { get; set; }
 
-    // Cấp độ của câu hỏi nhóm
-    [Required(ErrorMessage = "Cấp độ không được để trống.")]
+    // C?p d? c?a c�u h?i nh�m
+    [Required(ErrorMessage = "C?p d? kh�ng du?c d? tr?ng.")]
     public short CapDo { get; set; }
 
     public EnumCLO? CLO { get; set; }
@@ -25,8 +25,8 @@ public class UpdateCauHoiNhomDto
     public DateTime NgayTao { get; set; } = DateTime.UtcNow;
     public Guid NguoiTao { get; set; }
 
-    // Danh sách các câu hỏi con nằm trong nhóm này
+    // Danh s�ch c�c c�u h?i con n?m trong nh�m n�y
     [Required]
-    [MinLength(1, ErrorMessage = "Câu hỏi nhóm phải có ít nhất 1 câu hỏi con.")]
+    [MinLength(1, ErrorMessage = "C�u h?i nh�m ph?i c� �t nh?t 1 c�u h?i con.")]
     public List<CauHoiWithCauTraLoiDto> CauHoiCons { get; set; } = new List<CauHoiWithCauTraLoiDto>();
 }

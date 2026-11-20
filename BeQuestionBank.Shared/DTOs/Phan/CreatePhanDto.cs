@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -9,20 +9,20 @@ namespace BeQuestionBank.Shared.DTOs.Phan;
 
 public class CreatePhanDto
 {
-    [Required(ErrorMessage = "Mã môn học là bắt buộc.")]
+    [Required(ErrorMessage = "M� m�n h?c l� b?t bu?c.")]
     public Guid MaMonHoc { get; set; }
 
-    [Required(ErrorMessage = "Tên phần là bắt buộc.")]
-    [StringLength(255, ErrorMessage = "Tên phần không được vượt quá 255 ký tự.")]
+    [Required(ErrorMessage = "T�n ph?n l� b?t bu?c.")]
+    [StringLength(255, ErrorMessage = "T�n ph?n kh�ng du?c vu?t qu� 255 k� t?.")]
     public required string TenPhan { get; set; }
 
-    [StringLength(1000, ErrorMessage = "Nội dung không được vượt quá 1000 ký tự.")]
+    [StringLength(1000, ErrorMessage = "N?i dung kh�ng du?c vu?t qu� 1000 k� t?.")]
     public string? NoiDung { get; set; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "Thứ tự phải là số không âm.")]
+    [Range(0, int.MaxValue, ErrorMessage = "Th? t? ph?i l� s? kh�ng �m.")]
     public int? ThuTu { get; set; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "Số lượng câu hỏi phải là số không âm.")]
+    [Range(0, int.MaxValue, ErrorMessage = "S? lu?ng c�u h?i ph?i l� s? kh�ng �m.")]
     public int SoLuongCauHoi { get; set; }
 
     public Guid? MaPhanCha { get; set; }

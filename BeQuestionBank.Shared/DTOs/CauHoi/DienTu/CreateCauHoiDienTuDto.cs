@@ -1,12 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using BeQuestionBank.Shared.DTOs.CauTraLoi;
-using BeQuestionBank.Shared.Enums;
+using BeQuestionBank.Domain.Enums;
 
 namespace BeQuestionBank.Shared.DTOs.CauHoi;
 
 public class CreateCauHoiDienTuDto : CreateCauHoiDto
 {
     [Required]
-    [MinLength(1, ErrorMessage = "Câu hỏi nhóm phải có ít nhất 1 câu hỏi con.")]
+    [MinLength(1, ErrorMessage = "C�u h?i nh�m ph?i c� �t nh?t 1 c�u h?i con.")]
     public List<CreateChilDienTu> CauHoiCons { get; set; } = new();
 }

@@ -1,6 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using BeQuestionBank.Shared.DTOs.CauTraLoi;
-using BeQuestionBank.Shared.Enums;
+using BeQuestionBank.Domain.Enums;
 
 namespace BeQuestionBank.Shared.DTOs.CauHoi;
 
@@ -13,7 +13,7 @@ public class CreateCauHoiGhepNoiDto:CreateCauHoiDto
     //public bool HoanVi { get; set; } = true;
     //public EnumCLO? CLO { get; set; }
     //[Required]
-    [MinLength(1, ErrorMessage = "Câu hỏi ghepnoi phải có ít nhất 1 câu hỏi con.")]
+    [MinLength(1, ErrorMessage = "C�u h?i ghepnoi ph?i c� �t nh?t 1 c�u h?i con.")]
     public List<CreateCauHoiWithCauTraLoiDto> CauHoiCons { get; set; } = new();
     
     

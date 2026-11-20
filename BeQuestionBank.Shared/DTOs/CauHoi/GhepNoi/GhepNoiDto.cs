@@ -1,4 +1,4 @@
-﻿namespace BeQuestionBank.Shared.DTOs.CauHoi;
+namespace BeQuestionBank.Shared.DTOs.CauHoi;
 
 public class GhepNoiDto
 {

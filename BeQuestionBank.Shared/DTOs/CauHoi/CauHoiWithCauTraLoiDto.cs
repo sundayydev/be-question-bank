@@ -1,4 +1,4 @@
-﻿using BeQuestionBank.Shared.DTOs.CauTraLoi;
+using BeQuestionBank.Shared.DTOs.CauTraLoi;
 using System;
 using System.Collections.Generic;
 using System.Linq;

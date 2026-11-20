@@ -1,4 +1,4 @@
-﻿namespace BeQuestionBank.Shared.DTOs.YeuCauRutTrich;
+namespace BeQuestionBank.Shared.DTOs.YeuCauRutTrich;
 
 public class YeuCauRutTrichDto
 {
@@ -10,8 +10,8 @@ public class YeuCauRutTrichDto
     public DateTime? NgayYeuCau { get; set; }
     public DateTime? NgayXuLy { get; set; }
     public bool? DaXuLy { get; set; }
-    public Guid MaDeThi { get; set; }  // Thêm để lấy ID đề thi
-    public string? TenDeThi { get; set; }  // Thêm để hiển thị tên đề thi
+    public Guid MaDeThi { get; set; }  // Th�m d? l?y ID d? thi
+    public string? TenDeThi { get; set; }  // Th�m d? hi?n th? t�n d? thi
     public string? TenNguoiDung { get; set; }
     public string? TenMonHoc { get; set; }
     public string? TenKhoa { get; set; }

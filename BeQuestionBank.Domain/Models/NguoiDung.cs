@@ -1,5 +1,5 @@
 ﻿using BeQuestionBank.Domain.Common;
-using BeQuestionBank.Shared.Enums;
+using BeQuestionBank.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 

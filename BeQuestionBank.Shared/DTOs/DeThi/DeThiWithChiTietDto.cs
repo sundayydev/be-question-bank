@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using BEQuestionBank.Shared.DTOs.ChiTietDeThi;
 using BEQuestionBank.Shared.DTOs.DeThi;
 

@@ -1,4 +1,4 @@
-﻿// File: BeQuestionBank.Shared.DTOs.YeuCauRutTrich/MaTranTuLuan.cs
+// File: BeQuestionBank.Shared.DTOs.YeuCauRutTrich/MaTranTuLuan.cs
 
 using BEQuestionBank.Shared.DTOs.MaTran;
 
@@ -15,5 +15,5 @@ public class PartTuLuanDto
 {
     public Guid Part { get; set; }
 
-    public List<CloDto> Clos { get; set; } = new(); // Mỗi cặp = 1 câu lớn có đúng Num câu con
+    public List<CloDto> Clos { get; set; } = new(); // M?i c?p = 1 c�u l?n c� d�ng Num c�u con
 }

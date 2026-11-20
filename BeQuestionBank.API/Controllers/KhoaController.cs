@@ -1,52 +1,42 @@
-﻿using BeQuestionBank.Domain.Models;
+﻿using BeQuestionBank.Application.Features.Khoa.Commands;
+using BeQuestionBank.Application.Features.Khoa.Queries;
+using BeQuestionBank.Domain.Models;
 using BeQuestionBank.Shared.DTOs.Common;
 using BeQuestionBank.Shared.DTOs.Khoa;
 using BeQuestionBank.Shared.DTOs.MonHoc;
-using BEQuestionBank.Core.Services;
 using BeQuestionBank.Shared.DTOs.Pagination;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Swashbuckle.AspNetCore.Annotations;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace BeQuestionBank.API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize] // Yêu cầu Bearer token cho tất cả endpoints
-public class KhoaController(KhoaService service, ILogger<KhoaController> logger) : ControllerBase
+[Authorize]
+public class KhoaController(ISender sender, ILogger<KhoaController>? logger = null) : ControllerBase
 {
-    private readonly KhoaService _service = service;
-    private readonly ILogger<KhoaController> _logger = logger;
+    private readonly ISender _sender = sender;
+    private readonly ILogger<KhoaController>? _logger = logger;
 
     // GET: api/Khoa/{id}
     [HttpGet("{id}")]
     [SwaggerOperation("Tìm Khoa theo Mã Khoa")]
     public async Task<ActionResult<Khoa>> GetKhoaByIdAsync(string id)
     {
-        try
+        var khoa = await _sender.Send(new GetKhoaByIdQuery(Guid.Parse(id)));
+        if (khoa == null)
         {
-            _logger.LogInformation("Yêu cầu tìm Khoa theo mã: {MaKhoa}", id);
-
-            var khoa = await _service.GetKhoaByIdAsync(Guid.Parse(id));
-            if (khoa == null)
-            {
-                _logger.LogWarning("Không tìm thấy Khoa với mã: {MaKhoa}", id);
-                return NotFound(ApiResponseFactory.NotFound<Khoa>(
-                  $"Không tìm thấy Khoa với mã {id}",
-                  new { MaKhoa = id }
-                 ));
-            }
-
-            _logger.LogInformation("Tìm thấy Khoa: {TenKhoa}", khoa.TenKhoa);
-            return Ok(ApiResponseFactory.Success(khoa, "Lấy dữ liệu thành công"));
+            return NotFound(ApiResponseFactory.NotFound<Khoa>($"Không tìm thấy Khoa với mã {id}", new { MaKhoa = id }));
         }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Lỗi khi lấy thông tin Khoa theo mã: {MaKhoa}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, 
-                ApiResponseFactory.ServerError("Đã xảy ra lỗi trong quá trình xử lý."));
-        }
+
+        return Ok(ApiResponseFactory.Success(khoa, "Lấy dữ liệu thành công"));
     }
 
     // GET: api/Khoa
@@ -54,7 +44,7 @@ public class KhoaController(KhoaService service, ILogger<KhoaController> logger)
     [SwaggerOperation("Lấy danh sách tất cả Khoa")]
     public async Task<ActionResult<KhoaDto>> GetAllAsync()
     {
-        var list = await _service.GetAllKhoasAsync(); 
+        var list = await _sender.Send(new GetAllKhoaQuery());
 
         var result = list.Select(k => new KhoaDto
         {
@@ -76,94 +66,23 @@ public class KhoaController(KhoaService service, ILogger<KhoaController> logger)
         return Ok(ApiResponseFactory.Success(result, "Lấy danh sách Khoa thành công"));
     }
 
-    //POST: api/Khoa
+    // POST: api/Khoa
     [HttpPost]
     [SwaggerOperation("Thêm một Khoa")]
-    public async Task<IActionResult> CreateKhoaAsync([FromBody] CreateKhoaDto model)
+    public async Task<IActionResult> CreateKhoaAsync([FromBody] CreateKhoaCommand command)
     {
-        try
-        {
-            _logger.LogInformation("Bắt đầu thêm Khoa. Tên: {TenKhoa}", model.TenKhoa);
-
-            var existingKhoa = await _service.GetKhoaByTenKhoaAsync(model.TenKhoa);
-            if (existingKhoa != null)
-            {
-                if (existingKhoa.XoaTam == true)
-                {
-                    _logger.LogInformation("Khoa tạm xóa được phát hiện: {TenKhoa}", existingKhoa.TenKhoa);
-                    return StatusCode(StatusCodes.Status409Conflict, new KhoaDto
-                    {
-                        MaKhoa = existingKhoa.MaKhoa,
-                        TenKhoa = existingKhoa.TenKhoa,
-                        XoaTam = existingKhoa.XoaTam
-                    });
-                }
-
-                _logger.LogWarning("Khoa với tên {TenKhoa} đã tồn tại.", model.TenKhoa);
-                return StatusCode(StatusCodes.Status409Conflict, $"Khoa với tên {model.TenKhoa} đã tồn tại.");
-            }
-
-            var newKhoa = new Khoa
-            {
-                TenKhoa = model.TenKhoa,
-                XoaTam = model.XoaTam ?? false
-            };
-
-            await _service.AddKhoaAsync(newKhoa);
-            _logger.LogInformation("Thêm Khoa thành công: {TenKhoa}", model.TenKhoa);
-
-            return StatusCode(StatusCodes.Status201Created, ApiResponseFactory.Created(new KhoaDto
-            {
-                MaKhoa = newKhoa.MaKhoa,
-                TenKhoa = newKhoa.TenKhoa,
-                XoaTam = newKhoa.XoaTam
-            }, "Thêm Khoa thành công"));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Có lỗi xảy ra khi thêm Khoa: {TenKhoa}", model.TenKhoa);
-            return StatusCode(StatusCodes.Status500InternalServerError, ApiResponseFactory.ServerError("Đã xảy ra lỗi khi thêm Khoa."));
-        }
+        var created = await _sender.Send(command);
+        return Ok(ApiResponseFactory.Success(created, "Thêm Khoa thành công"));
     }
 
-    //PATCH: api/Khoa/{id}
-    [HttpPatch("{id}")]
-    [SwaggerOperation(Summary = "Cập nhật thông tin Khoa")]
-    public async Task<IActionResult> UpdateKhoaAsync(string id, [FromBody] UpdateKhoaDto model)
+    // PUT: api/Khoa/{id}
+    [HttpPut("{id}")]
+    [SwaggerOperation(Summary = "Cập nhật Khoa")]
+    public async Task<IActionResult> UpdateKhoaAsync(string id, [FromBody] UpdateKhoaCommand command)
     {
-        try
-        {
-            _logger.LogInformation("Yêu cầu cập nhật Khoa có mã: {MaKhoa}", id);
-
-            var existingKhoa = await _service.GetKhoaByIdAsync(Guid.Parse(id));
-            if (existingKhoa == null)
-            {
-                _logger.LogWarning("Không tìm thấy Khoa với mã: {MaKhoa}", id);
-                return StatusCode(StatusCodes.Status404NotFound, ApiResponseFactory.NotFound<Khoa>($"Không tìm thấy Khoa với mã {id}", new {MaKhoa = id}));
-            }
-
-            existingKhoa.TenKhoa = model.TenKhoa;
-            existingKhoa.XoaTam = model.XoaTam ?? existingKhoa.XoaTam;
-
-            await _service.UpdateKhoaAsync(existingKhoa);
-
-            var khoaDto = new KhoaDto
-            {
-                MaKhoa = existingKhoa.MaKhoa,
-                TenKhoa = existingKhoa.TenKhoa,
-                XoaTam = existingKhoa.XoaTam,
-                MoTa = existingKhoa.MoTa
-            };
-
-            _logger.LogInformation("Cập nhật thành công Khoa: {TenKhoa}", existingKhoa.TenKhoa);
-
-            return StatusCode(StatusCodes.Status200OK, ApiResponseFactory.Updated(khoaDto, "Cập nhật Khoa thành công"));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Lỗi khi cập nhật Khoa có mã: {MaKhoa}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, ApiResponseFactory.ServerError());
-        }
+        command.MaKhoa = Guid.Parse(id);
+        var updated = await _sender.Send(command);
+        return Ok(ApiResponseFactory.Updated(updated, "Cập nhật Khoa thành công"));
     }
 
     // DELETE: api/Khoa/{id}
@@ -171,27 +90,8 @@ public class KhoaController(KhoaService service, ILogger<KhoaController> logger)
     [SwaggerOperation(Summary = "Xóa Khoa (xóa cứng)")]
     public async Task<IActionResult> DeleteKhoaAsync(string id)
     {
-        try
-        {
-            _logger.LogInformation("Yêu cầu xóa Khoa có mã: {MaKhoa}", id);
-
-            var existingKhoa = await _service.GetKhoaByIdAsync(Guid.Parse(id));
-            if (existingKhoa == null)
-            {
-                _logger.LogWarning("Không tìm thấy Khoa với mã: {MaKhoa}", id);
-                return StatusCode(StatusCodes.Status404NotFound, ApiResponseFactory.NotFound<Khoa>($"Không tìm thấy Khoa với mã {id}", new { MaKhoa = id }));
-            }
-
-            await _service.DeleteKhoaAsync(existingKhoa);
-            _logger.LogInformation("Đã xóa Khoa có mã: {MaKhoa}", id);
-
-            return StatusCode(StatusCodes.Status200OK, ApiResponseFactory.Success($"Đã xóa Khoa với mã {id} thành công."));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Lỗi khi xóa Khoa với mã: {MaKhoa}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, ApiResponseFactory.ServerError("Đã xảy ra lỗi khi xóa Khoa."));
-        }
+        await _sender.Send(new DeleteKhoaCommand(Guid.Parse(id)));
+        return Ok(ApiResponseFactory.Success($"Đã xóa Khoa với mã {id} thành công."));
     }
 
     // PATCH: api/Khoa/{id}/XoaTam
@@ -199,14 +99,8 @@ public class KhoaController(KhoaService service, ILogger<KhoaController> logger)
     [SwaggerOperation(Summary = "Xóa Khoa tạm thời")]
     public async Task<IActionResult> SoftDelete(string id)
     {
-        var existingKhoa = await _service.GetKhoaByIdAsync(Guid.Parse(id));
-        if (existingKhoa == null)
-        {
-            return StatusCode(StatusCodes.Status404NotFound, ApiResponseFactory.NotFound<Khoa>($"Không tìm thấy Khoa với mã {id}"));
-        }
-        existingKhoa.XoaTam = true;
-        await _service.UpdateKhoaAsync(existingKhoa);
-        return StatusCode(StatusCodes.Status200OK, ApiResponseFactory.Success($"Đã xóa tạm {existingKhoa.TenKhoa} thành công"));
+        var updated = await _sender.Send(new UpdateKhoaCommand { MaKhoa = Guid.Parse(id), XoaTam = true });
+        return Ok(ApiResponseFactory.Success($"Đã xóa tạm {updated.TenKhoa} thành công"));
     }
 
     // PATCH: api/Khoa/{id}/KhoiPhuc
@@ -214,16 +108,10 @@ public class KhoaController(KhoaService service, ILogger<KhoaController> logger)
     [SwaggerOperation(Summary = "Khôi phục Khoa đã xóa tạm")]
     public async Task<IActionResult> Restore(string id)
     {
-        var existingKhoa = await _service.GetKhoaByIdAsync(Guid.Parse(id));
-        if (existingKhoa == null)
-        {
-            return StatusCode(StatusCodes.Status404NotFound, ApiResponseFactory.NotFound<Khoa>($"Không tìm thấy Khoa với mã {id}"));
-        }
-        existingKhoa.XoaTam = false;
-        await _service.UpdateKhoaAsync(existingKhoa);
-        return StatusCode(StatusCodes.Status200OK, ApiResponseFactory.Success($"Đã khôi phục {existingKhoa.TenKhoa} thành công"));
+        var updated = await _sender.Send(new UpdateKhoaCommand { MaKhoa = Guid.Parse(id), XoaTam = false });
+        return Ok(ApiResponseFactory.Success($"Đã khôi phục {updated.TenKhoa} thành công"));
     }
-    
+
     // GET: api/Khoa/paged
     [HttpGet("paged")]
     [SwaggerOperation(Summary = "Lấy danh sách Khoa phân trang, tìm kiếm, sắp xếp")]
@@ -233,34 +121,18 @@ public class KhoaController(KhoaService service, ILogger<KhoaController> logger)
         [FromQuery] string? sort = null,
         [FromQuery] string? search = null)
     {
-        try
-        {
-            var result = await _service.GetPagedKhoasAsync(page, pageSize, sort, search);
-
-            return Ok(ApiResponseFactory.Success(result, "Lấy danh sách khoa thành công"));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Lỗi khi lấy danh sách Khoa phân trang");
-            return StatusCode(500, ApiResponseFactory.ServerError("Đã xảy ra lỗi hệ thống"));
-        }
+        var result = await _sender.Send(new GetKhoaPagedQuery(page, pageSize, search, sort));
+        return Ok(ApiResponseFactory.Success(result, "Lấy danh sách khoa thành công"));
     }
+
+    // GET: api/Khoa/trashed
     [HttpGet("trashed")]
     [SwaggerOperation("Lấy danh sách Khoa đã xóa tạm (dùng cho thùng rác)")]
     public async Task<IActionResult> GetTrashedAsync(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
-        try
-        {
-            var result = await _service.GetTrashedAsync(page, pageSize);
-            return Ok(ApiResponseFactory.Success(result, "Lấy danh sách khoa trong thùng rác thành công"));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Lỗi khi lấy danh sách khoa đã xóa tạm");
-            return StatusCode(500, ApiResponseFactory.ServerError("Lỗi hệ thống"));
-        }
+        var result = await _sender.Send(new GetKhoaTrashedPagedQuery(page, pageSize));
+        return Ok(ApiResponseFactory.Success(result, "Lấy danh sách khoa trong thùng rác thành công"));
     }
-    
 }
