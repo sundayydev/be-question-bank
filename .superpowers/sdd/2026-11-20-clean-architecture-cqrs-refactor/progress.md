@@ -9,7 +9,7 @@
 ## Tasks Progress
 - [x] Task 1: Solution & Projects Scaffolding for .NET 10 & C# 14
 - [x] Task 2: Domain Layer Purity & Exceptions Hierarchy
-- [ ] Task 3: Application Core (MediatR, FluentValidation, Pipeline Behaviors & Interfaces)
+- [x] Task 3: Application Core (MediatR, FluentValidation, Pipeline Behaviors & Interfaces)
 - [ ] Task 4: Infrastructure Persistence & Services Restructuring
 - [ ] Task 5: Application Feature Slices - Auth, Khoa, MonHoc, Phan, NguoiDung
 - [ ] Task 6: Application Feature Slices - CauHoi, DeThi, YeuCauRutTrich, File, Tool
