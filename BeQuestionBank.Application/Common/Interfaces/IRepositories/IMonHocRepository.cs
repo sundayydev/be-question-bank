@@ -14,4 +14,5 @@ public interface IMonHocRepository : IRepository<MonHoc>
 {
     Task<IEnumerable<MonHoc?>> GetByMaKhoaAsync(Guid maKhoa);
     Task<PagedResult<MonHocDto>> GetTrashedAsync(int page = 1, int pageSize = 10);
+    Task<PagedResult<MonHocDto>> GetPagedMonHocsAsync(int page, int pageSize, Guid? maKhoa = null, string? search = null, string? sort = null);
 }

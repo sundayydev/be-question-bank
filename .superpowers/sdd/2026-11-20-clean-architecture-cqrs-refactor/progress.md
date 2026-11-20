@@ -11,7 +11,7 @@
 - [x] Task 2: Domain Layer Purity & Exceptions Hierarchy
 - [x] Task 3: Application Core (MediatR, FluentValidation, Pipeline Behaviors & Interfaces)
 - [x] Task 4: Infrastructure Persistence & Services Restructuring
-- [ ] Task 5: Application Feature Slices - Auth, Khoa, MonHoc, Phan, NguoiDung
+- [x] Task 5: Application Feature Slices - Auth, Khoa, MonHoc, Phan, NguoiDung
 - [ ] Task 6: Application Feature Slices - CauHoi, DeThi, YeuCauRutTrich, File, Tool
 - [ ] Task 7: API Layer Modernization & Controller Thinning
 - [ ] Task 8: End-to-End Build, Frontend & Test Verification
