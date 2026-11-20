@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>14.0</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BeQuestionBank.Domain\BeQuestionBank.Domain.csproj" />
+    <ProjectReference Include="..\BeQuestionBank.Shared\BeQuestionBank.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

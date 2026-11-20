@@ -30,7 +30,7 @@ builder.Services.AddSwaggerGen(); //Cấu hình Swagger
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("PostgresConnection"),
-        x => x.MigrationsAssembly("BEQuestionBank.Core") // Thêm dòng này
+        x => x.MigrationsAssembly("BeQuestionBank.Infrastructure") // Thêm dòng này
     ));
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 

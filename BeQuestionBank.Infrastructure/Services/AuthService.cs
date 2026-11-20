@@ -156,7 +156,7 @@ public class AuthService
                 return null;
             }
 
-            var userId = Guid.Parse(userIdValue);
+            var userId = Guid.Parse(userIdValue.ToString()!);
             var user = await _userService.GetByIdAsync(userId);
             if (user == null)
             {

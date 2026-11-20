@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>14.0</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -18,12 +19,17 @@
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BEQuestionBank.Core\BEQuestionBank.Core.csproj" />
+    <ProjectReference Include="..\BeQuestionBank.API\BeQuestionBank.API.csproj" />
+    <ProjectReference Include="..\BeQuestionBank.Application\BeQuestionBank.Application.csproj" />
+    <ProjectReference Include="..\BeQuestionBank.Infrastructure\BeQuestionBank.Infrastructure.csproj" />
+    <ProjectReference Include="..\BeQuestionBank.Domain\BeQuestionBank.Domain.csproj" />
+    <ProjectReference Include="..\BeQuestionBank.Shared\BeQuestionBank.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>
