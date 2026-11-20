@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using BeQuestionBank.Application.Common.Interfaces.Services;
 
 namespace BEQuestionBank.Core.Services
 {
@@ -7,8 +8,21 @@ namespace BEQuestionBank.Core.Services
     /// Service để mã hóa và giải mã nội dung file EZP với password
     /// Sử dụng AES-256 encryption
     /// </summary>
-    public class EzpEncryptionService
+    public class EzpEncryptionService : IEncryptionService
     {
+        public byte[] EncryptEzp(byte[] data, string password)
+        {
+            var text = Encoding.UTF8.GetString(data);
+            var encrypted = Encrypt(text, password);
+            return Encoding.UTF8.GetBytes(encrypted);
+        }
+
+        public byte[] DecryptEzp(byte[] data, string password)
+        {
+            var base64 = Encoding.UTF8.GetString(data);
+            var decrypted = Decrypt(base64, password);
+            return Encoding.UTF8.GetBytes(decrypted);
+        }
         private const int KeySize = 256;
         private const int BlockSize = 128;
         private const int Iterations = 10000; // PBKDF2 iterations

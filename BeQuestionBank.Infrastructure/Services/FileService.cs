@@ -10,9 +10,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using File = BeQuestionBank.Domain.Models.File;
 
+using BeQuestionBank.Application.Common.Interfaces.Services;
+
 namespace BEQuestionBank.Core.Services;
 
-public class FileService
+public class FileService : IFileStorageService
 {
     private readonly IFileRepository _fileRepository;
     private readonly ICauHoiRepository _cauHoiRepository;

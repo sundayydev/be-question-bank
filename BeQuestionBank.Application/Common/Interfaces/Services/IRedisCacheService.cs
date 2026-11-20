@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 
 public interface IRedisCacheService
 {
-    Task SetAsync<T>(string key, T value, TimeSpan? expiry = null);
-    Task<T?> GetAsync<T>(string key);
-    Task<bool> RemoveAsync(string key);
-    Task<bool> ExistsAsync(string key);
+    Task SetRefreshTokenAsync(string userId, string token, TimeSpan expiry);
+    Task<string?> GetRefreshTokenAsync(string userId);
+    Task<string?> FindUserIdByTokenAsync(string token);
+    Task<bool> RevokeTokenAsync(string userId);
 }

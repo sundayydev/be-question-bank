@@ -11,12 +11,14 @@ using BeQuestionBank.Shared.DTOs.DeThi;
 using BeQuestionBank.Shared.Configuration;
 using Microsoft.Extensions.Options;
 
+using BeQuestionBank.Application.Common.Interfaces.Services;
+
 namespace BEQuestionBank.Core.Services
 {
     /// <summary>
     /// Service chuyên dụng để export đề thi ra file .ezp (JSON format)
     /// </summary>
-    public class DeThiExportService
+    public class DeThiExportService : IExportService
     {
         private readonly IDeThiRepository _deThiRepository;
         private readonly EzpEncryptionService _encryptionService;

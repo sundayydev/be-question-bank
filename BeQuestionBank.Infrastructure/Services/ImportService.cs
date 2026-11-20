@@ -13,9 +13,11 @@ using System.Text.RegularExpressions;
 using File = System.IO.File;
 using FileEntity = BeQuestionBank.Domain.Models.File;
 
+using BeQuestionBank.Application.Common.Interfaces.Services;
+
 namespace BEQuestionBank.Core.Services
 {
-    public class ImportService
+    public class ImportService : IImportService
     {
         private const bool USE_IMAGE_AS_BASE64 = true; 
         private readonly ICauHoiRepository _cauHoiRepository;

@@ -1,6 +1,7 @@
 ﻿using BeQuestionBank.Application.Common.Interfaces;
 using BeQuestionBank.Core.Configurations;
 using BeQuestionBank.Domain.Interfaces.IRepositories;
+using BeQuestionBank.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
@@ -71,12 +72,5 @@ namespace BEQuestionBank.Core.Repositories
             return await _context.Set<T>().AnyAsync(predicate);
         }
 
-    }
-
-    internal class EfDbTransaction(IDbContextTransaction transaction) : IDbTransaction
-    {
-        public Task CommitAsync(CancellationToken cancellationToken = default) => transaction.CommitAsync(cancellationToken);
-        public Task RollbackAsync(CancellationToken cancellationToken = default) => transaction.RollbackAsync(cancellationToken);
-        public ValueTask DisposeAsync() => transaction.DisposeAsync();
     }
 }

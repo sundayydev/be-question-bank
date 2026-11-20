@@ -1,6 +1,7 @@
 ﻿using StackExchange.Redis;
+using BeQuestionBank.Application.Common.Interfaces.Services;
 
-public class RedisService
+public class RedisService : IRedisCacheService
 {
     private readonly IDatabase _db;
     private const string TOKEN_HASH = "refresh_tokens"; // Hash: userId -> token

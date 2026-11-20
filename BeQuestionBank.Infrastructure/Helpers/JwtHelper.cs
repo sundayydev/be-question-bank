@@ -2,13 +2,16 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using BeQuestionBank.Application.Common.Interfaces.Services;
+using BeQuestionBank.Domain.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 namespace BEQuestionBank.Core.Helpers;
 
-public class JwtHelper
+public class JwtHelper : IJwtService
 {
+    public string GenerateAccessToken(NguoiDung user) => GenerateAccessToken(user.MaNguoiDung.ToString(), user.TenDangNhap, user.VaiTro.ToString());
     private readonly IConfiguration _config;
     private readonly string _secretKey;
     private readonly string _issuer;
