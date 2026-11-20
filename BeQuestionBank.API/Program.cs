@@ -1,37 +1,32 @@
-﻿using BeQuestionBank.API.Extensions;
-using BeQuestionBank.API.Middlewares;
-using BeQuestionBank.Core.Configurations;
+﻿using BeQuestionBank.API.Middlewares;
+using BeQuestionBank.Application;
+using BeQuestionBank.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
-using StackExchange.Redis;
 using Syncfusion.Licensing;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 var syncfusionKey = builder.Configuration["Syncfusion:LicenseKey"];
 
-Console.WriteLine($"Syncfusion key loaded: {syncfusionKey != null}");
-Console.WriteLine(syncfusionKey); // debug xem có bị null không
-
-SyncfusionLicenseProvider.RegisterLicense(syncfusionKey);
+if (!string.IsNullOrEmpty(syncfusionKey))
+{
+    SyncfusionLicenseProvider.RegisterLicense(syncfusionKey);
+}
 
 // Add services to the container.
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
-}); //Cần có để Swagger hiển thị API
-builder.Services.AddEndpointsApiExplorer(); //Cho minimal APIs
-builder.Services.AddSwaggerGen(); //Cấu hình Swagger
+});
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-// Add DbContext
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("PostgresConnection"),
-        x => x.MigrationsAssembly("BeQuestionBank.Infrastructure") // Thêm dòng này
-    ));
+// Clean Architecture Dependency Injection
+builder.Services.AddApplicationServices();
+builder.Services.AddInfrastructureServices(builder.Configuration);
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 // Cấu hình CORS
@@ -42,14 +37,13 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(
                 "http://localhost:5273",
                 "http://localhost:5173",
-                "http://localhost:5043"  // Thêm Swagger port
+                "http://localhost:5043"
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
     });
 
-    // Policy cho testing/development - cho phép mọi origin
     options.AddPolicy("AllowAll", policy =>
     {
         policy.AllowAnyOrigin()
@@ -59,11 +53,7 @@ builder.Services.AddCors(options =>
 });
 
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
-// Đăng ký Redis
-var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
-builder.Services.AddSingleton<IConnectionMultiplexer>(
-    ConnectionMultiplexer.Connect(redisConnectionString)
-);
+
 // Cấu hình JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"] ?? "your-super-secret-key-that-is-at-least-32-characters-long-for-jwt-signing";
@@ -78,7 +68,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false; // Chỉ set true trong production
+    options.RequireHttpsMetadata = false;
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -89,18 +79,17 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidAudience = audience,
         ValidateLifetime = true,
-        ClockSkew = TimeSpan.Zero, // Không cho phép sai lệch thời gian
+        ClockSkew = TimeSpan.Zero,
         RequireExpirationTime = true
     };
 
-    // Xử lý khi token hết hạn hoặc không hợp lệ
     options.Events = new JwtBearerEvents
     {
         OnAuthenticationFailed = context =>
         {
             if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
             {
-                context.Response.Headers.Add("Token-Expired", "true");
+                context.Response.Headers.Append("Token-Expired", "true");
             }
             return Task.CompletedTask;
         },
@@ -114,6 +103,7 @@ builder.Services.AddAuthentication(options =>
         }
     };
 });
+
 // Cấu hình Authorization
 builder.Services.AddAuthorization(options =>
 {
@@ -127,9 +117,6 @@ builder.Services.AddSingleton<string>(provider => "wwwroot/uploads");
 // Configure EzpSettings from appsettings.json
 builder.Services.Configure<BeQuestionBank.Shared.Configuration.EzpSettings>(
     builder.Configuration.GetSection("EzpSettings"));
-
-// Gọi extension từ Core
-builder.Services.AddCoreServices();
 
 // Bật annotation Swagger
 builder.Services.AddSwaggerGen(c =>
@@ -159,15 +146,6 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Đọc cấu hình từ appsettings.json (nếu có)
-//Log.Logger = new LoggerConfiguration()
-//    .ReadFrom.Configuration(builder.Configuration)
-//    .WriteTo.Seq("http://localhost:5341")
-//    .Enrich.FromLogContext()
-//    .WriteTo.Console()
-//    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
-//    .CreateLogger();
-
 // Thay logger mặc định của ASP.NET Core bằng Serilog
 builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
 
@@ -177,7 +155,6 @@ builder.Services.AddMemoryCache();
 var app = builder.Build();
 
 // Thêm middleware custom
-app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
 

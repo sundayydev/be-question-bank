@@ -13,5 +13,5 @@
 - [x] Task 4: Infrastructure Persistence & Services Restructuring
 - [x] Task 5: Application Feature Slices - Auth, Khoa, MonHoc, Phan, NguoiDung
 - [x] Task 6: Application Feature Slices - CauHoi, DeThi, YeuCauRutTrich, File, Tool
-- [ ] Task 7: API Layer Modernization & Controller Thinning
+- [x] Task 7: API Layer Modernization & Controller Thinning
 - [ ] Task 8: End-to-End Build, Frontend & Test Verification
